@@ -100,85 +100,126 @@
   <!-- ===================== JUGAR (mi quiniela) ===================== -->
   <section x-show="view==='pool' && tab==='play'" class="play">
 
-    <template x-if="pool && pool.locked && !me.saved">
-      <div class="banner warn">🔒 Esta porra ya está cerrada (el Mundial ha empezado). No se pueden meter ni cambiar pronósticos.</div>
+    <template x-if="pool && pool.locked">
+      <div class="banner warn">🔒 La porra está cerrada (el Mundial ya ha empezado). Puedes mirar tu quiniela pero no cambiarla. Ve a «Clasificación» para ver cómo vas.</div>
     </template>
 
-    <!-- Identidad -->
-    <div class="card slim">
-      <div class="row2">
-        <div><label>Nombre</label><input x-model="me.first" placeholder="Pablo" :disabled="pool && pool.locked" /></div>
-        <div><label>Apellido</label><input x-model="me.last" placeholder="Torres" :disabled="pool && pool.locked" /></div>
+    <!-- ===== FASE: BIENVENIDA / NOMBRE ===== -->
+    <div x-show="phase==='welcome'" class="phase welcome">
+      <div class="welcome-hero">
+        <div class="wc-emoji">⚽ 🏆</div>
+        <h1>¡Bienvenido a la <span class="grad2">Porra del Mundial 2026</span>!</h1>
+        <p class="lead2">Pon tu nombre y entra. Después harás tus pronósticos paso a paso: <b>grupo por grupo</b>, los <b>mejores terceros</b> y el <b>cuadro final</b>. Tardas 5 minutos y es muy fácil.</p>
       </div>
-      <p class="tiny muted" x-show="me.id">✅ Tu quiniela está guardada. Puedes seguir editándola hasta que se cierre la porra.</p>
+      <div class="card welcome-card">
+        <label>Tu nombre</label>
+        <input x-model="me.first" placeholder="Ej: Lucía" :disabled="pool && pool.locked" @keydown.enter="register()" />
+        <label>Tu apellido</label>
+        <input x-model="me.last" placeholder="Ej: Torres" :disabled="pool && pool.locked" @keydown.enter="register()" />
+        <button class="btn gold block big" @click="register()" :disabled="busy || (pool&&pool.locked)">Entrar en la porra →</button>
+        <p class="tiny muted">Al entrar ya apareces en la <b>clasificación</b> de la familia. Podrás completar o cambiar tus pronósticos hasta que empiece el Mundial.</p>
+      </div>
     </div>
 
-    <!-- Stepper -->
-    <div class="stepper">
-      <button :class="{on: step===1, done: prog.groups}" @click="step=1">1 · Grupos</button>
-      <button :class="{on: step===2, done: prog.thirds}" @click="goStep(2)">2 · Mejores terceros</button>
-      <button :class="{on: step===3, done: prog.bracket}" @click="goStep(3)">3 · Eliminatorias</button>
-      <button :class="{on: step===4}" @click="goStep(4)">4 · Guardar</button>
+    <!-- ===== FASE: INTRO / CÓMO FUNCIONA ===== -->
+    <div x-show="phase==='intro'" class="phase">
+      <div class="card intro-hello">
+        <h2 x-text="(me.saved && prog.thirds ?'¡Hola de nuevo, ':'¡Ya estás dentro, ')+ (me.first||'') +'! 🎉'"></h2>
+        <p class="muted">Ya apareces en la <b>clasificación</b> de la familia. Ahora vamos a hacer tu porra, paso a paso.</p>
+      </div>
+
+      <h3 class="how-title">Cómo funciona — 3 pasos</h3>
+      <div class="how-grid">
+        <div class="how-card">
+          <div class="how-n">1</div>
+          <h4>📊 Los 12 grupos</h4>
+          <p>Ordena cada grupo del <b>1º al 4º</b>. Los <b>2 primeros</b> de cada grupo pasan a la siguiente ronda.</p>
+        </div>
+        <div class="how-card">
+          <div class="how-n">2</div>
+          <h4>🥉 Los mejores terceros</h4>
+          <p>¡Novedad 2026! Además de los 2 primeros, también clasifican los <b>8 mejores terceros</b>. Tú eliges cuáles de tus terceros crees que se cuelan.</p>
+        </div>
+        <div class="how-card">
+          <div class="how-n">3</div>
+          <h4>🏆 El cuadro final</h4>
+          <p>Con los 32 clasificados se forma el cuadro. Eliges quién gana cada cruce hasta el <b>campeón del mundo</b>.</p>
+        </div>
+      </div>
+      <div class="how-points">🎯 <b>Puntos:</b> aciertas posiciones de grupo, terceros que clasifican y cada equipo que llega a octavos, cuartos, semis, final y campeón. ¡Cuanto más lejos llega tu equipo, más puntos!</div>
+      <button class="btn primary block big" @click="startGroups()" x-text="(me.saved && prog.thirds) ? '✏️ Editar mi porra →' : '¡Empezar mi porra! →'"></button>
+      <button class="btn ghost block" @click="openLeaderboard()">Ver la clasificación</button>
     </div>
 
-    <!-- PASO 1: GRUPOS -->
-    <div x-show="step===1" class="step">
-      <div class="step-head">
-        <h2>Ordena los 12 grupos</h2>
-        <p class="muted">Arrastra con ▲▼ del 1º al 4º. El 1º y 2º pasan directos; el 3º puede colarse entre los 8 mejores terceros.</p>
+    <!-- ===== FASE: GRUPOS (uno a uno) ===== -->
+    <div x-show="phase==='groups'" class="phase">
+      <div class="miniprog"><span class="mp on">Grupos</span><span class="sep">›</span><span class="mp">Terceros</span><span class="sep">›</span><span class="mp">Cuadro</span></div>
+      <div class="gwiz">
+        <div class="gwiz-head">
+          <span class="gwiz-count" x-text="'Grupo '+currentLetter+'  ·  '+(gIdx+1)+' de 12'"></span>
+          <div class="progress"><i :style="'width:'+(((gIdx+1)/12)*100)+'%'"></i></div>
+        </div>
+        <p class="gwiz-help">Ordena del <b>1º</b> (arriba) al <b>4º</b> con las flechas ▲▼. Los <b class="cg">2 primeros</b> clasifican directos; el <b class="ct">3º</b> puede entrar como mejor tercero (paso siguiente).</p>
+        <div class="gwiz-list">
+          <template x-for="(team, idx) in groups[currentLetter]" :key="team">
+            <div class="rankrow big" :class="rankClass(idx)">
+              <span class="pos" x-text="(idx+1)+'º'"></span>
+              <span class="flag" x-text="flag(team)"></span>
+              <span class="tname" x-text="es(team)"></span>
+              <span class="qtag" x-show="idx<2">clasifica</span>
+              <span class="qtag third" x-show="idx===2">3º</span>
+              <span class="arrows" x-show="!(pool && pool.locked)">
+                <button @click="moveTeam(currentLetter, idx, -1)" :disabled="idx===0">▲</button>
+                <button @click="moveTeam(currentLetter, idx, 1)" :disabled="idx===3">▼</button>
+              </span>
+            </div>
+          </template>
+        </div>
+        <div class="step-nav">
+          <button class="btn ghost" @click="prevGroup()" x-text="gIdx===0 ? '← Volver' : '← Grupo anterior'"></button>
+          <button class="btn primary" @click="nextGroup()" x-text="gIdx===11 ? 'Siguiente: terceros →' : 'Siguiente grupo →'"></button>
+        </div>
+        <div class="dots">
+          <template x-for="(L,i) in letters" :key="'dot'+L">
+            <span class="dot" :class="{on:i===gIdx, done:i<gIdx}" @click="gIdx=i" x-text="L"></span>
+          </template>
+        </div>
       </div>
-      <div class="groups-grid">
-        <template x-for="L in letters" :key="L">
-          <div class="group-card">
-            <div class="group-title">Grupo <span x-text="L"></span></div>
-            <template x-for="(team, idx) in groups[L]" :key="team">
-              <div class="rankrow" :class="rankClass(idx)">
-                <span class="pos" x-text="(idx+1)+'º'"></span>
-                <span class="flag" x-text="flag(team)"></span>
-                <span class="tname" x-text="es(team)"></span>
-                <span class="qtag" x-show="idx<2">clasifica</span>
-                <span class="qtag third" x-show="idx===2">3º</span>
-                <span class="arrows" x-show="!(pool && pool.locked)">
-                  <button @click="moveTeam(L, idx, -1)" :disabled="idx===0">▲</button>
-                  <button @click="moveTeam(L, idx, 1)" :disabled="idx===3">▼</button>
-                </span>
-              </div>
-            </template>
-          </div>
-        </template>
-      </div>
-      <div class="step-nav"><span></span><button class="btn primary" @click="goStep(2)">Siguiente: terceros →</button></div>
     </div>
 
-    <!-- PASO 2: TERCEROS -->
-    <div x-show="step===2" class="step">
-      <div class="step-head">
-        <h2>Los 8 mejores terceros</h2>
-        <p class="muted">De tus 12 terceros, elige los <b>8</b> que crees que se clasificarán a la fase eliminatoria. Llevas <b x-text="thirds.length"></b>/8.</p>
+    <!-- ===== FASE: TERCEROS ===== -->
+    <div x-show="phase==='thirds'" class="phase">
+      <div class="miniprog"><span class="mp done">Grupos</span><span class="sep">›</span><span class="mp on">Terceros</span><span class="sep">›</span><span class="mp">Cuadro</span></div>
+      <div class="rules-box">
+        <h3>🥉 Los 8 mejores terceros</h3>
+        <p>En el Mundial 2026, de cada grupo pasan los <b>2 primeros</b> (24 equipos). Pero, como novedad, <b>también clasifican los 8 terceros con mejor resultado</b> de entre los 12 grupos. En total son <b>32 equipos</b> en las eliminatorias.</p>
+        <p>👉 Abajo tienes el <b>3º de cada grupo</b> según el orden que pusiste. Elige los <b>8</b> que crees que serán los mejores terceros y se clasificarán.</p>
       </div>
+      <div class="thirds-counter" :class="{full: thirds.length===8}" x-text="'Elegidos: '+thirds.length+' de 8'"></div>
       <div class="thirds-grid">
         <template x-for="L in letters" :key="'t'+L">
           <button class="third-chip" :class="{picked: thirds.includes(groups[L][2]), dis: !thirds.includes(groups[L][2]) && thirds.length>=8}"
                   @click="toggleThird(groups[L][2])" :disabled="pool && pool.locked">
             <span class="flag" x-text="flag(groups[L][2])"></span>
             <span x-text="es(groups[L][2])"></span>
-            <small>3º Grupo <span x-text="L"></span></small>
+            <small>3º del Grupo <span x-text="L"></span></small>
             <span class="check" x-show="thirds.includes(groups[L][2])">✓</span>
           </button>
         </template>
       </div>
       <div class="step-nav">
-        <button class="btn ghost" @click="step=1">← Grupos</button>
-        <button class="btn primary" @click="goStep(3)" :disabled="thirds.length!==8" x-text="thirds.length===8 ? 'Siguiente: eliminatorias →' : 'Elige 8 terceros'"></button>
+        <button class="btn ghost" @click="phase='groups'; gIdx=11">← Grupos</button>
+        <button class="btn primary" @click="goBracketPhase()" :disabled="thirds.length!==8" x-text="thirds.length===8 ? 'Siguiente: el cuadro →' : 'Te faltan '+(8-thirds.length)+' terceros'"></button>
       </div>
     </div>
 
-    <!-- PASO 3: BRACKET -->
-    <div x-show="step===3" class="step">
-      <div class="step-head">
-        <h2>Eliminatorias</h2>
-        <p class="muted">Toca al equipo que crees que gana cada cruce, desde 1/16 hasta la final. Se construye con tus clasificados.</p>
-        <p class="tiny" :class="bracketDone ? 'ok' : 'muted'" x-text="bracketDone ? '✅ Bracket completo: tu campeón es '+es(myChampion) : 'Te faltan cruces por decidir ('+bracketPicked+'/31).'"></p>
+    <!-- ===== FASE: CUADRO ELIMINATORIO ===== -->
+    <div x-show="phase==='bracket'" class="phase">
+      <div class="miniprog"><span class="mp done">Grupos</span><span class="sep">›</span><span class="mp done">Terceros</span><span class="sep">›</span><span class="mp on">Cuadro</span></div>
+      <div class="rules-box">
+        <h3>🏆 El cuadro eliminatorio</h3>
+        <p>Con tus clasificados ya está montado el cuadro. <b>Toca al equipo que crees que gana</b> cada cruce: el ganador avanza solo a la siguiente columna, desde 1/16 hasta la final.</p>
+        <p class="tiny" :class="bracketDone ? 'ok' : 'muted'" x-text="bracketDone ? '✅ ¡Cuadro completo! Tu campeón: '+es(myChampion) : 'Cruces decididos: '+bracketPicked+' de 31  ·  desliza el cuadro a los lados →'"></p>
       </div>
       <div class="bracket-scroll">
         <div class="bracket">
@@ -209,28 +250,26 @@
         </div>
       </div>
       <div class="step-nav">
-        <button class="btn ghost" @click="step=2">← Terceros</button>
-        <button class="btn primary" @click="goStep(4)">Siguiente: guardar →</button>
+        <button class="btn ghost" @click="phase='thirds'">← Terceros</button>
+        <button class="btn gold big" @click="finishPorra()" :disabled="busy || (pool&&pool.locked)">💾 Guardar y terminar</button>
       </div>
     </div>
 
-    <!-- PASO 4: GUARDAR -->
-    <div x-show="step===4" class="step">
-      <div class="step-head"><h2>Revisar y guardar</h2></div>
-      <div class="review">
-        <div class="rev-line"><b>Jugador:</b> <span x-text="(me.first||'—')+' '+(me.last||'')"></span></div>
-        <div class="rev-line"><b>Grupos ordenados:</b> <span x-text="prog.groups?'✅ los 12':'pendiente'"></span></div>
-        <div class="rev-line"><b>Mejores terceros:</b> <span x-text="thirds.length+'/8'"></span></div>
-        <div class="rev-line"><b>Eliminatorias:</b> <span x-text="bracketPicked+'/31 cruces · campeón: '+(myChampion?es(myChampion):'—')"></span></div>
+    <!-- ===== FASE: HECHO ===== -->
+    <div x-show="phase==='done'" class="phase">
+      <div class="done-card">
+        <div class="done-emoji">🎉</div>
+        <h2>¡Quiniela guardada!</h2>
+        <p class="muted" x-text="'Listo, '+(me.first||'')+'. Tu porra está guardada. Puedes cambiarla cuando quieras hasta que empiece el Mundial.'"></p>
+        <ul class="checklist">
+          <li class="ok" x-text="'✅ '+(me.first||'')+' '+(me.last||'')"></li>
+          <li :class="prog.groups?'ok':'no'" x-text="(prog.groups?'✅':'⬜')+' Los 12 grupos ordenados'"></li>
+          <li :class="thirds.length===8?'ok':'no'" x-text="(thirds.length===8?'✅':'⬜')+' 8 mejores terceros elegidos'"></li>
+          <li :class="bracketDone?'ok':'no'" x-text="bracketDone ? ('✅ Cuadro completo · Campeón: '+es(myChampion)) : ('⬜ Cuadro a medias ('+bracketPicked+'/31)')"></li>
+        </ul>
+        <button class="btn primary block big" @click="openLeaderboard()">Ver la clasificación →</button>
+        <button class="btn ghost block" @click="phase='groups'; gIdx=0">✏️ Editar mis pronósticos</button>
       </div>
-      <ul class="checklist">
-        <li :class="me.first&&me.last?'ok':'no'" x-text="(me.first&&me.last?'✅':'⬜')+' Nombre y apellido'"></li>
-        <li :class="prog.groups?'ok':'no'" x-text="(prog.groups?'✅':'⬜')+' Grupos ordenados'"></li>
-        <li :class="thirds.length===8?'ok':'no'" x-text="(thirds.length===8?'✅':'⬜')+' 8 terceros elegidos'"></li>
-        <li :class="bracketDone?'ok':'no'" x-text="(bracketDone?'✅':'⬜')+' Bracket completo (recomendado)'"></li>
-      </ul>
-      <button class="btn gold block big" @click="saveEntry()" :disabled="busy || (pool&&pool.locked)" x-text="me.id ? '💾 Guardar cambios' : '✅ Guardar mi quiniela'"></button>
-      <p class="tiny muted">Se guarda en la nube. Podrás volver a editarla desde este móvil hasta que la porra se cierre.</p>
     </div>
   </section>
 

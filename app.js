@@ -34,6 +34,7 @@ window.porraApp = function () {
   return {
     // navegación
     view: "home", tab: "play", step: 1, rTab: "groups", aTab: "groups",
+    phase: "welcome", gIdx: 0,
     // estado porra / jugador
     pool: null, me: { first: "", last: "", id: null, saved: false },
     joinCode: "", newPool: { name: "", code: "", pin: "" }, recent: [],
@@ -106,6 +107,7 @@ window.porraApp = function () {
         history.replaceState(null, "", location.pathname + "?porra=" + pool.code);
         this.rememberPool(pool);
         this.loadMine(pool.code);
+        this.phase = this.me.id ? "intro" : "welcome"; this.gIdx = 0;
         await this.loadResults();
         await this.loadEntries();
       } catch (e) { this.toast(this.errMsg(e), "err"); } finally { this.busy = false; }
@@ -194,19 +196,38 @@ window.porraApp = function () {
       this.step = n; if (n === 3) this.rebuild(); this.persistDraft();
     },
 
-    // ---------- guardar quiniela ----------
-    async saveEntry() {
-      if (this.pool && this.pool.locked) return this.toast(ERRORS.POOL_LOCKED, "err");
-      if (!this.me.first.trim() || !this.me.last.trim()) { this.step = 4; return this.toast(ERRORS.NAME_REQUIRED, "err"); }
+    // ---------- asistente: guardar / navegación ----------
+    get currentLetter() { return this.letters[this.gIdx]; },
+    async _save(quiet) {
+      if (this.pool && this.pool.locked) { if (!quiet) this.toast(ERRORS.POOL_LOCKED, "err"); return false; }
+      if (!this.me.first.trim() || !this.me.last.trim()) { if (!quiet) this.toast(ERRORS.NAME_REQUIRED, "err"); return false; }
       this.busy = true;
       try {
         const picks = { groups: this.groups, thirds: this.thirds, bracket: this.bracket };
         const res = await this.rpc("porra_save_entry", { p_code: this.pool.code, p_first: this.me.first, p_last: this.me.last, p_picks: picks, p_participant_id: this.me.id });
         this.me.id = res.participant_id; this.me.saved = true;
         localStorage.setItem("porra_me_" + this.pool.code, JSON.stringify({ id: this.me.id, first: this.me.first, last: this.me.last, picks }));
-        this.toast("💾 ¡Quiniela guardada!");
         await this.loadEntries();
-      } catch (e) { this.toast(this.errMsg(e), "err"); } finally { this.busy = false; }
+        return true;
+      } catch (e) { this.toast(this.errMsg(e), "err"); return false; }
+      finally { this.busy = false; }
+    },
+    async register() {
+      if (this.pool && this.pool.locked) return this.toast(ERRORS.POOL_LOCKED, "err");
+      if (!this.me.first.trim() || !this.me.last.trim()) return this.toast("Pon tu nombre y tu apellido.", "warn");
+      const ok = await this._save(true);
+      if (ok) { this.phase = "intro"; this.toast("¡Estás dentro, " + this.me.first + "! Ya apareces en la clasificación. 🎉"); }
+    },
+    startGroups() { this.phase = "groups"; this.gIdx = 0; this.rebuild(); },
+    nextGroup() { if (this.gIdx < 11) { this.gIdx++; this.persistDraft(); } else { this.phase = "thirds"; this._save(true); } },
+    prevGroup() { if (this.gIdx > 0) this.gIdx--; else this.phase = "intro"; },
+    goBracketPhase() {
+      if (this.thirds.length !== 8) return this.toast("Elige tus 8 mejores terceros.", "warn");
+      this.rebuild(); this.phase = "bracket"; this._save(true);
+    },
+    async finishPorra() {
+      const ok = await this._save(false);
+      if (ok) { this.phase = "done"; this.toast("💾 ¡Quiniela guardada!"); }
     },
 
     // ---------- cargar resultados / participantes ----------

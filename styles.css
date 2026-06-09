@@ -190,7 +190,67 @@ table.mini tr.qual{background:#eafaf0} table.mini tr.third{background:#fff7e3}
 @keyframes spin{to{transform:rotate(360deg)}}
 .foot{text-align:center;color:var(--muted);font-size:.74rem;padding:24px 14px 40px}
 
+/* ===== Asistente guiado (fases) ===== */
+.phase{max-width:820px;margin:0 auto}
+.welcome{max-width:560px}
+.welcome-hero{text-align:center;padding:18px 6px 6px}
+.wc-emoji{font-size:2.6rem;letter-spacing:6px}
+.welcome-hero h1{font-size:1.7rem;margin-top:6px}
+.grad2{background:linear-gradient(95deg,var(--green2),var(--gold2));-webkit-background-clip:text;background-clip:text;color:transparent}
+.lead2{color:#33473e;margin-top:8px}
+.welcome-card{max-width:460px;margin:18px auto 0}
+.intro-hello{text-align:center}
+.intro-hello h2{font-size:1.4rem}
+.how-title{text-align:center;margin:20px 0 10px;color:var(--green)}
+.how-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.how-card{position:relative;background:#fff;border:1px solid var(--line);border-radius:14px;padding:16px 14px 14px;box-shadow:var(--shadow)}
+.how-card h4{margin:6px 0 4px;font-size:1rem}
+.how-card p{font-size:.86rem;color:#45554e;margin:0}
+.how-n{position:absolute;top:-12px;left:14px;width:28px;height:28px;border-radius:50%;background:var(--green);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800}
+.how-points{margin:14px 0 16px;background:#eaf4ee;border:1px solid #cfe6d8;border-radius:12px;padding:13px 15px;font-size:.9rem;color:#264a3a}
+
+.miniprog{display:flex;align-items:center;gap:8px;justify-content:center;margin-bottom:14px;flex-wrap:wrap}
+.miniprog .mp{font-weight:700;font-size:.82rem;color:var(--muted);background:#fff;border:1px solid var(--line);padding:5px 12px;border-radius:999px}
+.miniprog .mp.on{color:#fff;background:var(--green);border-color:var(--green)}
+.miniprog .mp.done{color:var(--ok);border-color:#b6e6c7;background:#eafaf0}
+.miniprog .sep{color:var(--muted)}
+
+.gwiz{background:#fff;border:1px solid var(--line);border-radius:16px;padding:18px;box-shadow:var(--shadow)}
+.gwiz-head{display:flex;flex-direction:column;gap:8px;margin-bottom:8px}
+.gwiz-count{font-weight:800;color:var(--green);font-size:1.25rem}
+.progress{height:9px;background:#e9efeb;border-radius:999px;overflow:hidden}
+.progress i{display:block;height:100%;background:linear-gradient(90deg,var(--green2),var(--gold));transition:width .25s}
+.gwiz-help{font-size:.88rem;color:#45554e;background:#f6faf8;border-radius:10px;padding:10px 12px;margin:8px 0 14px}
+.gwiz-help .cg{color:var(--ok)} .gwiz-help .ct{color:var(--gold2)}
+.gwiz-list{display:flex;flex-direction:column;gap:9px}
+.rankrow.big{padding:13px 12px;border-radius:12px;border:1.5px solid var(--line);background:#fff}
+.rankrow.big.qual{background:#eafaf0;border-color:#cdebd8}
+.rankrow.big.third{background:#fff7e3;border-color:#f1e0b0}
+.rankrow.big .pos{font-size:1.05rem;width:30px}
+.rankrow.big .tname{font-size:1.02rem}
+.rankrow.big .arrows button{width:38px;height:26px;font-size:.85rem}
+.dots{display:flex;gap:6px;justify-content:center;flex-wrap:wrap;margin-top:16px}
+.dot{width:30px;height:30px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:.8rem;background:#fff;border:1.5px solid var(--line);color:var(--muted);cursor:pointer}
+.dot.on{background:var(--green);color:#fff;border-color:var(--green)}
+.dot.done{border-color:#b6e6c7;color:var(--ok);background:#eafaf0}
+
+.rules-box{background:linear-gradient(135deg,#eef7f1,#fff);border:1px solid #cfe6d8;border-left:5px solid var(--green);border-radius:12px;padding:15px 17px;margin-bottom:14px}
+.rules-box h3{color:var(--green);margin-bottom:6px}
+.rules-box p{font-size:.9rem;color:#33473e;margin:6px 0}
+.thirds-counter{display:inline-block;background:#fbecc4;color:var(--gold2);font-weight:800;border-radius:999px;padding:7px 16px;margin-bottom:12px;font-size:.92rem}
+.thirds-counter.full{background:#d8f5e3;color:#0a6c39}
+
+.done-card{max-width:480px;margin:10px auto;text-align:center;background:#fff;border:1px solid var(--line);border-radius:18px;padding:26px 20px;box-shadow:var(--shadow)}
+.done-emoji{font-size:3rem}
+.done-card h2{font-size:1.5rem;color:var(--green)}
+.done-card .checklist{text-align:left;display:inline-block;margin:14px auto}
+
 /* ===== Responsive ===== */
+@media(max-width:640px){
+  .how-grid{grid-template-columns:1fr}
+  .wc-emoji{font-size:2.2rem}
+  .welcome-hero h1{font-size:1.45rem}
+}
 @media(max-width:640px){
   .cards{grid-template-columns:1fr}
   .hero h1{font-size:1.6rem}
