@@ -335,6 +335,34 @@ tr.clickrow.sel td{background:#e7f1ec}
 .pod-pts{color:var(--green);font-weight:700;font-size:.84rem}
 .pod-win{font-size:.74rem;color:var(--gold2);font-weight:700}
 @media(max-width:640px){ .extras-grid{grid-template-columns:1fr} }
+
+/* ===== Panel "Mi porra" (resumen / hub) ===== */
+.hub{max-width:640px}
+.hub-head h2{font-size:1.5rem}
+.hub-status{border-radius:13px;padding:14px 16px;margin:8px 0 16px;font-size:.95rem;line-height:1.5}
+.hub-status.ok{background:#eafaf0;border:1px solid #cdebd8;color:#1f5b3f}
+.hub-status.warn{background:#fff6e6;border:1px solid #f3d699;color:#8a5a12}
+.hub-status .tiny{display:block;margin-top:4px;opacity:.85}
+.hub-cards{display:flex;flex-direction:column;gap:10px;margin-bottom:16px}
+.hub-card{display:flex;align-items:center;gap:13px;background:#fff;border:1.5px solid var(--line);border-radius:14px;padding:14px 16px;text-align:left;box-shadow:var(--shadow);transition:border-color .12s,transform .05s}
+.hub-card:hover{border-color:var(--green2)}
+.hub-card:active{transform:translateY(1px)}
+.hc-ic{font-size:1.7rem;width:34px;text-align:center}
+.hc-body{flex:1;display:flex;flex-direction:column}
+.hc-body b{font-size:1rem}
+.hc-body small{color:var(--muted);font-size:.8rem}
+.hc-badge{font-weight:800;font-size:.82rem;white-space:nowrap;border-radius:999px;padding:5px 12px}
+.hc-badge.ok{background:#d8f5e3;color:#0a6c39}
+.hc-badge.warn{background:#fbecc4;color:var(--gold2)}
+.hc-badge.soft{background:#eef3f0;color:var(--muted)}
+.how-collapse{margin-top:16px;background:#fff;border:1px solid var(--line);border-radius:12px;padding:4px 14px}
+.how-collapse summary{cursor:pointer;font-weight:800;color:var(--green);padding:10px 0}
+.how-collapse .how-grid{margin-top:8px}
+
+.sec-top{display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap}
+.sec-top .miniprog{margin:0;justify-content:flex-start}
+.miniprog .mp{cursor:pointer}
+.miniprog .mp.done{cursor:pointer}
 @media(max-width:640px){
   .cards{grid-template-columns:1fr}
   .hero h1{font-size:1.6rem}

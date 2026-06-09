@@ -187,7 +187,7 @@ window.porraApp = function () {
         history.replaceState(null, "", location.pathname + "?porra=" + pool.code);
         this.rememberPool(pool);
         this.loadMine(pool.code);
-        this.phase = this.me.id ? "intro" : "welcome"; this.gIdx = 0;
+        this.phase = this.me.id ? "hub" : "welcome"; this.gIdx = 0;
         await this.loadExtrasActual();
         await this.loadResults();
         await this.loadEntries();
@@ -313,11 +313,21 @@ window.porraApp = function () {
       if (this.isLocked) return this.toast(ERRORS.POOL_LOCKED, "err");
       if (!this.me.first.trim() || !this.me.last.trim()) return this.toast("Pon tu nombre y tu apellido.", "warn");
       const ok = await this._save(true);
-      if (ok) { this.phase = "intro"; this.toast("¡Estás dentro, " + this.me.first + "! Ya apareces en la clasificación. 🎉"); }
+      if (ok) { this.phase = "hub"; this.toast("¡Estás dentro, " + this.me.first + "! Ya apareces en la clasificación. 🎉"); }
+    },
+    // panel "Mi porra" (resumen): navegación fácil + estado
+    editSection(name) { this.rebuild(); if (name === "groups") this.gIdx = 0; this.phase = name; },
+    goHub() { if (!this.isLocked) { this._save(true); this.toast("Guardado ✓"); } this.phase = "hub"; },
+    get extrasFilled() { const e = this.extras, sb = e.sidebets || {}; return !!(e.revelacion || e.decepcion || e.pichichi || e.asistente || sb.hattrick || sb.dobleRoja); },
+    get status() {
+      const t = this.thirds.length, b = this.bracketPicked, missing = [];
+      if (t !== 8) missing.push(t < 8 ? "elegir " + (8 - t) + " tercero" + (8 - t > 1 ? "s" : "") + " más" : "ajustar los terceros");
+      if (b !== 31) missing.push("completar el cuadro (" + b + "/31)");
+      return { thirds: t === 8, thirdsTxt: t + "/8", bracket: b === 31, bracketTxt: b + "/31", extras: this.extrasFilled, complete: t === 8 && b === 31, missing };
     },
     startGroups() { this.phase = "groups"; this.gIdx = 0; this.rebuild(); },
     nextGroup() { if (this.gIdx < 11) { this.gIdx++; this.persistDraft(); } else { this.phase = "thirds"; this._save(true); } },
-    prevGroup() { if (this.gIdx > 0) this.gIdx--; else this.phase = "intro"; },
+    prevGroup() { if (this.gIdx > 0) this.gIdx--; else this.goHub(); },
     goBracketPhase() {
       if (this.thirds.length !== 8) return this.toast("Elige tus 8 mejores terceros.", "warn");
       this.rebuild(); this.phase = "bracket"; this._save(true);
@@ -326,7 +336,7 @@ window.porraApp = function () {
     toggleSideBet(key, val) { if (this.isLocked) return; this.extras.sidebets[key] = this.extras.sidebets[key] === val ? "" : val; this.persistDraft(); },
     async finishPorra() {
       const ok = await this._save(false);
-      if (ok) { this.phase = "done"; this.toast("💾 ¡Quiniela guardada!"); }
+      if (ok) { this.phase = "hub"; this.toast("💾 ¡Porra guardada!"); }
     },
 
     // ---------- cargar resultados / participantes ----------
