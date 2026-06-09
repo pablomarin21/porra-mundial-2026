@@ -141,14 +141,10 @@
       <template x-if="status.complete">
         <div class="hub-status ok">✅ <b>¡Tu porra está completa!</b> 🍀 ¡Mucha suerte!</div>
       </template>
-      <template x-if="!status.complete && status.generalDone">
-        <div class="hub-status soft">👍 <b>Tu porra general está lista.</b> Solo te faltan las <b>predicciones especiales</b> <span x-text="'('+status.extrasTxt+')'"></span> — son opcionales, pero dan puntos extra.</div>
-      </template>
-      <template x-if="!status.generalDone">
+      <template x-if="!status.complete">
         <div class="hub-status warn">
           <b>⚠️ Termina tu porra</b>
           <div x-text="'Te falta: '+status.missing.join('  ·  ')+'.'"></div>
-          <span class="tiny" x-show="!status.extras">Y las predicciones especiales (opcionales) están sin terminar.</span>
         </div>
       </template>
 
@@ -170,8 +166,8 @@
         </button>
         <button class="hub-card" @click="editSection('extras')">
           <span class="hc-ic">⭐</span>
-          <span class="hc-body"><b>4 · Especiales</b><small>Puntos extra (opcional)</small></span>
-          <span class="hc-badge" :class="status.extras?'ok':'soft'" x-text="status.extras?'✅ Hecho':('Opcional · '+status.extrasTxt)"></span>
+          <span class="hc-body"><b>4 · Especiales</b><small>Revelación, goleador, asistente…</small></span>
+          <span class="hc-badge" :class="status.extras?'ok':'warn'" x-text="status.extras?'✅ Hecho':('⚠️ '+status.extrasTxt)"></span>
         </button>
       </div>
 
@@ -329,7 +325,7 @@
       </div>
       <div class="rules-box gold">
         <h3>⭐ Predicciones especiales — puntos extra</h3>
-        <p>Esto va <b>aparte</b> de la porra general y da <b>puntos de regalo</b> si aciertas. Son <b>opcionales</b>: deja en blanco lo que no sepas.</p>
+        <p>Esto va <b>aparte</b> de la porra general y da <b>puntos extra</b> si aciertas. Hay que rellenar <b>las 6</b> para terminar tu porra. <span x-show="!status.extras" x-text="'(llevas '+status.extrasTxt+')'"></span></p>
       </div>
       <div class="extras-grid">
         <div class="extra-card">

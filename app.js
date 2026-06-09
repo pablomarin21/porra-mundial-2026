@@ -364,6 +364,7 @@ window.porraApp = function () {
       const generalDone = t === 8 && b === 31;
       if (t !== 8) missing.push(t < 8 ? "elegir " + (8 - t) + " tercero" + (8 - t > 1 ? "s" : "") + " más" : "ajustar los terceros");
       if (b !== 31) missing.push("completar el cuadro (" + b + "/31)");
+      if (!extrasDone) missing.push("las predicciones especiales (" + exCount + "/6)");
       return {
         thirds: t === 8, thirdsTxt: t + "/8", bracket: b === 31, bracketTxt: b + "/31",
         extras: extrasDone, extrasTxt: exCount + "/6", generalDone, complete: generalDone && extrasDone, missing,
