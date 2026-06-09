@@ -564,6 +564,33 @@
         </div>
       </template>
     </div>
+    <!-- 🔴 EN DIRECTO: lo que pusisteis para el grupo que se está jugando -->
+    <div class="live-groups" x-show="liveGroups.length">
+      <template x-for="g in liveGroups" :key="'lg'+g.letter">
+        <div class="lg-card">
+          <div class="lg-head">
+            <span class="lg-live">🔴 EN DIRECTO</span>
+            <span class="lg-g">Grupo <span x-text="g.letter"></span></span>
+            <span class="lg-score"><span class="flag" x-text="g.match.hFlag"></span> <b x-text="g.match.hs+'–'+g.match.as"></b> <span class="flag" x-text="g.match.aFlag"></span></span>
+          </div>
+          <div class="lg-sub">📋 Lo que pusisteis para el <b>Grupo <span x-text="g.letter"></span></b> (resaltados, los que juegan ahora):</div>
+          <div class="lg-preds">
+            <template x-for="pr in groupPredictions(g.letter)" :key="'gp'+g.letter+pr.id">
+              <div class="lg-row" :class="{me:pr.me, bot:pr.bot}">
+                <span class="lg-name"><span x-text="pr.name"></span><span class="youtag" x-show="pr.me">tú</span></span>
+                <span class="lg-order">
+                  <template x-for="(t,idx) in pr.order" :key="'o'+g.letter+pr.id+idx">
+                    <span class="lg-pos" :class="{playing: t===g.match.hCanon || t===g.match.aCanon}"><b x-text="(idx+1)+'º'"></b><span class="flag" x-text="flag(t)"></span></span>
+                  </template>
+                </span>
+              </div>
+            </template>
+            <p class="muted tiny" x-show="!groupPredictions(g.letter).length">Las predicciones se ven cuando empieza el Mundial.</p>
+          </div>
+        </div>
+      </template>
+    </div>
+
     <div class="subtabs">
       <button :class="{on: rTab==='cal'}" @click="rTab='cal'">📅 Calendario</button>
       <button :class="{on: rTab==='groups'}" @click="rTab='groups'">Fase de grupos</button>

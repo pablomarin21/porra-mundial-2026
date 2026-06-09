@@ -8,6 +8,7 @@ const D = window.PORRA_DATA;
 const Eng = window.PorraEngine;
 
 const ALL_TEAMS = [].concat(...D.GROUP_LETTERS.map((L) => D.GROUPS[L]));
+const TEAM_GROUP = (function () { const m = {}; for (const L of D.GROUP_LETTERS) for (const t of D.GROUPS[L]) m[t] = L; return m; })();
 const KO_META = []
   .concat(D.R32.map((m) => ({ match: m.match, round: "1/16", stageKey: "r32" })))
   .concat(D.R16.map((m) => ({ match: m.match, round: "Octavos", stageKey: "r16" })))
@@ -115,6 +116,20 @@ window.porraApp = function () {
       }
       out.sort((a, b) => a.ts - b.ts);
       return out;
+    },
+    get liveGroups() {
+      const seen = {}, out = [];
+      for (const m of this.liveMatches) {
+        if (!m.live) continue;
+        const g = m.hCanon && TEAM_GROUP[m.hCanon];
+        if (g && g === (m.aCanon && TEAM_GROUP[m.aCanon]) && !seen[g]) { seen[g] = true; out.push({ letter: g, match: m }); }
+      }
+      return out.sort((a, b) => a.letter.localeCompare(b.letter));
+    },
+    groupPredictions(L) {
+      return (this.entries || [])
+        .filter((e) => e.picks && e.picks.groups && e.picks.groups[L] && e.picks.groups[L].length === 4)
+        .map((e) => ({ id: e.id, name: e.first_name + " " + e.last_name, me: e.id === this.me.id, bot: (e.first_name || "").startsWith("🤖"), order: e.picks.groups[L] }));
     },
     get liveToday() {
       const live = this.liveMatches.filter((m) => m.live);
@@ -537,7 +552,7 @@ window.porraApp = function () {
       if (!ok) { this.usingServerBoard = false; try { await this.refreshBoard(); } catch (e) {} }
       this.probBusy = false;
     },
-    openResults() { this.tab = "results"; this.fetchEspn(false); },
+    openResults() { this.tab = "results"; this.fetchEspn(false); this.loadEntries({ recompute: false }); },
     async refreshBoard() { await this.loadResults(); await this.loadEntries(); },
     recomputeRanking() {
       if (this.usingServerBoard) { if (this.selectedId) this.det = this._computeDetail(this.selectedId); return; }
