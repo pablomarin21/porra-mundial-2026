@@ -127,7 +127,8 @@
         <label>Tu apellido</label>
         <input x-model="me.last" placeholder="Ej: Torres" :disabled="isLocked" @keydown.enter="register()" />
         <button class="btn gold block big" @click="register()" :disabled="busy || isLocked">Entrar en la porra →</button>
-        <p class="tiny muted">Al entrar ya apareces en la <b>clasificación</b> de la familia. Podrás completar o cambiar tus pronósticos hasta que empiece el Mundial.</p>
+        <p class="tiny muted">Al entrar ya apareces en la <b>clasificación</b>. Podrás cambiar tus pronósticos hasta que empiece el Mundial.</p>
+        <p class="tiny" style="background:#eef3fb;border:1px solid #cdd9ee;color:#2b4a7a;border-radius:9px;padding:8px 11px;margin-top:8px">🔁 <b>¿Ya rellenaste tu porra y te vuelve a pedir el nombre?</b> Pon el <b>mismo nombre y apellido</b> y la recuperas entera (no se pierde nada).</p>
       </div>
     </div>
 

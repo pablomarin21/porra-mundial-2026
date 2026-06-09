@@ -197,7 +197,7 @@ window.porraApp = function () {
     // ---------- toasts / rpc ----------
     toast(msg, kind = "ok") { const id = Math.random().toString(36).slice(2); this.toasts.push({ id, msg, kind }); setTimeout(() => { this.toasts = this.toasts.filter((t) => t.id !== id); }, 3800); },
     errMsg(e) { const m = (e && e.message) || ""; for (const k in ERRORS) if (m.includes(k)) return ERRORS[k]; return m || "Algo ha fallado, inténtalo de nuevo."; },
-    async rpc(name, args) { const { data, error } = await sb.rpc(name, args); if (error) throw new Error(this.errMsg(error)); return data; },
+    async rpc(name, args) { const { data, error } = await sb.rpc(name, args); if (error) { const e = new Error(this.errMsg(error)); e.raw = (error && error.message) || ""; throw e; } return data; },
 
     // ---------- crear / unirse ----------
     async createPool() {
@@ -339,20 +339,54 @@ window.porraApp = function () {
       if (!this.me.first.trim() || !this.me.last.trim()) { if (!quiet) this.toast(ERRORS.NAME_REQUIRED, "err"); return false; }
       this.busy = true;
       try {
-        const picks = { groups: this.groups, thirds: this.thirds, bracket: this.bracket, extras: this.extras };
-        const res = await this.rpc("porra_save_entry", { p_code: this.pool.code, p_first: this.me.first, p_last: this.me.last, p_picks: picks, p_participant_id: this.me.id });
-        this.me.id = res.participant_id; this.me.saved = true;
-        localStorage.setItem("porra_me_" + this.pool.code, JSON.stringify({ id: this.me.id, first: this.me.first, last: this.me.last, picks }));
-        await this.loadEntries();
-        return true;
-      } catch (e) { this.toast(this.errMsg(e), "err"); return false; }
-      finally { this.busy = false; }
+        return await this._doSave();
+      } catch (e) {
+        if (((e && e.raw) || "").includes("PARTICIPANT_NOT_FOUND")) {
+          try {
+            const r = await this.rpc("porra_register", { p_code: this.pool.code, p_first: this.me.first, p_last: this.me.last });
+            this.me.id = r.participant_id;
+            return await this._doSave();
+          } catch (e2) { if (!quiet) this.toast(this.errMsg(e2), "err"); return false; }
+        }
+        if (!quiet) this.toast(this.errMsg(e), "err");
+        return false;
+      } finally { this.busy = false; }
+    },
+    async _doSave() {
+      const picks = { groups: this.groups, thirds: this.thirds, bracket: this.bracket, extras: this.extras };
+      const res = await this.rpc("porra_save_entry", { p_code: this.pool.code, p_first: this.me.first, p_last: this.me.last, p_picks: picks, p_participant_id: this.me.id });
+      this.me.id = res.participant_id; this.me.saved = true;
+      this._persistMe();
+      await this.loadEntries({ recompute: false });
+      return true;
     },
     async register() {
-      if (this.isLocked) return this.toast(ERRORS.POOL_LOCKED, "err");
       if (!this.me.first.trim() || !this.me.last.trim()) return this.toast("Pon tu nombre y tu apellido.", "warn");
-      const ok = await this._save(true);
-      if (ok) { this.phase = "hub"; this.toast("¡Estás dentro, " + this.me.first + "! Ya apareces en la clasificación. 🎉"); }
+      this.busy = true;
+      try {
+        const res = await this.rpc("porra_register", { p_code: this.pool.code, p_first: this.me.first, p_last: this.me.last });
+        this.me.id = res.participant_id; this.me.saved = true;
+        if (res.claimed && res.picks && Object.keys(res.picks).length) this.applyPicks(res.picks);
+        this._persistMe();
+        this.phase = "hub";
+        this.toast(res.claimed
+          ? ("¡Bienvenido de nuevo, " + this.me.first + "! He recuperado tu porra. 👌")
+          : ("¡Estás dentro, " + this.me.first + "! Ya apareces en la clasificación. 🎉"));
+      } catch (e) { this.toast(this.errMsg(e), "err"); }
+      finally { this.busy = false; }
+    },
+    applyPicks(p) {
+      this.groups = emptyGroups();
+      if (p.groups && Object.keys(p.groups).length) for (const L of D.GROUP_LETTERS) if (p.groups[L]) this.groups[L] = p.groups[L].slice();
+      this.thirds = (p.thirds || []).slice();
+      this.bracket = Object.assign({}, p.bracket || {});
+      this.extras = Object.assign({ revelacion: "", decepcion: "", pichichi: "", asistente: "", sidebets: {} }, p.extras || {}, { sidebets: Object.assign({}, (p.extras && p.extras.sidebets) || {}) });
+      this.reconcileThirds(); this.rebuild();
+    },
+    _persistMe() {
+      if (!this.pool) return;
+      const picks = { groups: this.groups, thirds: this.thirds, bracket: this.bracket, extras: this.extras };
+      try { localStorage.setItem("porra_me_" + this.pool.code, JSON.stringify({ id: this.me.id, first: this.me.first, last: this.me.last, picks })); } catch (e) {}
     },
     // panel "Mi porra" (resumen): navegación fácil + estado
     editSection(name) { this.rebuild(); if (name === "groups") this.gIdx = 0; this.phase = name; },
