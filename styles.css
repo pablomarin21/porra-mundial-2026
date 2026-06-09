@@ -350,6 +350,34 @@ table.mini tr.qual{background:#eafaf0} table.mini tr.third{background:#fff7e3}
 .lg-pos.playing{background:#fff3cf;border-color:var(--gold)}
 .lg-pos.playing b{color:#8a5a12}
 
+/* ===== Grupos enriquecidos (tabla + prob clasificar) ===== */
+.rgroups2 .gcard2{margin-bottom:12px}
+.mini.grp{width:100%}
+.mini.grp th:last-child,.mini.grp td.qcell{text-align:right;white-space:nowrap}
+.qcell{min-width:78px}
+.qbar{display:inline-block;vertical-align:middle;width:32px;height:7px;border-radius:4px;background:#e7efe9;overflow:hidden;margin-right:5px}
+.qbar i{display:block;height:100%;background:linear-gradient(90deg,#bfe6cd,#5cc489)}
+.qval{font-weight:800;font-size:.8rem;color:#0a5c39}
+tr.out .qbar i{background:linear-gradient(90deg,#e9c3c3,#d98a8a)}
+.gc-det{margin-top:8px;border-top:1px solid var(--line);padding-top:4px}
+.gc-det summary{cursor:pointer;font-weight:700;font-size:.82rem;color:var(--green);padding:5px 0;list-style:none}
+.gc-det summary::-webkit-details-marker{display:none}
+.gc-det summary::before{content:"▸ ";color:var(--green2)}
+.gc-det[open] summary::before{content:"▾ "}
+.lg-preds.in-card{padding:4px 0 2px}
+
+/* ===== Goleadores / asistentes ===== */
+.rscorers .sc-cols{display:grid;grid-template-columns:1fr;gap:14px}
+@media(min-width:560px){.rscorers .sc-cols{grid-template-columns:1fr 1fr}}
+.sc-col{background:#fff;border:1px solid var(--line);border-radius:14px;padding:10px 13px;box-shadow:0 10px 26px rgba(0,0,0,.3)}
+.sc-col h3{margin:2px 0 8px;color:var(--green);font-size:1rem}
+.sc-row{display:flex;align-items:center;gap:9px;padding:7px 2px;border-bottom:1px solid var(--line)}
+.sc-row:last-child{border-bottom:0}
+.sc-pos{flex:0 0 20px;text-align:center;font-weight:800;color:var(--muted);font-size:.82rem}
+.sc-fl{font-size:1.15rem}
+.sc-nm{flex:1;font-weight:600;font-size:.9rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sc-n{font-weight:800;color:var(--green);font-size:1.05rem}
+
 .player-chip.bot{background:#eef3fb;border-color:#b9c9ea;color:#2b4a7a;font-weight:800}
 table.ranking tr.bot td{background:#eef3fb}
 table.ranking tr.bot.sel td{background:#e2eafa}

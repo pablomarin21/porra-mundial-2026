@@ -593,9 +593,9 @@
 
     <div class="subtabs">
       <button :class="{on: rTab==='cal'}" @click="rTab='cal'">📅 Calendario</button>
-      <button :class="{on: rTab==='groups'}" @click="rTab='groups'">Fase de grupos</button>
-      <button :class="{on: rTab==='tables'}" @click="rTab='tables'">Clasificaciones</button>
-      <button :class="{on: rTab==='ko'}" @click="rTab='ko'">Eliminatorias</button>
+      <button :class="{on: rTab==='groups'}" @click="rTab='groups'">📊 Grupos</button>
+      <button :class="{on: rTab==='ko'}" @click="rTab='ko'">🏆 Eliminatorias</button>
+      <button :class="{on: rTab==='scorers'}" @click="rTab='scorers'">⚽ Goleadores</button>
     </div>
 
     <!-- Calendario: todos los partidos con hora de España (Madrid) -->
@@ -622,39 +622,70 @@
       <p class="muted" x-show="!schedule.length" x-text="espnAt ? (calFilter==='today' ? 'No hay partidos hoy.' : (calFilter==='spain' ? 'No hay partidos de España con este filtro.' : 'No hay partidos.')) : 'Cargando el calendario en vivo…'"></p>
     </div>
 
-    <div x-show="rTab==='groups'" class="rgroups">
-      <template x-for="L in letters" :key="'rg'+L">
-        <div class="group-card">
+    <!-- 📊 GRUPOS: tabla en vivo + prob. de clasificar + lo que pusisteis -->
+    <div x-show="rTab==='groups'" class="rgroups2">
+      <p class="muted tiny">Tabla en vivo + <b>probabilidad de clasificar</b> de cada selección (simulación del resto de la fase) + lo que predijo cada uno. <span x-show="teamProbsSims">· <b x-text="teamProbsSims.toLocaleString('es')"></b> simulaciones</span></p>
+      <template x-for="L in letters" :key="'g2'+L">
+        <div class="group-card gcard2">
           <div class="group-title">Grupo <span x-text="L"></span></div>
-          <template x-for="fx in groupFixtures(L)" :key="fx.code">
-            <div class="rmatch">
-              <span class="md">J<span x-text="fx.md"></span></span>
-              <span class="t1"><span x-text="es(fx.home)"></span> <span class="flag" x-text="flag(fx.home)"></span></span>
-              <span class="sc" x-text="scoreTxt(fx.code)"></span>
-              <span class="t2"><span class="flag" x-text="flag(fx.away)"></span> <span x-text="es(fx.away)"></span></span>
-            </div>
-          </template>
-        </div>
-      </template>
-    </div>
-
-    <div x-show="rTab==='tables'" class="rtables">
-      <template x-for="L in letters" :key="'tb'+L">
-        <div class="group-card">
-          <div class="group-title">Grupo <span x-text="L"></span></div>
-          <table class="mini">
-            <thead><tr><th></th><th>PJ</th><th>Pts</th><th>DG</th></tr></thead>
+          <table class="mini grp">
+            <thead><tr><th></th><th>PJ</th><th>Pts</th><th>DG</th><th>Clasif.</th></tr></thead>
             <tbody>
-              <template x-for="(row,i) in liveTable(L)" :key="row.team">
+              <template x-for="(row,i) in liveTable(L)" :key="'gr'+L+row.team">
                 <tr :class="rankClass(i)">
                   <td class="tl"><span class="flag" x-text="flag(row.team)"></span> <span x-text="es(row.team)"></span></td>
                   <td x-text="row.pj"></td><td><b x-text="row.pts"></b></td><td x-text="(row.gd>0?'+':'')+row.gd"></td>
+                  <td class="qcell"><span class="qbar"><i :style="'width:'+Math.round((teamQ(row.team)||0)*100)+'%'"></i></span><span class="qval" x-text="teamQ(row.team)==null?'—':pct(teamQ(row.team))"></span></td>
                 </tr>
               </template>
             </tbody>
           </table>
+          <details class="gc-det">
+            <summary>📋 Lo que pusisteis para el Grupo <span x-text="L"></span></summary>
+            <div class="lg-preds in-card">
+              <template x-for="pr in groupPredictions(L)" :key="'gp2'+L+pr.id">
+                <div class="lg-row" :class="{me:pr.me, bot:pr.bot}">
+                  <span class="lg-name"><span x-text="pr.name"></span><span class="youtag" x-show="pr.me">tú</span></span>
+                  <span class="lg-order"><template x-for="(t,idx) in pr.order" :key="'o2'+L+pr.id+idx"><span class="lg-pos"><b x-text="(idx+1)+'º'"></b><span class="flag" x-text="flag(t)"></span></span></template></span>
+                </div>
+              </template>
+              <p class="muted tiny" x-show="!groupPredictions(L).length">Las predicciones se ven cuando empiece el Mundial.</p>
+            </div>
+          </details>
+          <details class="gc-det">
+            <summary>⚽ Partidos del Grupo <span x-text="L"></span></summary>
+            <template x-for="fx in groupFixtures(L)" :key="'gf'+fx.code">
+              <div class="rmatch">
+                <span class="md">J<span x-text="fx.md"></span></span>
+                <span class="t1"><span x-text="es(fx.home)"></span> <span class="flag" x-text="flag(fx.home)"></span></span>
+                <span class="sc" x-text="scoreTxt(fx.code)"></span>
+                <span class="t2"><span class="flag" x-text="flag(fx.away)"></span> <span x-text="es(fx.away)"></span></span>
+              </div>
+            </template>
+          </details>
         </div>
       </template>
+    </div>
+
+    <!-- ⚽ GOLEADORES Y ASISTENTES en directo -->
+    <div x-show="rTab==='scorers'" class="rscorers">
+      <p class="muted tiny">En directo desde ESPN según se juegan los partidos.</p>
+      <div class="sc-cols">
+        <div class="sc-col">
+          <h3>⚽ Máximos goleadores</h3>
+          <template x-for="(s,i) in scorers" :key="'sc'+i">
+            <div class="sc-row"><span class="sc-pos" x-text="(i+1)"></span><span class="flag sc-fl" x-text="s.flag"></span><span class="sc-nm" x-text="s.name"></span><b class="sc-n" x-text="s.n"></b></div>
+          </template>
+          <p class="muted tiny" x-show="!scorers.length">Aún no hay goles. Aparecerán aquí en directo cuando empiece el Mundial. 🥅</p>
+        </div>
+        <div class="sc-col">
+          <h3>🅰️ Máximos asistentes</h3>
+          <template x-for="(s,i) in assisters" :key="'as'+i">
+            <div class="sc-row"><span class="sc-pos" x-text="(i+1)"></span><span class="flag sc-fl" x-text="s.flag"></span><span class="sc-nm" x-text="s.name"></span><b class="sc-n" x-text="s.n"></b></div>
+          </template>
+          <p class="muted tiny" x-show="!assisters.length">Las asistencias aparecerán según ESPN las publique durante los partidos.</p>
+        </div>
+      </div>
     </div>
 
     <div x-show="rTab==='ko'" class="rko">

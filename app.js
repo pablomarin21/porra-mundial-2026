@@ -35,6 +35,7 @@ window.porraApp = function () {
   return {
     // navegación
     view: "home", tab: "play", step: 1, rTab: "cal", aTab: "groups", calFilter: "all",
+    teamProbs: {}, teamProbsSims: 0, scorers: [], assisters: [],
     phase: "welcome", gIdx: 0, chosenNew: false, confirmClaim: null,
     // estado porra / jugador
     pool: null, me: { first: "", last: "", id: null, saved: false },
@@ -188,8 +189,38 @@ window.porraApp = function () {
     },
     computeLive() {
       this.outcome = Eng.outcomeFromEspn(this.espnEvents, this.results, this.extrasActual);
+      this.computeScorers();
+      if (this.tab === "results") {
+        const mc = Eng.monteCarloTeams((this.outcome && this.outcome.groupMap) || {}, 3000, Math.random);
+        this.teamProbs = mc.byTeam; this.teamProbsSims = mc.sims;
+      }
       this.recomputeRanking();
       this.refreshLiveBracket();
+    },
+    teamQ(team) { const p = this.teamProbs[team]; return p ? p.qualify : null; },
+    computeScorers() {
+      const goals = {}, assists = {};
+      for (const ev of (this.espnEvents || [])) {
+        const comp = ev.competitions && ev.competitions[0]; if (!comp) continue;
+        const flagBy = {};
+        for (const c of (comp.competitors || [])) { const canon = D.espnCanon(c.team && c.team.displayName); flagBy[c.team && c.team.id] = canon ? D.flag(canon) : "🏳️"; }
+        for (const dd of (comp.details || [])) {
+          if (!dd.scoringPlay) continue;
+          const inv = dd.athletesInvolved || [];
+          if (!dd.ownGoal && inv[0] && inv[0].displayName) {
+            const a = inv[0], k = a.id || a.displayName;
+            if (!goals[k]) goals[k] = { name: a.displayName, flag: flagBy[a.team && a.team.id] || "🏳️", n: 0 };
+            goals[k].n++;
+          }
+          if (inv[1] && inv[1].displayName) {
+            const a = inv[1], k = a.id || a.displayName;
+            if (!assists[k]) assists[k] = { name: a.displayName, flag: flagBy[a.team && a.team.id] || "🏳️", n: 0 };
+            assists[k].n++;
+          }
+        }
+      }
+      this.scorers = Object.values(goals).sort((a, b) => b.n - a.n).slice(0, 25);
+      this.assisters = Object.values(assists).sort((a, b) => b.n - a.n).slice(0, 25);
     },
     get liveAgo() {
       if (!this.espnAt) return "";

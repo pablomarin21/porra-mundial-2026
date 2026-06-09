@@ -399,10 +399,33 @@
     return { byId, sims: n };
   }
 
+  // -------- Monte Carlo por SELECCIÓN: prob. de clasificar / 1º / top2 (solo fase de grupos) --------
+  function monteCarloTeams(resultsMap, N, rng) {
+    rng = rng || Math.random;
+    const teams = [].concat(...LETTERS.map((L) => DATA.GROUPS[L]));
+    const acc = {}; teams.forEach((t) => (acc[t] = { qualify: 0, first: 0, top2: 0 }));
+    const n = Math.max(1, N | 0);
+    for (let s = 0; s < n; s++) {
+      const standingsByGroup = {};
+      for (const L of LETTERS) standingsByGroup[L] = groupStandings(L, resultsMap, true, rng);
+      const q = computeQualifiers(standingsByGroup);
+      for (const L of LETTERS) {
+        const st = standingsByGroup[L];
+        acc[st[0].team].first++;
+        acc[st[0].team].top2++; acc[st[1].team].top2++;
+      }
+      const qset = new Set([].concat(Object.values(q.winners), Object.values(q.runnersUp), q.qualifiedThirdTeams));
+      qset.forEach((t) => { if (acc[t]) acc[t].qualify++; });
+    }
+    const out = {};
+    teams.forEach((t) => (out[t] = { qualify: acc[t].qualify / n, first: acc[t].first / n, top2: acc[t].top2 / n }));
+    return { byTeam: out, sims: n };
+  }
+
   return {
     poisson, simGoals, simKnockoutWinner,
     groupStandings, thirdMatching, buildR32Teams, computeQualifiers,
-    simulateOutcome, liveOutcome, derivePicks, scoreEntry, scoreBreakdown, monteCarlo,
+    simulateOutcome, liveOutcome, derivePicks, scoreEntry, scoreBreakdown, monteCarlo, monteCarloTeams,
     scoreExtras, outcomeFromEspn, THIRD_SLOT_NUMS,
   };
 });
