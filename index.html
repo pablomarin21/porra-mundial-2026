@@ -583,7 +583,7 @@
           <div class="cal-day-h" x-text="day.label"></div>
           <template x-for="m in day.matches" :key="'cm'+m.id">
             <div class="cal-row" :class="{live:m.live, done:m.done}">
-              <span class="cal-time" x-text="m.live?'🔴 EN VIVO':(m.done?'FIN':m.time)"></span>
+              <span class="cal-time"><b x-text="m.live?'🔴':(m.done?'FIN':m.time)"></b><small class="cal-venue" x-text="m.venue" x-show="m.venue"></small></span>
               <span class="cal-t home"><span class="tn" x-text="m.hName"></span> <span class="flag" x-text="m.hFlag"></span></span>
               <span class="cal-sc" x-text="m.pre ? 'vs' : (m.hs+' - '+m.as)"></span>
               <span class="cal-t away"><span class="flag" x-text="m.aFlag"></span> <span class="tn" x-text="m.aName"></span></span>

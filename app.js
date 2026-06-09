@@ -101,8 +101,9 @@ window.porraApp = function () {
         const H = cs.find((c) => c.homeAway === "home") || cs[0], A = cs.find((c) => c.homeAway === "away") || cs[1];
         const st = (ev.status && ev.status.type) || {};
         const cH = D.espnCanon(H.team.displayName), cA = D.espnCanon(A.team.displayName);
+        const venue = (comp.venue && comp.venue.address && comp.venue.address.city) ? String(comp.venue.address.city).split(",")[0].trim() : ((comp.venue && comp.venue.fullName) || "");
         out.push({
-          id: ev.id, ts: this._d(ev.date) ? this._d(ev.date).getTime() : 0,
+          id: ev.id, ts: this._d(ev.date) ? this._d(ev.date).getTime() : 0, venue,
           time: this.madridTime(ev.date), dayShort: this.madridDayShort(ev.date), dayLong: this.madridDayLong(ev.date), dayKey: this._dayKey(ev.date),
           hCanon: cH, aCanon: cA,
           hName: cH ? D.es(cH) : this.koLabel(H.team.displayName), hFlag: cH ? D.flag(cH) : "🏳️",
