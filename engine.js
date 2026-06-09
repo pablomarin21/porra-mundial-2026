@@ -273,6 +273,31 @@
     return total;
   }
 
+  // -------- desglose de puntos por categoría (para mostrar en la app) --------
+  function scoreBreakdown(P, oc, S) {
+    const bd = { grupos: 0, terceros: 0, octavos: 0, cuartos: 0, semis: 0, final: 0, campeon: 0 };
+    for (const L of LETTERS) {
+      const act = oc.groupOrder[L]; const pred = P.groups[L];
+      if (!act || !pred) continue;
+      if (pred[0] && pred[0] === act[0]) bd.grupos += S.g1;
+      if (pred[1] && pred[1] === act[1]) bd.grupos += S.g2;
+      if (pred[2] && pred[2] === act[2]) bd.grupos += S.g3;
+      const top2 = new Set([act[0], act[1]]);
+      if (pred[0] && top2.has(pred[0])) bd.grupos += S.qual;
+      if (pred[1] && top2.has(pred[1])) bd.grupos += S.qual;
+    }
+    if (oc.qualifiedThirdTeams) for (const t of P.thirds) if (oc.qualifiedThirdTeams.has(t)) bd.terceros += S.thirdQual;
+    const stages = [["octavos", S.octavos, "octavos"], ["cuartos", S.cuartos, "cuartos"], ["semis", S.semis, "semis"], ["final", S.finalists, "final"]];
+    for (const [stage, pts, key] of stages) {
+      const actSet = oc.reached[stage]; const predSet = P[stage];
+      if (!actSet || !predSet) continue;
+      predSet.forEach((t) => { if (actSet.has(t)) bd[key] += pts; });
+    }
+    if (oc.reached.champion && P.champion && P.champion === oc.reached.champion) bd.campeon += S.champion;
+    bd.total = bd.grupos + bd.terceros + bd.octavos + bd.cuartos + bd.semis + bd.final + bd.campeon;
+    return bd;
+  }
+
   // -------- Monte Carlo: probabilidad de ganar la porra en vivo --------
   // entries: [{id, picks(derivados)}].  Devuelve {byId:{id:{win,podium,avg}}, sims}
   function monteCarlo(entries, resultsMap, N, S, rng) {
@@ -306,7 +331,7 @@
   return {
     poisson, simGoals, simKnockoutWinner,
     groupStandings, thirdMatching, buildR32Teams, computeQualifiers,
-    simulateOutcome, liveOutcome, derivePicks, scoreEntry, monteCarlo,
+    simulateOutcome, liveOutcome, derivePicks, scoreEntry, scoreBreakdown, monteCarlo,
     THIRD_SLOT_NUMS,
   };
 });

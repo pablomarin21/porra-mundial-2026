@@ -277,21 +277,57 @@
   <section x-show="view==='pool' && tab==='leaderboard'" class="board">
     <div class="step-head">
       <h2>Clasificación en vivo</h2>
-      <p class="muted" x-show="!pool?.locked">La clasificación y las probabilidades se activan cuando la porra esté cerrada (al empezar el Mundial). Ahora mismo solo se ven los participantes.</p>
+      <p class="muted" x-show="!pool?.locked">Los puntos y la probabilidad de ganar se activan cuando empiece el Mundial (al cerrar la porra). Las quinielas de cada uno se revelan al cerrar, para que nadie copie.</p>
     </div>
 
+    <!-- Cómo se puntúa (siempre visible) -->
+    <details class="scoring-explain">
+      <summary>📋 ¿Cómo se puntúa? — el modelo de la porra</summary>
+      <div class="se-body">
+        <p><b>Tu pronóstico:</b> el orden de los 12 grupos, los 8 mejores terceros y el cuadro hasta el campeón. Sumas puntos por cada acierto, y cuanto más lejos llega tu equipo, más puntos.</p>
+        <div class="se-grid">
+          <div class="se-card">
+            <h4>📊 Fase de grupos <small>(en cada grupo)</small></h4>
+            <ul>
+              <li>Acertar el <b>1º</b> <span class="pp" x-text="'+'+settings.g1"></span></li>
+              <li>Acertar el <b>2º</b> <span class="pp" x-text="'+'+settings.g2"></span></li>
+              <li>Acertar el <b>3º</b> <span class="pp" x-text="'+'+settings.g3"></span></li>
+              <li>Equipo que <b>clasifica</b> (top 2), aunque falles el orden <span class="pp" x-text="'+'+settings.qual"></span></li>
+            </ul>
+          </div>
+          <div class="se-card">
+            <h4>🥉 Mejores terceros</h4>
+            <ul><li>Por cada tercero tuyo que <b>clasifica</b> <span class="pp" x-text="'+'+settings.thirdQual"></span></li></ul>
+            <h4>🏆 Eliminatorias <small>(por cada equipo que llega)</small></h4>
+            <ul>
+              <li>Llega a <b>octavos</b> <span class="pp" x-text="'+'+settings.octavos"></span></li>
+              <li>Llega a <b>cuartos</b> <span class="pp" x-text="'+'+settings.cuartos"></span></li>
+              <li>Llega a <b>semifinal</b> <span class="pp" x-text="'+'+settings.semis"></span></li>
+              <li>Llega a la <b>final</b> <span class="pp" x-text="'+'+settings.finalists"></span></li>
+              <li>Acierta el <b>campeón</b> <span class="pp" x-text="'+'+settings.champion"></span></li>
+            </ul>
+          </div>
+        </div>
+        <p class="tiny muted">El organizador puede ajustar estos valores en Admin → Puntuación. Los puntos se recalculan solos según se juegan los partidos.</p>
+      </div>
+    </details>
+
+    <!-- PRE-CIERRE: participantes -->
     <template x-if="!pool?.locked">
       <div class="card slim">
         <h3 x-text="'Participantes ('+entries.length+')'"></h3>
+        <p class="tiny muted" x-show="!adminOk">Las quinielas se podrán ver cuando el organizador cierre la porra.</p>
+        <p class="tiny muted" x-show="adminOk">👑 Eres admin: toca un nombre para ver su quiniela ya.</p>
         <div class="players">
           <template x-for="e in entries" :key="e.id">
-            <span class="player-chip" x-text="e.first_name+' '+e.last_name"></span>
+            <span class="player-chip" :class="{clickable: canViewPicks && e.picks, sel: selectedId===e.id}" @click="toggleDetail(e.id)" x-text="e.first_name+' '+e.last_name"></span>
           </template>
           <p class="muted" x-show="!entries.length">Aún no se ha apuntado nadie.</p>
         </div>
       </div>
     </template>
 
+    <!-- POST-CIERRE: tabla -->
     <template x-if="pool?.locked">
       <div>
         <div class="board-actions">
@@ -310,11 +346,12 @@
             </thead>
             <tbody>
               <template x-for="(e,i) in ranked" :key="e.id">
-                <tr :class="{me: e.id===me.id, top: i===0}">
+                <tr class="clickrow" :class="{me: e.id===me.id, top: i===0, sel: selectedId===e.id}" @click="toggleDetail(e.id)">
                   <td class="pos" x-text="i+1"></td>
                   <td>
                     <span x-text="e.first_name+' '+e.last_name"></span>
                     <span class="youtag" x-show="e.id===me.id">tú</span>
+                    <span class="seehint">👁️ ver</span>
                   </td>
                   <td class="r"><b x-text="e.points"></b></td>
                   <td class="r" x-show="lastProb"><div class="probcell"><span x-text="pct(e.win)"></span><i :style="'width:'+Math.min(100,e.win*100)+'%'"></i></div></td>
@@ -326,7 +363,53 @@
           </table>
           <p class="muted" x-show="!entries.length">Nadie se apuntó a esta porra.</p>
         </div>
-        <p class="tiny muted">«Puntos» son los puntos ya conseguidos con los partidos jugados. «🏆 Ganar» es la probabilidad de acabar primero según miles de simulaciones del resto del Mundial (fuerza Elo de cada selección).</p>
+        <p class="tiny muted">👁️ Toca a un jugador para ver su quiniela y el desglose de sus puntos. «🏆 Ganar» = probabilidad de acabar primero según miles de simulaciones del resto del Mundial.</p>
+      </div>
+    </template>
+
+    <!-- DETALLE: quiniela de un participante -->
+    <template x-if="det">
+      <div class="detail card">
+        <div class="detail-head">
+          <h3 x-text="'🔎 Quiniela de '+det.name"></h3>
+          <button class="btn mini ghost" @click="selectedId=null">✕ cerrar</button>
+        </div>
+        <template x-if="pool?.locked">
+          <div class="bd-chips">
+            <span class="bd-total" x-text="det.bd.total+' pts'"></span>
+            <span x-text="'Grupos '+det.bd.grupos"></span>
+            <span x-text="'Terceros '+det.bd.terceros"></span>
+            <span x-text="'Octavos '+det.bd.octavos"></span>
+            <span x-text="'Cuartos '+det.bd.cuartos"></span>
+            <span x-text="'Semis '+det.bd.semis"></span>
+            <span x-text="'Final '+det.bd.final"></span>
+            <span x-text="'Campeón '+det.bd.campeon"></span>
+          </div>
+        </template>
+
+        <div class="qv">
+          <div class="qv-champ">
+            <small>Su campeón</small>
+            <div class="qv-champ-team"><span class="flag big" x-text="det.champion?flag(det.champion):'🏆'"></span><b x-text="det.champion?es(det.champion):'—'"></b></div>
+          </div>
+          <div class="qv-row"><b>Finalistas:</b> <template x-for="t in det.finalists" :key="'f'+t"><span class="qchip"><span class="flag" x-text="flag(t)"></span><span x-text="es(t)"></span></span></template><span class="muted tiny" x-show="!det.finalists.length">(sin completar)</span></div>
+          <div class="qv-row"><b>Semifinalistas:</b> <template x-for="t in det.semis" :key="'s'+t"><span class="qchip"><span class="flag" x-text="flag(t)"></span><span x-text="es(t)"></span></span></template></div>
+          <div class="qv-row"><b>Cuartos:</b> <template x-for="t in det.cuartos" :key="'c'+t"><span class="qchip sm"><span class="flag" x-text="flag(t)"></span><span x-text="es(t)"></span></span></template></div>
+          <details class="qv-more">
+            <summary>Ver octavos, terceros y grupos</summary>
+            <div class="qv-row"><b>Octavos:</b> <template x-for="t in det.octavos" :key="'o'+t"><span class="qchip sm"><span class="flag" x-text="flag(t)"></span><span x-text="es(t)"></span></span></template></div>
+            <div class="qv-row"><b>8 mejores terceros:</b> <template x-for="t in det.thirds" :key="'th'+t"><span class="qchip sm third"><span class="flag" x-text="flag(t)"></span><span x-text="es(t)"></span></span></template></div>
+            <div class="qv-groups">
+              <template x-for="L in letters" :key="'qg'+L">
+                <div class="qv-group"><b x-text="'Grupo '+L+':'"></b>
+                  <template x-for="(t,idx) in (det.groups[L]||[])" :key="'qg'+L+t">
+                    <span class="qv-gteam" :class="rankClass(idx)" x-text="(idx+1)+'. '+es(t)"></span>
+                  </template>
+                </div>
+              </template>
+            </div>
+          </details>
+        </div>
       </div>
     </template>
   </section>

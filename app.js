@@ -56,6 +56,7 @@ window.porraApp = function () {
     ],
     // probabilidades
     lastProb: false, simN: 0, probData: {},
+    selectedId: null, det: null,
     koMeta: KO_META,
 
     // ---------- helpers de presentación ----------
@@ -250,9 +251,39 @@ window.porraApp = function () {
       this.recomputeRanking();
     },
     async loadEntries() {
-      const res = await this.rpc("porra_list_entries", { p_code: this.pool.code });
-      this.entries = res.entries || [];
+      let entries;
+      if (this.adminOk && this.adminPin) {
+        try { const r = await this.rpc("porra_list_entries_admin", { p_code: this.pool.code, p_pin: this.adminPin }); entries = r.entries; }
+        catch (e) { const res = await this.rpc("porra_list_entries", { p_code: this.pool.code }); entries = res.entries; }
+      } else {
+        const res = await this.rpc("porra_list_entries", { p_code: this.pool.code }); entries = res.entries;
+      }
+      this.entries = entries || [];
       this.recomputeRanking();
+    },
+
+    // ---------- ver la quiniela de un participante ----------
+    get canViewPicks() { return !!(this.pool && (this.pool.locked || this.adminOk)); },
+    toggleDetail(id) {
+      const e = this.entries.find((x) => x.id === id);
+      if (!e) return;
+      if (!e.picks) { this.toast("Las quinielas se revelan cuando se cierra la porra (para que nadie copie).", "warn"); return; }
+      if (this.selectedId === id) { this.selectedId = null; this.det = null; }
+      else { this.selectedId = id; this.det = this._computeDetail(id); }
+    },
+    _computeDetail(id) {
+      const e = this.entries.find((x) => x.id === id);
+      if (!e || !e.picks) return null;
+      const dp = Eng.derivePicks(e.picks);
+      const live = Eng.liveOutcome(this.results);
+      const bd = Eng.scoreBreakdown(dp, live, this.settings);
+      const ord = (set) => [...set].sort((a, b) => D.es(a).localeCompare(D.es(b)));
+      return {
+        name: e.first_name + " " + e.last_name,
+        champion: dp.champion, finalists: ord(dp.final), semis: ord(dp.semis),
+        cuartos: ord(dp.cuartos), octavos: ord(dp.octavos),
+        groups: e.picks.groups || {}, thirds: e.picks.thirds || [], bd,
+      };
     },
     refreshLiveBracket() {
       const standings = {}; let complete = true;
@@ -282,7 +313,7 @@ window.porraApp = function () {
     liveTable(L) { return Eng.groupStandings(L, this.results, false, null); },
 
     // ---------- clasificación + probabilidades ----------
-    openLeaderboard() { this.tab = "leaderboard"; this.refreshBoard(); },
+    openLeaderboard() { this.tab = "leaderboard"; this.selectedId = null; this.det = null; this.refreshBoard(); },
     openResults() { this.tab = "results"; this.refreshLiveBracket(); },
     async refreshBoard() { await this.loadResults(); await this.loadEntries(); },
     recomputeRanking() {
@@ -294,6 +325,7 @@ window.porraApp = function () {
       });
       arr.sort((a, b) => (b.points - a.points) || ((b.win || 0) - (a.win || 0)) || a.last_name.localeCompare(b.last_name));
       this.ranked = arr;
+      if (this.selectedId) this.det = this._computeDetail(this.selectedId);
     },
     runProbabilities() {
       const mcEntries = this.entries.filter((e) => e.picks).map((e) => ({ id: e.id, picks: Eng.derivePicks(e.picks) }));

@@ -251,6 +251,49 @@ table.mini tr.qual{background:#eafaf0} table.mini tr.third{background:#fff7e3}
   .wc-emoji{font-size:2.2rem}
   .welcome-hero h1{font-size:1.45rem}
 }
+
+/* ===== Explicador de puntos + ver quinielas ===== */
+.scoring-explain{background:#fff;border:1px solid var(--line);border-radius:12px;padding:4px 14px;margin-bottom:14px;box-shadow:var(--shadow)}
+.scoring-explain summary{cursor:pointer;font-weight:800;color:var(--green);padding:9px 0}
+.se-body{padding:4px 0 12px}
+.se-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:10px 0}
+.se-card{background:#fbfdfc;border:1px solid var(--line);border-radius:10px;padding:12px 14px}
+.se-card h4{margin:8px 0 4px;color:var(--green);font-size:.92rem}
+.se-card h4 small{color:var(--muted);font-weight:600}
+.se-card ul{margin:4px 0;padding-left:2px;list-style:none}
+.se-card li{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:.85rem;padding:3px 0;border-bottom:1px dashed var(--line)}
+.se-card li:last-child{border:0}
+.pp{font-weight:800;color:var(--gold2);background:#fbecc4;border-radius:6px;padding:1px 8px;white-space:nowrap}
+
+.player-chip.clickable{cursor:pointer}
+.player-chip.clickable:hover{border-color:var(--green2)}
+.player-chip.sel{background:var(--green);color:#fff;border-color:var(--green)}
+tr.clickrow{cursor:pointer}
+tr.clickrow:hover td{background:#f0f7f3}
+tr.clickrow.sel td{background:#e7f1ec}
+.seehint{font-size:.62rem;color:var(--muted);margin-left:8px;opacity:.7}
+
+.detail{margin-top:14px;border-color:#cfe6d8}
+.detail-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+.detail-head h3{color:var(--green);margin:0}
+.bd-chips{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px}
+.bd-chips span{background:#eef3f0;border:1px solid var(--line);border-radius:999px;padding:4px 11px;font-size:.78rem;font-weight:600;color:#3a4a43}
+.bd-chips .bd-total{background:var(--green);color:#fff;border-color:var(--green);font-weight:800}
+.qv-champ{text-align:center;margin-bottom:12px}
+.qv-champ small{color:var(--muted);text-transform:uppercase;font-size:.7rem;letter-spacing:.5px}
+.qv-champ-team{display:flex;align-items:center;justify-content:center;gap:8px;font-size:1.2rem;color:var(--green)}
+.qv-row{display:flex;flex-wrap:wrap;gap:6px;align-items:center;padding:8px 0;border-bottom:1px dashed var(--line)}
+.qv-row>b{min-width:108px;font-size:.85rem}
+.qchip{display:inline-flex;align-items:center;gap:5px;background:#eafaf0;border:1px solid #cdebd8;border-radius:8px;padding:4px 9px;font-size:.82rem;font-weight:600}
+.qchip.sm{font-size:.76rem;padding:3px 7px;background:#fbfdfc;border-color:var(--line)}
+.qchip.third{background:#fff7e3;border-color:#f1e0b0}
+.qv-more{margin-top:8px}
+.qv-more summary{cursor:pointer;font-weight:700;color:var(--green);font-size:.85rem;padding:6px 0}
+.qv-groups{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:6px;margin-top:8px}
+.qv-group{background:#fbfdfc;border:1px solid var(--line);border-radius:8px;padding:7px 10px;font-size:.78rem;display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.qv-gteam{padding:1px 6px;border-radius:5px}
+.qv-gteam.qual{background:#eafaf0} .qv-gteam.third{background:#fff7e3} .qv-gteam.out{color:var(--muted)}
+@media(max-width:640px){ .se-grid{grid-template-columns:1fr} .qv-row>b{min-width:auto;width:100%} }
 @media(max-width:640px){
   .cards{grid-template-columns:1fr}
   .hero h1{font-size:1.6rem}
