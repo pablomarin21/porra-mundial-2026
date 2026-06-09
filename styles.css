@@ -342,6 +342,7 @@ tr.clickrow.sel td{background:#e7f1ec}
 .hub-status{border-radius:13px;padding:14px 16px;margin:8px 0 16px;font-size:.95rem;line-height:1.5}
 .hub-status.ok{background:#eafaf0;border:1px solid #cdebd8;color:#1f5b3f}
 .hub-status.warn{background:#fff6e6;border:1px solid #f3d699;color:#8a5a12}
+.hub-status.soft{background:#eef3fb;border:1px solid #cdd9ee;color:#2b4a7a}
 .hub-status .tiny{display:block;margin-top:4px;opacity:.85}
 .hub-cards{display:flex;flex-direction:column;gap:10px;margin-bottom:16px}
 .hub-card{display:flex;align-items:center;gap:13px;background:#fff;border:1.5px solid var(--line);border-radius:14px;padding:14px 16px;text-align:left;box-shadow:var(--shadow);transition:border-color .12s,transform .05s}

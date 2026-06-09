@@ -358,10 +358,16 @@ window.porraApp = function () {
     goHub() { if (!this.isLocked) { this._save(true); this.toast("Guardado ✓"); } this.phase = "hub"; },
     get extrasFilled() { const e = this.extras, sb = e.sidebets || {}; return !!(e.revelacion || e.decepcion || e.pichichi || e.asistente || sb.hattrick || sb.dobleRoja); },
     get status() {
-      const t = this.thirds.length, b = this.bracketPicked, missing = [];
+      const t = this.thirds.length, b = this.bracketPicked, e = this.extras, sb = e.sidebets || {}, missing = [];
+      const exCount = ["revelacion", "decepcion", "pichichi", "asistente"].filter((k) => e[k]).length + ["hattrick", "dobleRoja"].filter((k) => sb[k]).length;
+      const extrasDone = exCount === 6;
+      const generalDone = t === 8 && b === 31;
       if (t !== 8) missing.push(t < 8 ? "elegir " + (8 - t) + " tercero" + (8 - t > 1 ? "s" : "") + " más" : "ajustar los terceros");
       if (b !== 31) missing.push("completar el cuadro (" + b + "/31)");
-      return { thirds: t === 8, thirdsTxt: t + "/8", bracket: b === 31, bracketTxt: b + "/31", extras: this.extrasFilled, complete: t === 8 && b === 31, missing };
+      return {
+        thirds: t === 8, thirdsTxt: t + "/8", bracket: b === 31, bracketTxt: b + "/31",
+        extras: extrasDone, extrasTxt: exCount + "/6", generalDone, complete: generalDone && extrasDone, missing,
+      };
     },
     startGroups() { this.phase = "groups"; this.gIdx = 0; this.rebuild(); },
     nextGroup() { if (this.gIdx < 11) { this.gIdx++; this.persistDraft(); } else { this.phase = "thirds"; this._save(true); } },

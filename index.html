@@ -139,13 +139,16 @@
       </div>
 
       <template x-if="status.complete">
-        <div class="hub-status ok">✅ <b>¡Tu porra está completa!</b> <span x-show="!status.extras">Para sumar más, añade las <b>predicciones especiales</b> (opcional).</span></div>
+        <div class="hub-status ok">✅ <b>¡Tu porra está completa!</b> 🍀 ¡Mucha suerte!</div>
       </template>
-      <template x-if="!status.complete">
+      <template x-if="!status.complete && status.generalDone">
+        <div class="hub-status soft">👍 <b>Tu porra general está lista.</b> Solo te faltan las <b>predicciones especiales</b> <span x-text="'('+status.extrasTxt+')'"></span> — son opcionales, pero dan puntos extra.</div>
+      </template>
+      <template x-if="!status.generalDone">
         <div class="hub-status warn">
           <b>⚠️ Termina tu porra</b>
           <div x-text="'Te falta: '+status.missing.join('  ·  ')+'.'"></div>
-          <span class="tiny" x-show="!status.extras">Además, las predicciones especiales están sin poner (opcionales, dan puntos extra).</span>
+          <span class="tiny" x-show="!status.extras">Y las predicciones especiales (opcionales) están sin terminar.</span>
         </div>
       </template>
 
@@ -168,7 +171,7 @@
         <button class="hub-card" @click="editSection('extras')">
           <span class="hc-ic">⭐</span>
           <span class="hc-body"><b>4 · Especiales</b><small>Puntos extra (opcional)</small></span>
-          <span class="hc-badge" :class="status.extras?'ok':'soft'" x-text="status.extras?'✅ Hecho':'Pendiente'"></span>
+          <span class="hc-badge" :class="status.extras?'ok':'soft'" x-text="status.extras?'✅ Hecho':('Opcional · '+status.extrasTxt)"></span>
         </button>
       </div>
 
