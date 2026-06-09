@@ -34,7 +34,7 @@ window.porraApp = function () {
   return {
     // navegación
     view: "home", tab: "play", step: 1, rTab: "cal", aTab: "groups", calFilter: "all",
-    phase: "welcome", gIdx: 0,
+    phase: "welcome", gIdx: 0, chosenNew: false, confirmClaim: null,
     // estado porra / jugador
     pool: null, me: { first: "", last: "", id: null, saved: false },
     joinCode: "", newPool: { name: "", code: "", pin: "" }, recent: [],
@@ -226,7 +226,7 @@ window.porraApp = function () {
         history.replaceState(null, "", location.pathname + "?porra=" + pool.code);
         this.rememberPool(pool);
         this.loadMine(pool.code);
-        this.phase = this.me.id ? "hub" : "welcome"; this.gIdx = 0;
+        this.phase = this.me.id ? "hub" : "welcome"; this.gIdx = 0; this.chosenNew = false; this.confirmClaim = null;
         await this.loadExtrasActual();
         await this.loadResults();
         await this.loadEntries();
@@ -360,18 +360,31 @@ window.porraApp = function () {
       await this.loadEntries({ recompute: false });
       return true;
     },
-    async register() {
+    chooseNew() { this.chosenNew = true; },
+    askClaim(e) { this.confirmClaim = e; },
+    cancelClaim() { this.confirmClaim = null; },
+    async createNew() {
       if (!this.me.first.trim() || !this.me.last.trim()) return this.toast("Pon tu nombre y tu apellido.", "warn");
       this.busy = true;
       try {
-        const res = await this.rpc("porra_register", { p_code: this.pool.code, p_first: this.me.first, p_last: this.me.last });
+        const res = await this.rpc("porra_register", { p_code: this.pool.code, p_first: this.me.first, p_last: this.me.last, p_force_new: true });
         this.me.id = res.participant_id; this.me.saved = true;
-        if (res.claimed && res.picks && Object.keys(res.picks).length) this.applyPicks(res.picks);
         this._persistMe();
-        this.phase = "hub";
-        this.toast(res.claimed
-          ? ("¡Bienvenido de nuevo, " + this.me.first + "! He recuperado tu porra. 👌")
-          : ("¡Estás dentro, " + this.me.first + "! Ya apareces en la clasificación. 🎉"));
+        this.chosenNew = false; this.phase = "hub";
+        this.toast("¡Estás dentro, " + this.me.first + "! Ya apareces en la clasificación. 🎉");
+      } catch (e) { this.toast(this.errMsg(e), "err"); }
+      finally { this.busy = false; }
+    },
+    async doClaim() {
+      const sel = this.confirmClaim; if (!sel) return;
+      this.busy = true;
+      try {
+        const res = await this.rpc("porra_claim", { p_code: this.pool.code, p_participant_id: sel.id });
+        this.me.id = res.participant_id; this.me.first = res.first_name; this.me.last = res.last_name; this.me.saved = true;
+        if (res.picks && Object.keys(res.picks).length) this.applyPicks(res.picks);
+        this._persistMe();
+        this.confirmClaim = null; this.chosenNew = false; this.phase = "hub";
+        this.toast("¡Hola de nuevo, " + this.me.first + "! He recuperado tu porra. 👌");
       } catch (e) { this.toast(this.errMsg(e), "err"); }
       finally { this.busy = false; }
     },
