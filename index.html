@@ -121,26 +121,41 @@
         <h1>¡Bienvenido a la <span class="grad2">Porra del Mundial 2026</span>!</h1>
         <p class="lead2">Pon tu nombre y entra. Después harás tus pronósticos paso a paso: <b>grupo por grupo</b>, los <b>mejores terceros</b> y el <b>cuadro final</b>. Tardas 5 minutos y es muy fácil.</p>
       </div>
-      <!-- ¿Eres uno de estos? (si ya hay participantes) -->
-      <div class="card welcome-card" x-show="entries.length>0 && !chosenNew">
-        <h3 style="margin:0 0 4px">¿Ya habías hecho tu porra?</h3>
-        <p class="muted" style="margin:0 0 12px">Si ya la rellenaste, <b>elígete de la lista</b> para recuperarla con tus pronósticos (así no se duplica). Si eres nuevo, pulsa abajo.</p>
+      <!-- Cargando la lista -->
+      <div class="card welcome-card" x-show="!entriesLoaded" style="text-align:center">
+        <p class="muted">Cargando…</p>
+      </div>
+
+      <!-- Elegir: ya tengo usuario / crear usuario -->
+      <div class="card welcome-card" x-show="entriesLoaded && entries.length>0 && wmode==='choose'">
+        <h3 style="margin:0 0 12px;text-align:center">¿Cómo quieres entrar?</h3>
+        <button class="btn gold block big" @click="wmode='pick'">✅ Ya tengo usuario</button>
+        <button class="btn primary block big" @click="wmode='name'" style="margin-top:10px">🆕 Crear usuario nuevo</button>
+        <p class="tiny muted" style="margin-top:12px;text-align:center">¿Ya rellenaste tu porra? Entra con <b>«Ya tengo usuario»</b> y elígete de la lista para recuperarla (no la dupliques).</p>
+      </div>
+
+      <!-- Ya tengo usuario: lista de nombres -->
+      <div class="card welcome-card" x-show="entriesLoaded && entries.length>0 && wmode==='pick'">
+        <button class="btn ghost mini" @click="wmode='choose'" style="margin-bottom:8px">← volver</button>
+        <h3 style="margin:0 0 4px">¿Quién eres?</h3>
+        <p class="muted" style="margin:0 0 12px">Toca tu nombre para entrar con <b>tu porra</b>.</p>
         <div class="id-list">
           <template x-for="e in entries" :key="'id'+e.id">
             <button class="id-name" :class="{bot:(e.first_name||'').startsWith('🤖')}" @click="askClaim(e)" x-text="e.first_name+' '+e.last_name"></button>
           </template>
         </div>
-        <button class="btn ghost block" style="margin-top:14px" @click="chooseNew()">➕ No estoy en la lista — soy nuevo →</button>
+        <button class="btn ghost block" style="margin-top:12px" @click="wmode='name'">No estoy en la lista — crear usuario →</button>
       </div>
 
-      <!-- Soy nuevo / primer participante -->
-      <div class="card welcome-card" x-show="entries.length===0 || chosenNew">
-        <button class="btn ghost mini" x-show="entries.length>0" @click="chosenNew=false" style="margin-bottom:8px">← volver a la lista</button>
+      <!-- Crear usuario (o primer participante) -->
+      <div class="card welcome-card" x-show="(entriesLoaded && entries.length===0) || wmode==='name'">
+        <button class="btn ghost mini" x-show="entries.length>0" @click="wmode='choose'" style="margin-bottom:8px">← volver</button>
+        <h3 style="margin:0 0 8px">🆕 Crear tu usuario</h3>
         <label>Tu nombre</label>
         <input x-model="me.first" placeholder="Ej: Lucía" :disabled="isLocked" @keydown.enter="submitName()" />
         <label>Tu apellido</label>
         <input x-model="me.last" placeholder="Ej: Torres" :disabled="isLocked" @keydown.enter="submitName()" />
-        <button class="btn gold block big" @click="submitName()" :disabled="busy || isLocked">🚀 Entrar →</button>
+        <button class="btn gold block big" @click="submitName()" :disabled="busy || isLocked">Crear y entrar →</button>
         <p class="tiny muted">Al entrar ya apareces en la <b>clasificación</b>. Podrás cambiar tus pronósticos hasta que empiece el Mundial.</p>
       </div>
 

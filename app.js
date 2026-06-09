@@ -37,6 +37,7 @@ window.porraApp = function () {
     view: "home", tab: "play", step: 1, rTab: "cal", aTab: "groups", calFilter: "all",
     teamProbs: {}, teamProbsSims: 0, scorers: [], assisters: [],
     phase: "welcome", gIdx: 0, chosenNew: false, confirmClaim: null, claimFromName: false,
+    wmode: "choose", entriesLoaded: false,
     // estado porra / jugador
     pool: null, me: { first: "", last: "", id: null, saved: false },
     joinCode: "", newPool: { name: "", code: "", pin: "" }, recent: [],
@@ -272,7 +273,7 @@ window.porraApp = function () {
         history.replaceState(null, "", location.pathname + "?porra=" + pool.code);
         this.rememberPool(pool);
         this.loadMine(pool.code);
-        this.phase = this.me.id ? "hub" : "welcome"; this.gIdx = 0; this.chosenNew = false; this.confirmClaim = null;
+        this.phase = this.me.id ? "hub" : "welcome"; this.gIdx = 0; this.chosenNew = false; this.confirmClaim = null; this.wmode = "choose"; this.entriesLoaded = false;
         await this.loadExtrasActual();
         await this.loadResults();
         await this.loadEntries();
@@ -529,6 +530,7 @@ window.porraApp = function () {
         const res = await this.rpc("porra_list_entries", { p_code: this.pool.code }); entries = res.entries;
       }
       this.entries = entries || [];
+      this.entriesLoaded = true;
       if (!opts || opts.recompute !== false) this.recomputeRanking();
     },
 
