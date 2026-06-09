@@ -374,8 +374,8 @@
   <!-- ===================== CLASIFICACIÓN ===================== -->
   <section x-show="view==='pool' && tab==='leaderboard'" class="board">
     <div class="step-head">
-      <h2>Clasificación en vivo</h2>
-      <p class="muted" x-show="!isLocked">Los puntos y la probabilidad de ganar se activan cuando empiece el Mundial (11 jun). Las quinielas de cada uno se revelan al empezar, para que nadie copie. <span x-show="lockCountdown">⏳ Empieza en <b x-text="lockCountdown"></b>.</span></p>
+      <h2>🏆 Clasificación</h2>
+      <p class="muted">La liga de la familia. <span x-show="probBusy">⏳ calculando probabilidades…</span></p>
     </div>
 
     <!-- Cómo se puntúa (siempre visible) -->
@@ -410,79 +410,49 @@
       </div>
     </details>
 
-    <!-- PRE-CIERRE: participantes -->
-    <template x-if="!isLocked">
-      <div class="card slim">
-        <h3 x-text="'Participantes ('+entries.length+')'"></h3>
-        <p class="tiny muted" x-show="!adminOk">Las quinielas se podrán ver cuando el organizador cierre la porra.</p>
-        <p class="tiny muted" x-show="adminOk">👑 Eres admin: toca un nombre para ver su quiniela ya.</p>
-        <div class="players">
-          <template x-for="e in entries" :key="e.id">
-            <span class="player-chip" :class="{clickable: canViewPicks && e.picks, sel: selectedId===e.id, bot: (e.first_name||'').startsWith('🤖')}" @click="toggleDetail(e.id)" x-text="e.first_name+' '+e.last_name"></span>
-          </template>
-          <p class="muted" x-show="!entries.length">Aún no se ha apuntado nadie.</p>
-        </div>
-      </div>
-    </template>
+    <!-- Barra de estado -->
+    <div class="live-bar">
+      <span class="live-dot" :class="{on: liveMatches.some(m=>m.live)}"></span>
+      <span x-show="liveMatches.some(m=>m.live)"><b>EN DIRECTO</b> · </span>
+      <span x-text="boardLocked ? playedTxt : 'Probabilidad según tu predicción'"></span>
+      <span class="muted tiny" x-show="lastProb"> · <span x-text="simN.toLocaleString('es')"></span> simulaciones</span>
+      <button class="btn mini ghost" @click="loadBoard()" :disabled="probBusy"><span x-show="!probBusy">↻ actualizar</span><span x-show="probBusy">…</span></button>
+    </div>
 
-    <!-- POST-CIERRE: tabla -->
-    <template x-if="isLocked">
-      <div>
-        <div class="live-bar">
-          <span class="live-dot" :class="{on: liveMatches.some(m=>m.live)}"></span>
-          <span x-show="liveMatches.some(m=>m.live)"><b>EN DIRECTO</b> · </span>
-          <span x-text="playedTxt"></span>
-          <span class="muted tiny" x-show="espnAt"> · ESPN <span x-text="liveAgo"></span></span>
-          <button class="btn mini ghost" @click="fetchEspn(true)" :disabled="liveBusy"><span x-show="!liveBusy">↻ en vivo</span><span x-show="liveBusy">…</span></button>
-        </div>
-        <template x-if="ranked.length">
-          <div class="podium">
-            <template x-for="(e,i) in ranked.slice(0,3)" :key="'pod'+e.id">
-              <div class="pod" :class="'p'+(i+1)">
-                <div class="pod-medal" x-text="['🥇','🥈','🥉'][i]"></div>
-                <div class="pod-name" x-text="e.first_name+' '+e.last_name"></div>
-                <div class="pod-pts" x-text="e.points+' pts'"></div>
-                <div class="pod-win" x-show="lastProb" x-text="pct(e.win)+' 🏆'"></div>
-              </div>
-            </template>
+    <!-- Podio -->
+    <template x-if="ranked.length>=2">
+      <div class="podium">
+        <template x-for="(e,i) in ranked.slice(0,3)" :key="'pod'+e.id">
+          <div class="pod" :class="['p'+(i+1), {bot:(e.first_name||'').startsWith('🤖')}]">
+            <div class="pod-medal" x-text="['🥇','🥈','🥉'][i]"></div>
+            <div class="pod-name" x-text="e.first_name"></div>
+            <div class="pod-win" x-text="pct(e.win)+' 🏆'"></div>
+            <div class="pod-pts" x-text="boardLocked ? (e.points+' pts') : 'de ganar'"></div>
           </div>
         </template>
-        <div class="board-actions">
-          <button class="btn primary" @click="runProbabilities()" :disabled="probBusy">
-            <span x-show="!probBusy">🎲 Calcular probabilidad de ganar en vivo</span>
-            <span x-show="probBusy">Simulando <span x-text="simN"></span> mundiales…</span>
-          </button>
-          <button class="btn ghost" @click="refreshBoard()">↻ Actualizar</button>
-          <span class="muted tiny" x-show="lastProb" x-text="'Basado en '+simN.toLocaleString('es')+' simulaciones · '+playedTxt"></span>
-        </div>
-
-        <div class="table-wrap">
-          <table class="ranking">
-            <thead>
-              <tr><th>#</th><th>Jugador</th><th class="r">Puntos</th><th class="r" x-show="lastProb">🏆 Ganar</th><th class="r" x-show="lastProb">Podio</th><th class="r" x-show="lastProb">Media est.</th></tr>
-            </thead>
-            <tbody>
-              <template x-for="(e,i) in ranked" :key="e.id">
-                <tr class="clickrow" :class="{me: e.id===me.id, top: i===0, sel: selectedId===e.id, bot: (e.first_name||'').startsWith('🤖')}" @click="toggleDetail(e.id)">
-                  <td class="pos" x-text="i+1"></td>
-                  <td>
-                    <span x-text="e.first_name+' '+e.last_name"></span>
-                    <span class="youtag" x-show="e.id===me.id">tú</span>
-                    <span class="seehint">👁️ ver</span>
-                  </td>
-                  <td class="r"><b x-text="e.points"></b></td>
-                  <td class="r" x-show="lastProb"><div class="probcell"><span x-text="pct(e.win)"></span><i :style="'width:'+Math.min(100,e.win*100)+'%'"></i></div></td>
-                  <td class="r" x-show="lastProb" x-text="pct(e.podium)"></td>
-                  <td class="r muted" x-show="lastProb" x-text="e.avg!=null?e.avg.toFixed(0):'—'"></td>
-                </tr>
-              </template>
-            </tbody>
-          </table>
-          <p class="muted" x-show="!entries.length">Nadie se apuntó a esta porra.</p>
-        </div>
-        <p class="tiny muted">👁️ Toca a un jugador para ver su quiniela y el desglose de sus puntos. «🏆 Ganar» = probabilidad de acabar primero según miles de simulaciones del resto del Mundial.</p>
       </div>
     </template>
+
+    <!-- Tabla de liga -->
+    <div class="league" x-show="ranked.length">
+      <div class="league-head">
+        <span class="lr-pos">#</span>
+        <span class="lr-name">Jugador</span>
+        <span class="lr-num" x-show="boardLocked">Pts</span>
+        <span class="lr-win"><span class="lr-winval">🏆 Ganar</span></span>
+      </div>
+      <template x-for="(e,i) in ranked" :key="e.id">
+        <div class="league-row clickrow" :class="{me:e.id===me.id, bot:(e.first_name||'').startsWith('🤖'), sel:selectedId===e.id, pos1:i===0, pos2:i===1, pos3:i===2}" @click="toggleDetail(e.id)">
+          <span class="lr-pos" x-text="i+1"></span>
+          <span class="lr-name"><span x-text="e.first_name+' '+e.last_name"></span><span class="youtag" x-show="e.id===me.id">tú</span><span class="seehint" x-show="canViewPicks">👁️</span></span>
+          <span class="lr-num" x-show="boardLocked"><b x-text="e.points"></b></span>
+          <span class="lr-win"><span class="lr-winbar" :style="'width:'+Math.min(100,(e.win||0)*100)+'%'"></span><span class="lr-winval" x-text="pct(e.win)"></span></span>
+        </div>
+      </template>
+    </div>
+    <p class="muted" x-show="!ranked.length && !probBusy" style="text-align:center;padding:16px">Aún no hay quinielas para calcular la clasificación.</p>
+    <p class="tiny muted" x-show="!boardLocked && ranked.length">🔒 Las quinielas no se ven hasta que empiece el Mundial (para que nadie copie). Mientras, ves la <b>probabilidad de ganar la porra</b> de cada uno según lo acertada que sea su predicción (simulación del torneo con la fuerza de cada selección). <span x-show="lockCountdown">⏳ Empieza en <b x-text="lockCountdown"></b>.</span></p>
+    <p class="tiny muted" x-show="boardLocked && ranked.length">👁️ Toca a un jugador para ver su quiniela y el desglose. «🏆 Ganar» = probabilidad de acabar 1º según miles de simulaciones del resto del Mundial.</p>
 
     <!-- DETALLE: quiniela de un participante -->
     <template x-if="det">

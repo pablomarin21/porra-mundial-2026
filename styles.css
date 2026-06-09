@@ -297,6 +297,33 @@ table.mini tr.qual{background:#eafaf0} table.mini tr.third{background:#fff7e3}
 .welcome-hero .lead2{color:#e9f3ee}
 .welcome-hero p.lead2 b{color:#fff}
 
+/* ===== Tabla de liga ===== */
+.league{background:#fff;border:1px solid var(--line);border-radius:14px;overflow:hidden;box-shadow:0 12px 30px rgba(0,0,0,.32)}
+.league-head{display:flex;align-items:center;gap:10px;padding:9px 12px;background:linear-gradient(120deg,var(--green),var(--green2));color:#fff;font-size:.72rem;font-weight:800;text-transform:uppercase;letter-spacing:.4px}
+.league-row{display:flex;align-items:center;gap:10px;padding:11px 12px;border-bottom:1px solid var(--line);cursor:pointer;background:#fff}
+.league-row:last-child{border-bottom:0}
+.league-row:hover{background:#f3f9f5}
+.league-row.sel{background:#e7f1ec}
+.league-row.me{background:#eaf4ee}
+.league-row.bot{background:#eef3fb}
+.league-row.pos1{border-left:4px solid var(--gold)}
+.league-row.pos2{border-left:4px solid #c2cdc7}
+.league-row.pos3{border-left:4px solid #d8b483}
+.lr-pos{flex:0 0 24px;text-align:center;font-weight:800;color:var(--green2)}
+.league-head .lr-pos{color:#fff}
+.lr-name{flex:1;min-width:0;font-weight:700;display:flex;align-items:center;gap:7px;font-size:.92rem;overflow:hidden}
+.lr-name>span:first-child{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.lr-num{flex:0 0 40px;text-align:right;font-weight:800;color:var(--green)}
+.league-head .lr-num{color:#fff}
+.lr-win{flex:0 0 92px;position:relative;height:24px;border-radius:7px;background:#eef3f0;overflow:hidden;display:flex;align-items:center;justify-content:flex-end;padding:0 9px}
+.league-head .lr-win{background:transparent;height:auto;padding:0;flex-basis:92px}
+.lr-winbar{position:absolute;left:0;top:0;bottom:0;background:linear-gradient(90deg,#bfe6cd,#6fcd97)}
+.lr-winval{position:relative;z-index:1;font-weight:800;font-size:.82rem;color:#0a5c39}
+.league-head .lr-winval{color:#fff;font-size:.72rem}
+.league-row.bot .lr-winbar{background:linear-gradient(90deg,#cdd9ee,#90abdd)}
+.league-row.bot .lr-winval{color:#27406e}
+.pod.bot{border-color:#b9c9ea;background:linear-gradient(180deg,#eef3fb,#fff)}
+
 .player-chip.bot{background:#eef3fb;border-color:#b9c9ea;color:#2b4a7a;font-weight:800}
 table.ranking tr.bot td{background:#eef3fb}
 table.ranking tr.bot.sel td{background:#e2eafa}
@@ -366,8 +393,8 @@ tr.clickrow.sel td{background:#e7f1ec}
 .pod.p3{border-color:#e6cdb3}
 .pod-medal{font-size:1.8rem}
 .pod-name{font-weight:800;font-size:.88rem;margin-top:2px}
-.pod-pts{color:var(--green);font-weight:700;font-size:.84rem}
-.pod-win{font-size:.74rem;color:var(--gold2);font-weight:700}
+.pod-pts{color:var(--muted);font-weight:600;font-size:.72rem}
+.pod-win{font-size:1rem;color:var(--gold2);font-weight:800}
 @media(max-width:640px){ .extras-grid{grid-template-columns:1fr} }
 
 /* ===== Panel "Mi porra" (resumen / hub) ===== */

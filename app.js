@@ -62,6 +62,7 @@ window.porraApp = function () {
     ],
     // probabilidades
     lastProb: false, simN: 0, probData: {},
+    boardLocked: false, usingServerBoard: false,
     selectedId: null, det: null,
     koMeta: KO_META,
 
@@ -144,7 +145,7 @@ window.porraApp = function () {
       window.addEventListener("appinstalled", () => { this.deferredPrompt = null; this.showInstall = false; });
       // Mostrar el tutorial de instalación una sola vez (primera visita, si no es ya una app)
       try { if (!this.isStandalone && !localStorage.getItem("porra_install_seen")) setTimeout(() => { if (!this.isStandalone) this.showInstall = true; }, 1800); } catch (e) {}
-      this._espnTimer = setInterval(() => { if (this.pool && (this.tab === "leaderboard" || this.tab === "results")) this.fetchEspn(false); }, 60000);
+      this._espnTimer = setInterval(() => { if (!this.pool) return; if (this.tab === "leaderboard") this.loadBoard(); else if (this.tab === "results") this.fetchEspn(false); }, 60000);
       const code = new URLSearchParams(location.search).get("porra");
       if (code) await this.loadPool(code);
     },
@@ -403,7 +404,7 @@ window.porraApp = function () {
       this.koEdit = ke;
       this.computeLive();
     },
-    async loadEntries() {
+    async loadEntries(opts) {
       let entries;
       if (this.adminOk && this.adminPin) {
         try { const r = await this.rpc("porra_list_entries_admin", { p_code: this.pool.code, p_pin: this.adminPin }); entries = r.entries; }
@@ -412,11 +413,11 @@ window.porraApp = function () {
         const res = await this.rpc("porra_list_entries", { p_code: this.pool.code }); entries = res.entries;
       }
       this.entries = entries || [];
-      this.recomputeRanking();
+      if (!opts || opts.recompute !== false) this.recomputeRanking();
     },
 
     // ---------- ver la quiniela de un participante ----------
-    get canViewPicks() { return !!(this.pool && (this.pool.locked || this.adminOk)); },
+    get canViewPicks() { return !!(this.pool && (this.boardLocked || this.adminOk)); },
     toggleDetail(id) {
       const e = this.entries.find((x) => x.id === id);
       if (!e) return;
@@ -468,10 +469,30 @@ window.porraApp = function () {
     liveTable(L) { return (this.outcome && this.outcome.standingsByGroup && this.outcome.standingsByGroup[L]) || Eng.groupStandings(L, this.results, false, null); },
 
     // ---------- clasificación + probabilidades ----------
-    openLeaderboard() { this.tab = "leaderboard"; this.selectedId = null; this.det = null; this.refreshBoard(); this.fetchEspn(false); },
+    openLeaderboard() { this.tab = "leaderboard"; this.selectedId = null; this.det = null; this.loadBoard(); },
+    async loadBoard() {
+      if (!this.pool) return;
+      this.probBusy = true;
+      let ok = false;
+      try {
+        const { data, error } = await sb.functions.invoke("porra-prob", { body: { code: this.pool.code } });
+        if (!error && data && !data.error && Array.isArray(data.rows)) {
+          this.usingServerBoard = true;
+          this.boardLocked = !!data.locked;
+          this.simN = data.sims || 4000; this.lastProb = true;
+          this.ranked = data.rows.map((r) => ({ id: r.id, first_name: r.first_name, last_name: r.last_name, points: r.points, win: r.win, podium: r.podium, avg: r.avg }));
+          ok = true;
+        }
+      } catch (e) { /* fallback abajo */ }
+      // marcadores en vivo + picks (no deben afectar a la tabla del servidor)
+      try { await this.loadResults(); if (ok && this.boardLocked) await this.loadEntries({ recompute: false }); } catch (e) {}
+      if (!ok) { this.usingServerBoard = false; try { await this.refreshBoard(); } catch (e) {} }
+      this.probBusy = false;
+    },
     openResults() { this.tab = "results"; this.fetchEspn(false); },
     async refreshBoard() { await this.loadResults(); await this.loadEntries(); },
     recomputeRanking() {
+      if (this.usingServerBoard) { if (this.selectedId) this.det = this._computeDetail(this.selectedId); return; }
       const oc = this.outcome || Eng.liveOutcome(this.results); const S = this.settings;
       const arr = this.entries.map((e) => {
         let base = 0, extra = 0;
