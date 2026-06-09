@@ -40,6 +40,7 @@ window.porraApp = function () {
     joinCode: "", newPool: { name: "", code: "", pin: "" }, recent: [],
     // ui
     toasts: [], busy: false, probBusy: false, syncBusy: false, syncMsg: "",
+    showInstall: false, deferredPrompt: null,
     // pronósticos
     groups: emptyGroups(), thirds: [], bracket: {}, _cols: [], _champion: null,
     extras: { revelacion: "", decepcion: "", pichichi: "", asistente: "", sidebets: {} },
@@ -117,6 +118,8 @@ window.porraApp = function () {
       this.rebuild();
       this.nowTs = Date.now();
       setInterval(() => { this.nowTs = Date.now(); }, 20000);
+      window.addEventListener("beforeinstallprompt", (e) => { e.preventDefault(); this.deferredPrompt = e; });
+      window.addEventListener("appinstalled", () => { this.deferredPrompt = null; this.showInstall = false; });
       this._espnTimer = setInterval(() => { if (this.pool && (this.tab === "leaderboard" || this.tab === "results")) this.fetchEspn(false); }, 60000);
       const code = new URLSearchParams(location.search).get("porra");
       if (code) await this.loadPool(code);
@@ -154,6 +157,17 @@ window.porraApp = function () {
       return s < 60 ? "hace " + Math.max(1, s) + "s" : "hace " + Math.round(s / 60) + " min";
     },
     goHome() { this.view = "home"; this.pool = null; this.adminOk = false; this.adminPin = ""; history.replaceState(null, "", location.pathname); },
+
+    // ---------- instalar en el móvil (PWA) ----------
+    get isStandalone() { try { return window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone === true; } catch (e) { return false; } },
+    get isIOS() { return /iphone|ipad|ipod/i.test(navigator.userAgent || ""); },
+    async installApp() {
+      if (!this.deferredPrompt) return;
+      this.deferredPrompt.prompt();
+      try { await this.deferredPrompt.userChoice; } catch (e) {}
+      this.deferredPrompt = null; this.showInstall = false;
+    },
+    closeInstall() { this.showInstall = false; try { localStorage.setItem("porra_install_seen", "1"); } catch (e) {} },
 
     // ---------- toasts / rpc ----------
     toast(msg, kind = "ok") { const id = Math.random().toString(36).slice(2); this.toasts.push({ id, msg, kind }); setTimeout(() => { this.toasts = this.toasts.filter((t) => t.id !== id); }, 3800); },

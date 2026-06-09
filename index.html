@@ -7,6 +7,12 @@
   <meta name="description" content="La porra del Mundial 2026 para la familia: grupos, terceros, eliminatorias, clasificación y probabilidad de ganar en vivo." />
   <meta name="theme-color" content="#0b3d2e" />
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚽</text></svg>" />
+  <link rel="manifest" href="manifest.webmanifest" />
+  <link rel="apple-touch-icon" href="apple-touch-icon.png" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Porra Mundial" />
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body x-data="porraApp()" x-init="init()" x-cloak>
@@ -18,6 +24,7 @@
         <span class="ball">⚽</span>
         <span class="brand-txt">Porra <b>Mundial 2026</b></span>
       </a>
+      <button class="install-btn" x-show="!isStandalone" @click="showInstall=true" title="Añadir al móvil como app">📲 Instalar</button>
       <template x-if="pool">
         <nav class="tabs">
           <button :class="{active: tab==='play'}" @click="tab='play'">Mi quiniela</button>
@@ -756,10 +763,43 @@
 
   <footer class="foot">
     <span>Porra Mundial 2026 ⚽ · datos verificados (Wikipedia + ESPN) · probabilidades por simulación Monte Carlo</span>
+    <button class="foot-install" x-show="!isStandalone" @click="showInstall=true">📲 Instalar en el móvil</button>
   </footer>
 
   <!-- Loader global -->
   <div class="overlay" x-show="busy" x-transition.opacity><div class="spinner"></div></div>
+
+  <!-- Tutorial: instalar en el móvil como app -->
+  <div class="modal-bg" x-show="showInstall" x-transition.opacity @click.self="closeInstall()">
+    <div class="modal">
+      <div class="modal-head">
+        <h3>📲 Pon la porra en tu móvil</h3>
+        <button class="modal-x" @click="closeInstall()">✕</button>
+      </div>
+      <p class="muted">Añádela a la pantalla de inicio y tendrás el icono <b>⚽ Porra 2026</b> como una app — sin descargar nada y sin ocupar espacio.</p>
+      <template x-if="deferredPrompt">
+        <button class="btn gold block big" @click="installApp()">⬇️ Instalar ahora</button>
+      </template>
+      <div class="ins-block" :class="{hl: isIOS}">
+        <div class="ins-h">🍎 iPhone / iPad <small>(Safari)</small></div>
+        <ol>
+          <li>Toca el botón <b>Compartir</b> (el cuadradito con la flecha ↑, abajo del todo).</li>
+          <li>Desliza y toca <b>«Añadir a pantalla de inicio»</b>.</li>
+          <li>Toca <b>«Añadir»</b> arriba a la derecha. ¡Ya tienes el icono ⚽!</li>
+        </ol>
+      </div>
+      <div class="ins-block" :class="{hl: !isIOS}">
+        <div class="ins-h">🤖 Android <small>(Chrome)</small></div>
+        <ol>
+          <li>Toca el menú <b>⋮</b> (tres puntos, arriba a la derecha).</li>
+          <li>Toca <b>«Añadir a pantalla de inicio»</b> o <b>«Instalar aplicación»</b>.</li>
+          <li>Confirma con <b>«Añadir»</b>. ¡Ya tienes el icono ⚽!</li>
+        </ol>
+      </div>
+      <p class="tiny muted">💡 ¿Abriste el enlace desde <b>WhatsApp</b>? Primero ábrelo en el navegador: toca <b>⋯</b> (o Compartir) → <b>«Abrir en Safari / Chrome»</b>, y luego sigue los pasos.</p>
+      <button class="btn ghost block" @click="closeInstall()">Entendido</button>
+    </div>
+  </div>
 
   <!-- ====== Dependencias ====== -->
   <script src="data.js"></script>
