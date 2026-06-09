@@ -9,9 +9,11 @@
 *{box-sizing:border-box}
 [x-cloak]{display:none!important}
 html,body{margin:0;padding:0}
-body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;color:var(--ink);line-height:1.45;-webkit-text-size-adjust:100%;background:#0a2e22}
+html{background:#0a2e22}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;color:var(--ink);line-height:1.45;-webkit-text-size-adjust:100%;background:transparent}
 body::before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;
-  background:linear-gradient(180deg, rgba(7,38,28,.72), rgba(7,38,28,.90)), url('stadium.jpg') center 22%/cover no-repeat}
+  background:linear-gradient(180deg, rgba(6,32,24,.42), rgba(6,32,24,.66)),
+             url('stadium.jpg') center 25%/cover no-repeat}
 h1,h2,h3{margin:0 0 .35em;line-height:1.15}
 b{font-weight:700}
 small{font-size:.78rem}
