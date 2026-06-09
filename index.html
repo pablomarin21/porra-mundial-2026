@@ -556,7 +556,7 @@
     <div class="livestrip" x-show="liveToday.length">
       <template x-for="m in liveToday" :key="'lm'+m.id">
         <div class="lcard" :class="{live:m.live, done:m.done}">
-          <span class="lc-badge" x-text="m.live?'🔴 EN VIVO':(m.done?'FINAL':(m.status||'Próximo'))"></span>
+          <span class="lc-badge" x-text="m.live?'🔴 EN VIVO':(m.done?'FINAL':(m.dayShort+' · '+m.time))"></span>
           <div class="lc-team"><span class="flag" x-text="m.hFlag"></span><span x-text="m.hName"></span></div>
           <div class="lc-score" x-text="m.pre ? 'vs' : (m.hs+' - '+m.as)"></div>
           <div class="lc-team"><span class="flag" x-text="m.aFlag"></span><span x-text="m.aName"></span></div>
@@ -564,9 +564,29 @@
       </template>
     </div>
     <div class="subtabs">
+      <button :class="{on: rTab==='cal'}" @click="rTab='cal'">📅 Calendario</button>
       <button :class="{on: rTab==='groups'}" @click="rTab='groups'">Fase de grupos</button>
       <button :class="{on: rTab==='tables'}" @click="rTab='tables'">Clasificaciones</button>
       <button :class="{on: rTab==='ko'}" @click="rTab='ko'">Eliminatorias</button>
+    </div>
+
+    <!-- Calendario: todos los partidos con hora de España (Madrid) -->
+    <div x-show="rTab==='cal'" class="rcal">
+      <p class="muted tiny">⏰ Horarios en hora de <b>España peninsular (Madrid)</b>. <span x-show="!espnAt">Cargando…</span></p>
+      <template x-for="day in schedule" :key="'d'+day.key">
+        <div class="cal-day">
+          <div class="cal-day-h" x-text="day.label"></div>
+          <template x-for="m in day.matches" :key="'cm'+m.id">
+            <div class="cal-row" :class="{live:m.live, done:m.done}">
+              <span class="cal-time" x-text="m.live?'🔴 EN VIVO':(m.done?'FIN':m.time)"></span>
+              <span class="cal-t home"><span class="tn" x-text="m.hName"></span> <span class="flag" x-text="m.hFlag"></span></span>
+              <span class="cal-sc" x-text="m.pre ? 'vs' : (m.hs+' - '+m.as)"></span>
+              <span class="cal-t away"><span class="flag" x-text="m.aFlag"></span> <span class="tn" x-text="m.aName"></span></span>
+            </div>
+          </template>
+        </div>
+      </template>
+      <p class="muted" x-show="!schedule.length">Cargando el calendario en vivo…</p>
     </div>
 
     <div x-show="rTab==='groups'" class="rgroups">

@@ -33,7 +33,7 @@ const ERRORS = {
 window.porraApp = function () {
   return {
     // navegación
-    view: "home", tab: "play", step: 1, rTab: "groups", aTab: "groups",
+    view: "home", tab: "play", step: 1, rTab: "cal", aTab: "groups",
     phase: "welcome", gIdx: 0,
     // estado porra / jugador
     pool: null, me: { first: "", last: "", id: null, saved: false },
@@ -86,6 +86,13 @@ window.porraApp = function () {
         .replace("Round of 32", "1/16").replace("Round of 16", "Octavos").replace("Quarterfinal", "Cuartos")
         .replace("Semifinal", "Semis").replace(/Third Place.*/, "3º clasificado").replace(" Loser", " (perdedor)");
     },
+    // --- fechas/horas en hora de España (Madrid) ---
+    _d(iso) { if (!iso) return null; let s = String(iso); if (/T\d\d:\d\dZ$/.test(s)) s = s.replace("Z", ":00Z"); const d = new Date(s); return isNaN(d.getTime()) ? null : d; },
+    madridTime(iso) { const d = this._d(iso); if (!d) return ""; try { return new Intl.DateTimeFormat("es-ES", { timeZone: "Europe/Madrid", hour: "2-digit", minute: "2-digit", hour12: false }).format(d); } catch (e) { return ""; } },
+    madridDayLong(iso) { const d = this._d(iso); if (!d) return ""; try { const s = new Intl.DateTimeFormat("es-ES", { timeZone: "Europe/Madrid", weekday: "long", day: "numeric", month: "long" }).format(d); return s.charAt(0).toUpperCase() + s.slice(1); } catch (e) { return ""; } },
+    madridDayShort(iso) { const d = this._d(iso); if (!d) return ""; try { return new Intl.DateTimeFormat("es-ES", { timeZone: "Europe/Madrid", weekday: "short", day: "numeric", month: "short" }).format(d); } catch (e) { return ""; } },
+    _dayKey(iso) { const d = this._d(iso); if (!d) return (iso || "").slice(0, 10); try { return new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/Madrid", year: "numeric", month: "2-digit", day: "2-digit" }).format(d); } catch (e) { return (iso || "").slice(0, 10); } },
+
     get liveMatches() {
       const out = [];
       for (const ev of (this.espnEvents || [])) {
@@ -95,7 +102,8 @@ window.porraApp = function () {
         const st = (ev.status && ev.status.type) || {};
         const cH = D.espnCanon(H.team.displayName), cA = D.espnCanon(A.team.displayName);
         out.push({
-          id: ev.id, ts: Date.parse(ev.date || 0),
+          id: ev.id, ts: this._d(ev.date) ? this._d(ev.date).getTime() : 0,
+          time: this.madridTime(ev.date), dayShort: this.madridDayShort(ev.date), dayLong: this.madridDayLong(ev.date), dayKey: this._dayKey(ev.date),
           hName: cH ? D.es(cH) : this.koLabel(H.team.displayName), hFlag: cH ? D.flag(cH) : "🏳️",
           aName: cA ? D.es(cA) : this.koLabel(A.team.displayName), aFlag: cA ? D.flag(cA) : "🏳️",
           hs: H.score, as: A.score, live: st.state === "in", done: !!st.completed, pre: st.state === "pre",
@@ -110,6 +118,15 @@ window.porraApp = function () {
       if (live.length) return live;
       const upcoming = this.liveMatches.filter((m) => m.ts >= this.nowTs - 6 * 3600000);
       return (upcoming.length ? upcoming : this.liveMatches).slice(0, 10);
+    },
+    get schedule() {
+      const byDay = {};
+      for (const m of this.liveMatches) {
+        const k = m.dayKey || "?";
+        if (!byDay[k]) byDay[k] = { key: k, label: m.dayLong, matches: [] };
+        byDay[k].matches.push(m);
+      }
+      return Object.values(byDay).sort((a, b) => a.key.localeCompare(b.key));
     },
 
     // ---------- init ----------
