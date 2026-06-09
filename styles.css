@@ -265,7 +265,9 @@ table.mini tr.qual{background:#eafaf0} table.mini tr.third{background:#fff7e3}
 .se-card li:last-child{border:0}
 .pp{font-weight:800;color:var(--gold2);background:#fbecc4;border-radius:6px;padding:1px 8px;white-space:nowrap}
 
-.player-chip.clickable{cursor:pointer}
+.player-chip.bot{background:#eef3fb;border-color:#b9c9ea;color:#2b4a7a;font-weight:800}
+table.ranking tr.bot td{background:#eef3fb}
+table.ranking tr.bot.sel td{background:#e2eafa}
 .player-chip.clickable:hover{border-color:var(--green2)}
 .player-chip.sel{background:var(--green);color:#fff;border-color:var(--green)}
 tr.clickrow{cursor:pointer}

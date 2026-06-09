@@ -418,7 +418,7 @@
         <p class="tiny muted" x-show="adminOk">👑 Eres admin: toca un nombre para ver su quiniela ya.</p>
         <div class="players">
           <template x-for="e in entries" :key="e.id">
-            <span class="player-chip" :class="{clickable: canViewPicks && e.picks, sel: selectedId===e.id}" @click="toggleDetail(e.id)" x-text="e.first_name+' '+e.last_name"></span>
+            <span class="player-chip" :class="{clickable: canViewPicks && e.picks, sel: selectedId===e.id, bot: (e.first_name||'').startsWith('🤖')}" @click="toggleDetail(e.id)" x-text="e.first_name+' '+e.last_name"></span>
           </template>
           <p class="muted" x-show="!entries.length">Aún no se ha apuntado nadie.</p>
         </div>
@@ -463,7 +463,7 @@
             </thead>
             <tbody>
               <template x-for="(e,i) in ranked" :key="e.id">
-                <tr class="clickrow" :class="{me: e.id===me.id, top: i===0, sel: selectedId===e.id}" @click="toggleDetail(e.id)">
+                <tr class="clickrow" :class="{me: e.id===me.id, top: i===0, sel: selectedId===e.id, bot: (e.first_name||'').startsWith('🤖')}" @click="toggleDetail(e.id)">
                   <td class="pos" x-text="i+1"></td>
                   <td>
                     <span x-text="e.first_name+' '+e.last_name"></span>
