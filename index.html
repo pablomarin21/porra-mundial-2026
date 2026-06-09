@@ -444,12 +444,13 @@
       <template x-for="(e,i) in ranked" :key="e.id">
         <div class="league-row clickrow" :class="{me:e.id===me.id, bot:(e.first_name||'').startsWith('🤖'), sel:selectedId===e.id, pos1:i===0, pos2:i===1, pos3:i===2}" @click="toggleDetail(e.id)">
           <span class="lr-pos" x-text="i+1"></span>
-          <span class="lr-name"><span x-text="e.first_name+' '+e.last_name"></span><span class="youtag" x-show="e.id===me.id">tú</span><span class="seehint" x-show="canViewPicks">👁️</span></span>
+          <span class="lr-name"><span x-text="e.first_name+' '+e.last_name"></span><span class="incompleto" x-show="e.complete===false">⚠️ sin terminar</span><span class="youtag" x-show="e.id===me.id">tú</span><span class="seehint" x-show="canViewPicks">👁️</span></span>
           <span class="lr-num" x-show="boardLocked"><b x-text="e.points"></b></span>
           <span class="lr-win"><span class="lr-winbar" :style="'width:'+Math.min(100,(e.win||0)*100)+'%'"></span><span class="lr-winval" x-text="pct(e.win)"></span></span>
         </div>
       </template>
     </div>
+    <p class="incomplete-note" x-show="boardIncomplete>0"><span>⚠️</span> <b x-text="boardIncomplete"></b> <span x-text="boardIncomplete===1?'jugador no ha terminado':'jugadores no han terminado'"></span> su porra<span x-show="!boardLocked"> — aún están a tiempo hasta el cierre</span>.</p>
     <p class="muted" x-show="!ranked.length && !probBusy" style="text-align:center;padding:16px">Aún no hay quinielas para calcular la clasificación.</p>
     <p class="tiny muted" x-show="!boardLocked && ranked.length">🔒 Las quinielas no se ven hasta que empiece el Mundial (para que nadie copie). Mientras, ves la <b>probabilidad de ganar la porra</b> de cada uno según lo acertada que sea su predicción (simulación del torneo con la fuerza de cada selección). <span x-show="lockCountdown">⏳ Empieza en <b x-text="lockCountdown"></b>.</span></p>
     <p class="tiny muted" x-show="boardLocked && ranked.length">👁️ Toca a un jugador para ver su quiniela y el desglose. «🏆 Ganar» = probabilidad de acabar 1º según miles de simulaciones del resto del Mundial.</p>

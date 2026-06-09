@@ -62,7 +62,7 @@ window.porraApp = function () {
     ],
     // probabilidades
     lastProb: false, simN: 0, probData: {},
-    boardLocked: false, usingServerBoard: false,
+    boardLocked: false, usingServerBoard: false, boardIncomplete: 0,
     selectedId: null, det: null,
     koMeta: KO_META,
 
@@ -480,7 +480,8 @@ window.porraApp = function () {
           this.usingServerBoard = true;
           this.boardLocked = !!data.locked;
           this.simN = data.sims || 4000; this.lastProb = true;
-          this.ranked = data.rows.map((r) => ({ id: r.id, first_name: r.first_name, last_name: r.last_name, points: r.points, win: r.win, podium: r.podium, avg: r.avg }));
+          this.ranked = data.rows.map((r) => ({ id: r.id, first_name: r.first_name, last_name: r.last_name, points: r.points, win: r.win, podium: r.podium, avg: r.avg, complete: r.complete }));
+          this.boardIncomplete = data.incomplete || 0;
           ok = true;
         }
       } catch (e) { /* fallback abajo */ }
