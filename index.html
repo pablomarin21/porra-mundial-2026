@@ -148,6 +148,10 @@
         </div>
       </template>
 
+      <button class="btn gold block big" @click="startGroups()"
+        x-text="status.complete ? '✏️ Repasar mi porra' : ((status.thirds || bracketPicked>0 || status.extras) ? '▶️ Continuar mi porra →' : '🚀 ¡Empezar mi porra! →')"></button>
+
+      <p class="muted tiny" style="text-align:center;margin:8px 0 4px">…o toca un apartado para ir directo:</p>
       <div class="hub-cards">
         <button class="hub-card" @click="editSection('groups')">
           <span class="hc-ic">📊</span>
@@ -171,7 +175,7 @@
         </button>
       </div>
 
-      <button class="btn primary block big" @click="openLeaderboard()">Ver la clasificación →</button>
+      <button class="btn ghost block" @click="openLeaderboard()">🏆 Ver la clasificación</button>
 
       <details class="how-collapse" :open="!status.complete">
         <summary>¿Cómo funciona y cómo se puntúa?</summary>
