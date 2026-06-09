@@ -155,8 +155,8 @@ window.porraApp = function () {
       if (!this.pool || !this.pool.lock_at) return null;
       const ms = Date.parse(this.pool.lock_at) - this.nowTs;
       if (ms <= 0) return null;
-      const d = Math.floor(ms / 86400000), h = Math.floor(ms / 3600000) % 24, m = Math.floor(ms / 60000) % 60;
-      return (d ? d + "d " : "") + h + "h " + m + "m";
+      if (ms < 3600000) return Math.max(1, Math.floor(ms / 60000)) + " min";
+      return Math.floor(ms / 3600000) + " h"; // solo horas
     },
 
     // ---------- datos en vivo (ESPN, sin clave, CORS abierto) ----------
