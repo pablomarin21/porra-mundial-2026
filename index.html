@@ -100,8 +100,11 @@
   <!-- ===================== JUGAR (mi quiniela) ===================== -->
   <section x-show="view==='pool' && tab==='play'" class="play">
 
-    <template x-if="pool && pool.locked">
+    <template x-if="isLocked">
       <div class="banner warn">🔒 La porra está cerrada (el Mundial ya ha empezado). Puedes mirar tu quiniela pero no cambiarla. Ve a «Clasificación» para ver cómo vas.</div>
+    </template>
+    <template x-if="!isLocked && lockCountdown">
+      <div class="banner countdown">⏳ Puedes editar hasta el primer partido. <b>Cierra en <span x-text="lockCountdown"></span></b> (11 jun, 19:00 UTC · 21:00 en España).</div>
     </template>
 
     <!-- ===== FASE: BIENVENIDA / NOMBRE ===== -->
@@ -113,10 +116,10 @@
       </div>
       <div class="card welcome-card">
         <label>Tu nombre</label>
-        <input x-model="me.first" placeholder="Ej: Lucía" :disabled="pool && pool.locked" @keydown.enter="register()" />
+        <input x-model="me.first" placeholder="Ej: Lucía" :disabled="isLocked" @keydown.enter="register()" />
         <label>Tu apellido</label>
-        <input x-model="me.last" placeholder="Ej: Torres" :disabled="pool && pool.locked" @keydown.enter="register()" />
-        <button class="btn gold block big" @click="register()" :disabled="busy || (pool&&pool.locked)">Entrar en la porra →</button>
+        <input x-model="me.last" placeholder="Ej: Torres" :disabled="isLocked" @keydown.enter="register()" />
+        <button class="btn gold block big" @click="register()" :disabled="busy || isLocked">Entrar en la porra →</button>
         <p class="tiny muted">Al entrar ya apareces en la <b>clasificación</b> de la familia. Podrás completar o cambiar tus pronósticos hasta que empiece el Mundial.</p>
       </div>
     </div>
@@ -168,7 +171,7 @@
               <span class="tname" x-text="es(team)"></span>
               <span class="qtag" x-show="idx<2">clasifica</span>
               <span class="qtag third" x-show="idx===2">3º</span>
-              <span class="arrows" x-show="!(pool && pool.locked)">
+              <span class="arrows" x-show="!(isLocked)">
                 <button @click="moveTeam(currentLetter, idx, -1)" :disabled="idx===0">▲</button>
                 <button @click="moveTeam(currentLetter, idx, 1)" :disabled="idx===3">▼</button>
               </span>
@@ -199,7 +202,7 @@
       <div class="thirds-grid">
         <template x-for="L in letters" :key="'t'+L">
           <button class="third-chip" :class="{picked: thirds.includes(groups[L][2]), dis: !thirds.includes(groups[L][2]) && thirds.length>=8}"
-                  @click="toggleThird(groups[L][2])" :disabled="pool && pool.locked">
+                  @click="toggleThird(groups[L][2])" :disabled="isLocked">
             <span class="flag" x-text="flag(groups[L][2])"></span>
             <span x-text="es(groups[L][2])"></span>
             <small>3º del Grupo <span x-text="L"></span></small>
@@ -229,11 +232,11 @@
               <template x-for="m in col.matches" :key="m.match">
                 <div class="bmatch" :class="{nope: !m.a || !m.b}">
                   <button class="bteam" :class="{sel: bracket[m.match]===m.a, dim: bracket[m.match] && bracket[m.match]!==m.a}"
-                          :disabled="!m.a || !m.b || (pool && pool.locked)" @click="pickWinner(m.match, m.a)">
+                          :disabled="!m.a || !m.b || (isLocked)" @click="pickWinner(m.match, m.a)">
                     <span class="flag" x-text="m.a?flag(m.a):''"></span><span x-text="m.a?es(m.a):'—'"></span>
                   </button>
                   <button class="bteam" :class="{sel: bracket[m.match]===m.b, dim: bracket[m.match] && bracket[m.match]!==m.b}"
-                          :disabled="!m.a || !m.b || (pool && pool.locked)" @click="pickWinner(m.match, m.b)">
+                          :disabled="!m.a || !m.b || (isLocked)" @click="pickWinner(m.match, m.b)">
                     <span class="flag" x-text="m.b?flag(m.b):''"></span><span x-text="m.b?es(m.b):'—'"></span>
                   </button>
                 </div>
@@ -251,7 +254,56 @@
       </div>
       <div class="step-nav">
         <button class="btn ghost" @click="phase='thirds'">← Terceros</button>
-        <button class="btn gold big" @click="finishPorra()" :disabled="busy || (pool&&pool.locked)">💾 Guardar y terminar</button>
+        <button class="btn primary big" @click="goExtras()">Siguiente: especiales →</button>
+      </div>
+    </div>
+
+    <!-- ===== FASE: PREDICCIONES ESPECIALES (puntos extra) ===== -->
+    <div x-show="phase==='extras'" class="phase">
+      <div class="miniprog"><span class="mp done">Grupos</span><span class="sep">›</span><span class="mp done">Terceros</span><span class="sep">›</span><span class="mp done">Cuadro</span><span class="sep">›</span><span class="mp on">Especiales</span></div>
+      <div class="rules-box gold">
+        <h3>⭐ Predicciones especiales — puntos extra</h3>
+        <p>Esto va <b>aparte</b> de la porra general y da <b>puntos de regalo</b> si aciertas. Son <b>opcionales</b>: deja en blanco lo que no sepas.</p>
+      </div>
+      <div class="extras-grid">
+        <div class="extra-card">
+          <label>✨ Selección revelación <span class="pp" x-text="'+'+settings.revelacion"></span></label>
+          <select x-model="extras.revelacion" :disabled="isLocked">
+            <option value="">— elige una selección —</option>
+            <template x-for="t in allTeams" :key="'rv'+t"><option :value="t" x-text="flag(t)+' '+es(t)"></option></template>
+          </select>
+        </div>
+        <div class="extra-card">
+          <label>💀 Selección decepción <span class="pp" x-text="'+'+settings.decepcion"></span></label>
+          <select x-model="extras.decepcion" :disabled="isLocked">
+            <option value="">— elige una selección —</option>
+            <template x-for="t in allTeams" :key="'dc'+t"><option :value="t" x-text="flag(t)+' '+es(t)"></option></template>
+          </select>
+        </div>
+        <div class="extra-card">
+          <label>⚽ Máximo goleador (Bota de Oro) <span class="pp" x-text="'+'+settings.pichichi"></span></label>
+          <input x-model="extras.pichichi" :disabled="isLocked" placeholder="Ej: Kylian Mbappé" />
+        </div>
+        <div class="extra-card">
+          <label>🅰️ Máximo asistente <span class="pp" x-text="'+'+settings.asistente"></span></label>
+          <input x-model="extras.asistente" :disabled="isLocked" placeholder="Ej: Lionel Messi" />
+        </div>
+      </div>
+      <div class="sidebets">
+        <h4>🎲 Apuestas «sí o no»</h4>
+        <template x-for="sb in sideBets" :key="sb.key">
+          <div class="sidebet">
+            <span class="sb-q"><span x-text="sb.emoji"></span> <span x-text="sb.q"></span> <span class="pp" x-text="'+'+settings[sb.key]"></span></span>
+            <div class="sb-opts">
+              <button :class="{on: extras.sidebets[sb.key]==='si'}" @click="toggleSideBet(sb.key,'si')" :disabled="isLocked">Sí</button>
+              <button :class="{on: extras.sidebets[sb.key]==='no'}" @click="toggleSideBet(sb.key,'no')" :disabled="isLocked">No</button>
+            </div>
+          </div>
+        </template>
+      </div>
+      <div class="step-nav">
+        <button class="btn ghost" @click="phase='bracket'">← Cuadro</button>
+        <button class="btn gold big" @click="finishPorra()" :disabled="busy || isLocked">💾 Guardar y terminar</button>
       </div>
     </div>
 
@@ -266,6 +318,7 @@
           <li :class="prog.groups?'ok':'no'" x-text="(prog.groups?'✅':'⬜')+' Los 12 grupos ordenados'"></li>
           <li :class="thirds.length===8?'ok':'no'" x-text="(thirds.length===8?'✅':'⬜')+' 8 mejores terceros elegidos'"></li>
           <li :class="bracketDone?'ok':'no'" x-text="bracketDone ? ('✅ Cuadro completo · Campeón: '+es(myChampion)) : ('⬜ Cuadro a medias ('+bracketPicked+'/31)')"></li>
+          <li :class="(extras.revelacion||extras.pichichi||extras.decepcion||extras.asistente)?'ok':'no'" x-text="((extras.revelacion||extras.pichichi||extras.decepcion||extras.asistente)?'✅':'⬜')+' Predicciones especiales (opcional)'"></li>
         </ul>
         <button class="btn primary block big" @click="openLeaderboard()">Ver la clasificación →</button>
         <button class="btn ghost block" @click="phase='groups'; gIdx=0">✏️ Editar mis pronósticos</button>
@@ -277,7 +330,7 @@
   <section x-show="view==='pool' && tab==='leaderboard'" class="board">
     <div class="step-head">
       <h2>Clasificación en vivo</h2>
-      <p class="muted" x-show="!pool?.locked">Los puntos y la probabilidad de ganar se activan cuando empiece el Mundial (al cerrar la porra). Las quinielas de cada uno se revelan al cerrar, para que nadie copie.</p>
+      <p class="muted" x-show="!isLocked">Los puntos y la probabilidad de ganar se activan cuando empiece el Mundial (11 jun). Las quinielas de cada uno se revelan al empezar, para que nadie copie. <span x-show="lockCountdown">⏳ Empieza en <b x-text="lockCountdown"></b>.</span></p>
     </div>
 
     <!-- Cómo se puntúa (siempre visible) -->
@@ -313,7 +366,7 @@
     </details>
 
     <!-- PRE-CIERRE: participantes -->
-    <template x-if="!pool?.locked">
+    <template x-if="!isLocked">
       <div class="card slim">
         <h3 x-text="'Participantes ('+entries.length+')'"></h3>
         <p class="tiny muted" x-show="!adminOk">Las quinielas se podrán ver cuando el organizador cierre la porra.</p>
@@ -328,8 +381,27 @@
     </template>
 
     <!-- POST-CIERRE: tabla -->
-    <template x-if="pool?.locked">
+    <template x-if="isLocked">
       <div>
+        <div class="live-bar">
+          <span class="live-dot" :class="{on: liveMatches.some(m=>m.live)}"></span>
+          <span x-show="liveMatches.some(m=>m.live)"><b>EN DIRECTO</b> · </span>
+          <span x-text="playedTxt"></span>
+          <span class="muted tiny" x-show="espnAt"> · ESPN <span x-text="liveAgo"></span></span>
+          <button class="btn mini ghost" @click="fetchEspn(true)" :disabled="liveBusy"><span x-show="!liveBusy">↻ en vivo</span><span x-show="liveBusy">…</span></button>
+        </div>
+        <template x-if="ranked.length">
+          <div class="podium">
+            <template x-for="(e,i) in ranked.slice(0,3)" :key="'pod'+e.id">
+              <div class="pod" :class="'p'+(i+1)">
+                <div class="pod-medal" x-text="['🥇','🥈','🥉'][i]"></div>
+                <div class="pod-name" x-text="e.first_name+' '+e.last_name"></div>
+                <div class="pod-pts" x-text="e.points+' pts'"></div>
+                <div class="pod-win" x-show="lastProb" x-text="pct(e.win)+' 🏆'"></div>
+              </div>
+            </template>
+          </div>
+        </template>
         <div class="board-actions">
           <button class="btn primary" @click="runProbabilities()" :disabled="probBusy">
             <span x-show="!probBusy">🎲 Calcular probabilidad de ganar en vivo</span>
@@ -374,9 +446,9 @@
           <h3 x-text="'🔎 Quiniela de '+det.name"></h3>
           <button class="btn mini ghost" @click="selectedId=null">✕ cerrar</button>
         </div>
-        <template x-if="pool?.locked">
+        <template x-if="isLocked">
           <div class="bd-chips">
-            <span class="bd-total" x-text="det.bd.total+' pts'"></span>
+            <span class="bd-total" x-text="det.total+' pts'"></span>
             <span x-text="'Grupos '+det.bd.grupos"></span>
             <span x-text="'Terceros '+det.bd.terceros"></span>
             <span x-text="'Octavos '+det.bd.octavos"></span>
@@ -384,6 +456,7 @@
             <span x-text="'Semis '+det.bd.semis"></span>
             <span x-text="'Final '+det.bd.final"></span>
             <span x-text="'Campeón '+det.bd.campeon"></span>
+            <span class="bd-extra" x-show="det.ex.total" x-text="'⭐ Especiales '+det.ex.total"></span>
           </div>
         </template>
 
@@ -395,6 +468,15 @@
           <div class="qv-row"><b>Finalistas:</b> <template x-for="t in det.finalists" :key="'f'+t"><span class="qchip"><span class="flag" x-text="flag(t)"></span><span x-text="es(t)"></span></span></template><span class="muted tiny" x-show="!det.finalists.length">(sin completar)</span></div>
           <div class="qv-row"><b>Semifinalistas:</b> <template x-for="t in det.semis" :key="'s'+t"><span class="qchip"><span class="flag" x-text="flag(t)"></span><span x-text="es(t)"></span></span></template></div>
           <div class="qv-row"><b>Cuartos:</b> <template x-for="t in det.cuartos" :key="'c'+t"><span class="qchip sm"><span class="flag" x-text="flag(t)"></span><span x-text="es(t)"></span></span></template></div>
+          <div class="qv-row" x-show="det.extras && (det.extras.revelacion||det.extras.decepcion||det.extras.pichichi||det.extras.asistente||(det.extras.sidebets&&(det.extras.sidebets.hattrick||det.extras.sidebets.dobleRoja)))">
+            <b>⭐ Especiales:</b>
+            <span class="qchip sm" x-show="det.extras.revelacion">✨ <span x-text="es(det.extras.revelacion)"></span></span>
+            <span class="qchip sm" x-show="det.extras.decepcion">💀 <span x-text="es(det.extras.decepcion)"></span></span>
+            <span class="qchip sm" x-show="det.extras.pichichi">⚽ <span x-text="det.extras.pichichi"></span></span>
+            <span class="qchip sm" x-show="det.extras.asistente">🅰️ <span x-text="det.extras.asistente"></span></span>
+            <span class="qchip sm" x-show="det.extras.sidebets&&det.extras.sidebets.hattrick" x-text="'Hat-trick: '+(det.extras.sidebets?det.extras.sidebets.hattrick:'')"></span>
+            <span class="qchip sm" x-show="det.extras.sidebets&&det.extras.sidebets.dobleRoja" x-text="'Doble roja: '+(det.extras.sidebets?det.extras.sidebets.dobleRoja:'')"></span>
+          </div>
           <details class="qv-more">
             <summary>Ver octavos, terceros y grupos</summary>
             <div class="qv-row"><b>Octavos:</b> <template x-for="t in det.octavos" :key="'o'+t"><span class="qchip sm"><span class="flag" x-text="flag(t)"></span><span x-text="es(t)"></span></span></template></div>
@@ -417,7 +499,23 @@
   <!-- ===================== RESULTADOS / CALENDARIO ===================== -->
   <section x-show="view==='pool' && tab==='results'" class="results">
     <div class="step-head"><h2>Resultados y calendario</h2>
-      <p class="muted">Marcadores oficiales del Mundial 2026. <span x-text="playedTxt"></span></p>
+      <p class="muted">Marcadores oficiales del Mundial 2026 en directo. <span x-text="playedTxt"></span></p>
+    </div>
+    <div class="live-bar">
+      <span class="live-dot" :class="{on: liveMatches.some(m=>m.live)}"></span>
+      <span x-show="liveMatches.some(m=>m.live)"><b>EN DIRECTO</b> · </span>
+      <span class="muted" x-text="espnAt ? ('Datos de ESPN '+liveAgo) : 'Cargando datos en vivo…'"></span>
+      <button class="btn mini ghost" @click="fetchEspn(true)" :disabled="liveBusy"><span x-show="!liveBusy">↻ actualizar</span><span x-show="liveBusy">…</span></button>
+    </div>
+    <div class="livestrip" x-show="liveToday.length">
+      <template x-for="m in liveToday" :key="'lm'+m.id">
+        <div class="lcard" :class="{live:m.live, done:m.done}">
+          <span class="lc-badge" x-text="m.live?'🔴 EN VIVO':(m.done?'FINAL':(m.status||'Próximo'))"></span>
+          <div class="lc-team"><span class="flag" x-text="m.hFlag"></span><span x-text="m.hName"></span></div>
+          <div class="lc-score" x-text="m.pre ? 'vs' : (m.hs+' - '+m.as)"></div>
+          <div class="lc-team"><span class="flag" x-text="m.aFlag"></span><span x-text="m.aName"></span></div>
+        </div>
+      </template>
     </div>
     <div class="subtabs">
       <button :class="{on: rTab==='groups'}" @click="rTab='groups'">Fase de grupos</button>
@@ -499,7 +597,7 @@
           <div class="admin-row">
             <button class="btn" :class="pool?.locked?'gold':'danger'" @click="toggleLock()" :disabled="busy"
               x-text="pool?.locked ? '🔓 Reabrir pronósticos' : '🔒 Cerrar pronósticos (empieza el Mundial)'"></button>
-            <span class="muted tiny">Cierra la porra cuando empiece el Mundial para congelar las quinielas y activar la clasificación.</span>
+            <span class="muted tiny">La porra se <b>cierra sola</b> al empezar el primer partido (11 jun, 19:00 UTC). Este botón es solo por si quieres cerrarla/reabrirla a mano antes.</span>
           </div>
           <details class="scoring">
             <summary>Puntuación (avanzado)</summary>
@@ -512,12 +610,43 @@
           </details>
         </div>
 
-        <!-- Auto sync -->
+        <!-- Respuestas de las especiales -->
         <div class="card slim">
-          <h3>🔄 Resultados</h3>
-          <p class="muted tiny">Los metes a mano aquí abajo (siempre fiable). Si configuraste el sincronizador automático, también puedes traerlos solos:</p>
-          <button class="btn ghost" @click="autoSync()" :disabled="syncBusy"><span x-show="!syncBusy">⬇️ Intentar traer resultados automáticamente</span><span x-show="syncBusy">Sincronizando…</span></button>
-          <span class="muted tiny" x-text="syncMsg"></span>
+          <h3>⭐ Respuestas de las predicciones especiales</h3>
+          <p class="muted tiny">Cuando se sepan (al final del torneo o cuando proceda), márcalas aquí. Suman puntos a quien las acertó. Déjalas «sin decidir» mientras tanto.</p>
+          <div class="extras-grid">
+            <div class="extra-card">
+              <label>✨ Revelación</label>
+              <select x-model="extrasActualEdit.revelacion"><option value="">— sin decidir —</option><template x-for="t in allTeams" :key="'arv'+t"><option :value="t" x-text="flag(t)+' '+es(t)"></option></template></select>
+            </div>
+            <div class="extra-card">
+              <label>💀 Decepción</label>
+              <select x-model="extrasActualEdit.decepcion"><option value="">— sin decidir —</option><template x-for="t in allTeams" :key="'adc'+t"><option :value="t" x-text="flag(t)+' '+es(t)"></option></template></select>
+            </div>
+            <div class="extra-card"><label>⚽ Máximo goleador</label><input x-model="extrasActualEdit.pichichi" placeholder="Nombre del jugador" /></div>
+            <div class="extra-card"><label>🅰️ Máximo asistente</label><input x-model="extrasActualEdit.asistente" placeholder="Nombre del jugador" /></div>
+          </div>
+          <div class="sidebets">
+            <template x-for="sb in sideBets" :key="'asb'+sb.key">
+              <div class="sidebet">
+                <span class="sb-q"><span x-text="sb.emoji"></span> <span x-text="sb.q"></span></span>
+                <div class="sb-opts">
+                  <button :class="{on: extrasActualEdit.sidebets[sb.key]==='si'}" @click="extrasActualEdit.sidebets[sb.key]='si'">Sí</button>
+                  <button :class="{on: extrasActualEdit.sidebets[sb.key]==='no'}" @click="extrasActualEdit.sidebets[sb.key]='no'">No</button>
+                  <button class="sb-clr" @click="extrasActualEdit.sidebets[sb.key]=''">limpiar</button>
+                </div>
+              </div>
+            </template>
+          </div>
+          <button class="btn primary" @click="saveExtrasActual()" :disabled="busy">Guardar respuestas</button>
+        </div>
+
+        <!-- Resultados -->
+        <div class="card slim">
+          <h3>🔴 Resultados en vivo</h3>
+          <p class="muted tiny">Los resultados llegan <b>solos y en directo desde ESPN</b> (no tienes que hacer nada). Abajo puedes corregir o introducir un marcador a mano si hiciera falta: tu corrección manda sobre ESPN.</p>
+          <button class="btn ghost" @click="fetchEspn(true)" :disabled="liveBusy"><span x-show="!liveBusy">↻ Actualizar desde ESPN ahora</span><span x-show="liveBusy">Actualizando…</span></button>
+          <span class="muted tiny" x-show="espnAt" x-text="'ESPN '+liveAgo"></span>
         </div>
 
         <div class="subtabs">

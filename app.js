@@ -42,7 +42,12 @@ window.porraApp = function () {
     toasts: [], busy: false, probBusy: false, syncBusy: false, syncMsg: "",
     // pronósticos
     groups: emptyGroups(), thirds: [], bracket: {}, _cols: [], _champion: null,
+    extras: { revelacion: "", decepcion: "", pichichi: "", asistente: "", sidebets: {} },
     letters: D.GROUP_LETTERS, allTeams: ALL_TEAMS.slice().sort((a, b) => D.es(a).localeCompare(D.es(b))),
+    sideBets: D.SIDE_BETS,
+    // en vivo (ESPN) + cierre automático
+    espnEvents: [], espnAt: 0, liveBusy: false, nowTs: 0, outcome: null, extrasActual: {}, _espnTimer: null,
+    extrasActualEdit: { revelacion: "", decepcion: "", pichichi: "", asistente: "", sidebets: {} },
     // datos
     entries: [], ranked: [], results: {}, rEdit: defaultREdit(), koEdit: defaultKoEdit(), liveBr: { teamsByMatch: {}, winnerOf: {}, complete: false },
     // admin
@@ -64,15 +69,89 @@ window.porraApp = function () {
     rankClass(i) { return i < 2 ? "qual" : i === 2 ? "third" : "out"; },
     pct(x) { if (x == null) return "—"; const v = x * 100; return (v >= 9.95 ? v.toFixed(0) : v.toFixed(1)) + "%"; },
     groupFixtures(L) { return D.GROUP_FIXTURES.filter((f) => f.group === L); },
-    scoreTxt(code) { const r = this.results[code]; return r && r.played && r.home_score != null ? `${r.home_score} - ${r.away_score}` : "— : —"; },
-    get playedTxt() { const n = Object.values(this.results).filter((r) => r && r.played).length; return n ? `${n} partido${n > 1 ? "s" : ""} con resultado` : "Aún no hay resultados"; },
+    scoreTxt(code) {
+      const g = this.outcome && this.outcome.groupMap && this.outcome.groupMap[code];
+      const r = g || this.results[code];
+      return r && r.played && r.home_score != null ? `${r.home_score} - ${r.away_score}` : "— : —";
+    },
+    get playedTxt() {
+      const done = (this.espnEvents || []).filter((ev) => ev.status && ev.status.type && ev.status.type.completed).length;
+      const dbDone = Object.values(this.results).filter((r) => r && r.played).length;
+      const n = Math.max(done, dbDone);
+      return n ? `${n} partido${n > 1 ? "s" : ""} jugado${n > 1 ? "s" : ""}` : "Aún no hay partidos jugados";
+    },
+    koLabel(name) {
+      return (name || "").replace("Group ", "Grupo ").replace(" Winner", " (ganador)").replace(" 2nd Place", " (2º)")
+        .replace("Round of 32", "1/16").replace("Round of 16", "Octavos").replace("Quarterfinal", "Cuartos")
+        .replace("Semifinal", "Semis").replace(/Third Place.*/, "3º clasificado").replace(" Loser", " (perdedor)");
+    },
+    get liveMatches() {
+      const out = [];
+      for (const ev of (this.espnEvents || [])) {
+        const comp = ev.competitions && ev.competitions[0]; if (!comp) continue;
+        const cs = comp.competitors || []; if (cs.length !== 2) continue;
+        const H = cs.find((c) => c.homeAway === "home") || cs[0], A = cs.find((c) => c.homeAway === "away") || cs[1];
+        const st = (ev.status && ev.status.type) || {};
+        const cH = D.espnCanon(H.team.displayName), cA = D.espnCanon(A.team.displayName);
+        out.push({
+          id: ev.id, ts: Date.parse(ev.date || 0),
+          hName: cH ? D.es(cH) : this.koLabel(H.team.displayName), hFlag: cH ? D.flag(cH) : "🏳️",
+          aName: cA ? D.es(cA) : this.koLabel(A.team.displayName), aFlag: cA ? D.flag(cA) : "🏳️",
+          hs: H.score, as: A.score, live: st.state === "in", done: !!st.completed, pre: st.state === "pre",
+          status: st.shortDetail || st.detail || st.description || "",
+        });
+      }
+      out.sort((a, b) => a.ts - b.ts);
+      return out;
+    },
+    get liveToday() {
+      const live = this.liveMatches.filter((m) => m.live);
+      if (live.length) return live;
+      const upcoming = this.liveMatches.filter((m) => m.ts >= this.nowTs - 6 * 3600000);
+      return (upcoming.length ? upcoming : this.liveMatches).slice(0, 10);
+    },
 
     // ---------- init ----------
     async init() {
       try { this.recent = JSON.parse(localStorage.getItem("porra_recent") || "[]"); } catch (e) { this.recent = []; }
       this.rebuild();
+      this.nowTs = Date.now();
+      setInterval(() => { this.nowTs = Date.now(); }, 20000);
+      this._espnTimer = setInterval(() => { if (this.pool && (this.tab === "leaderboard" || this.tab === "results")) this.fetchEspn(false); }, 60000);
       const code = new URLSearchParams(location.search).get("porra");
       if (code) await this.loadPool(code);
+    },
+
+    // ---------- cierre automático ----------
+    get isLocked() { return !!(this.pool && (this.pool.locked || (this.pool.lock_at && this.nowTs >= Date.parse(this.pool.lock_at)))); },
+    get lockCountdown() {
+      if (!this.pool || !this.pool.lock_at) return null;
+      const ms = Date.parse(this.pool.lock_at) - this.nowTs;
+      if (ms <= 0) return null;
+      const d = Math.floor(ms / 86400000), h = Math.floor(ms / 3600000) % 24, m = Math.floor(ms / 60000) % 60;
+      return (d ? d + "d " : "") + h + "h " + m + "m";
+    },
+
+    // ---------- datos en vivo (ESPN, sin clave, CORS abierto) ----------
+    async fetchEspn(force) {
+      if (!force && Date.now() - this.espnAt < 40000 && this.espnEvents.length) { this.computeLive(); return; }
+      this.liveBusy = true;
+      try {
+        const r = await fetch("https://site.api.espn.com/apis/site/v2/sports/soccer/fifa.world/scoreboard?dates=20260611-20260719&limit=200");
+        const j = await r.json();
+        if (j && j.events) { this.espnEvents = j.events; this.espnAt = Date.now(); }
+      } catch (e) { /* mantener datos previos si falla */ }
+      finally { this.liveBusy = false; this.computeLive(); }
+    },
+    computeLive() {
+      this.outcome = Eng.outcomeFromEspn(this.espnEvents, this.results, this.extrasActual);
+      this.recomputeRanking();
+      this.refreshLiveBracket();
+    },
+    get liveAgo() {
+      if (!this.espnAt) return "";
+      const s = Math.round((this.nowTs - this.espnAt) / 1000);
+      return s < 60 ? "hace " + Math.max(1, s) + "s" : "hace " + Math.round(s / 60) + " min";
     },
     goHome() { this.view = "home"; this.pool = null; this.adminOk = false; this.adminPin = ""; history.replaceState(null, "", location.pathname); },
 
@@ -109,8 +188,23 @@ window.porraApp = function () {
         this.rememberPool(pool);
         this.loadMine(pool.code);
         this.phase = this.me.id ? "intro" : "welcome"; this.gIdx = 0;
+        await this.loadExtrasActual();
         await this.loadResults();
         await this.loadEntries();
+        this.fetchEspn(true);
+      } catch (e) { this.toast(this.errMsg(e), "err"); } finally { this.busy = false; }
+    },
+    async loadExtrasActual() {
+      try { this.extrasActual = (await this.rpc("porra_get_extras", {})) || {}; } catch (e) { this.extrasActual = {}; }
+      this.extrasActualEdit = Object.assign({ revelacion: "", decepcion: "", pichichi: "", asistente: "", sidebets: {} }, this.extrasActual, { sidebets: Object.assign({}, this.extrasActual.sidebets || {}) });
+    },
+    async saveExtrasActual() {
+      this.busy = true;
+      try {
+        await this.rpc("porra_set_extras", { p_pin: this.adminPin, p_extras: this.extrasActualEdit });
+        this.extrasActual = JSON.parse(JSON.stringify(this.extrasActualEdit));
+        this.toast("Respuestas de las especiales guardadas.");
+        this.computeLive();
       } catch (e) { this.toast(this.errMsg(e), "err"); } finally { this.busy = false; }
     },
     rememberPool(pool) {
@@ -131,6 +225,7 @@ window.porraApp = function () {
       try { draft = JSON.parse(localStorage.getItem("porra_draft_" + code) || "null"); } catch (e) {}
       const src = mine || draft;
       this.groups = emptyGroups(); this.thirds = []; this.bracket = {};
+      this.extras = { revelacion: "", decepcion: "", pichichi: "", asistente: "", sidebets: {} };
       this.me = { first: "", last: "", id: null, saved: false };
       if (mine) { this.me = { first: mine.first || "", last: mine.last || "", id: mine.id || null, saved: !!mine.id }; }
       else if (draft) { this.me.first = draft.first || ""; this.me.last = draft.last || ""; }
@@ -139,17 +234,18 @@ window.porraApp = function () {
         if (p.groups && Object.keys(p.groups).length) for (const L of D.GROUP_LETTERS) if (p.groups[L]) this.groups[L] = p.groups[L].slice();
         this.thirds = (p.thirds || []).slice();
         this.bracket = Object.assign({}, p.bracket || {});
+        if (p.extras) this.extras = Object.assign({ revelacion: "", decepcion: "", pichichi: "", asistente: "", sidebets: {} }, p.extras, { sidebets: Object.assign({}, p.extras.sidebets || {}) });
       }
       this.reconcileThirds(); this.rebuild();
     },
     persistDraft() {
       if (!this.pool) return;
-      localStorage.setItem("porra_draft_" + this.pool.code, JSON.stringify({ groups: this.groups, thirds: this.thirds, bracket: this.bracket, first: this.me.first, last: this.me.last }));
+      localStorage.setItem("porra_draft_" + this.pool.code, JSON.stringify({ groups: this.groups, thirds: this.thirds, bracket: this.bracket, extras: this.extras, first: this.me.first, last: this.me.last }));
     },
 
     // ---------- paso 1: grupos ----------
     moveTeam(L, idx, dir) {
-      if (this.pool && this.pool.locked) return;
+      if (this.isLocked) return;
       const j = idx + dir; if (j < 0 || j > 3) return;
       const a = this.groups[L]; const t = a[idx]; a[idx] = a[j]; a[j] = t;
       this.groups[L] = a.slice();
@@ -157,7 +253,7 @@ window.porraApp = function () {
     },
     // ---------- paso 2: terceros ----------
     toggleThird(team) {
-      if (this.pool && this.pool.locked) return;
+      if (this.isLocked) return;
       const i = this.thirds.indexOf(team);
       if (i >= 0) this.thirds.splice(i, 1);
       else if (this.thirds.length < 8) this.thirds.push(team);
@@ -185,7 +281,7 @@ window.porraApp = function () {
       this._cols = defs.map((d) => ({ key: d.key, title: d.title, matches: d.list.map((m) => ({ match: m.match, a: tbm[m.match].a, b: tbm[m.match].b })) }));
       this._champion = winnerOf[D.FINAL.match] || null;
     },
-    pickWinner(match, team) { if (!team || (this.pool && this.pool.locked)) return; this.bracket[match] = team; this.rebuild(); this.persistDraft(); },
+    pickWinner(match, team) { if (!team || this.isLocked) return; this.bracket[match] = team; this.rebuild(); this.persistDraft(); },
     get bracketCols() { return this._cols; },
     get myChampion() { return this._champion; },
     get bracketPicked() { let n = 0; for (const m of [...D.R32, ...D.R16, ...D.QF, ...D.SF, D.FINAL]) if (this.bracket[m.match]) n++; return n; },
@@ -200,11 +296,11 @@ window.porraApp = function () {
     // ---------- asistente: guardar / navegación ----------
     get currentLetter() { return this.letters[this.gIdx]; },
     async _save(quiet) {
-      if (this.pool && this.pool.locked) { if (!quiet) this.toast(ERRORS.POOL_LOCKED, "err"); return false; }
+      if (this.isLocked) { if (!quiet) this.toast(ERRORS.POOL_LOCKED, "err"); return false; }
       if (!this.me.first.trim() || !this.me.last.trim()) { if (!quiet) this.toast(ERRORS.NAME_REQUIRED, "err"); return false; }
       this.busy = true;
       try {
-        const picks = { groups: this.groups, thirds: this.thirds, bracket: this.bracket };
+        const picks = { groups: this.groups, thirds: this.thirds, bracket: this.bracket, extras: this.extras };
         const res = await this.rpc("porra_save_entry", { p_code: this.pool.code, p_first: this.me.first, p_last: this.me.last, p_picks: picks, p_participant_id: this.me.id });
         this.me.id = res.participant_id; this.me.saved = true;
         localStorage.setItem("porra_me_" + this.pool.code, JSON.stringify({ id: this.me.id, first: this.me.first, last: this.me.last, picks }));
@@ -214,7 +310,7 @@ window.porraApp = function () {
       finally { this.busy = false; }
     },
     async register() {
-      if (this.pool && this.pool.locked) return this.toast(ERRORS.POOL_LOCKED, "err");
+      if (this.isLocked) return this.toast(ERRORS.POOL_LOCKED, "err");
       if (!this.me.first.trim() || !this.me.last.trim()) return this.toast("Pon tu nombre y tu apellido.", "warn");
       const ok = await this._save(true);
       if (ok) { this.phase = "intro"; this.toast("¡Estás dentro, " + this.me.first + "! Ya apareces en la clasificación. 🎉"); }
@@ -226,6 +322,8 @@ window.porraApp = function () {
       if (this.thirds.length !== 8) return this.toast("Elige tus 8 mejores terceros.", "warn");
       this.rebuild(); this.phase = "bracket"; this._save(true);
     },
+    goExtras() { this.phase = "extras"; this._save(true); },
+    toggleSideBet(key, val) { if (this.isLocked) return; this.extras.sidebets[key] = this.extras.sidebets[key] === val ? "" : val; this.persistDraft(); },
     async finishPorra() {
       const ok = await this._save(false);
       if (ok) { this.phase = "done"; this.toast("💾 ¡Quiniela guardada!"); }
@@ -248,7 +346,7 @@ window.porraApp = function () {
         ke[m.match] = { home: r ? r.home_team || "" : (pred.a || ""), away: r ? r.away_team || "" : (pred.b || ""), h: r ? r.home_score : null, a: r ? r.away_score : null, winner: r ? r.winner || "" : "" };
       }
       this.koEdit = ke;
-      this.recomputeRanking();
+      this.computeLive();
     },
     async loadEntries() {
       let entries;
@@ -275,14 +373,16 @@ window.porraApp = function () {
       const e = this.entries.find((x) => x.id === id);
       if (!e || !e.picks) return null;
       const dp = Eng.derivePicks(e.picks);
-      const live = Eng.liveOutcome(this.results);
-      const bd = Eng.scoreBreakdown(dp, live, this.settings);
+      const oc = this.outcome || Eng.liveOutcome(this.results);
+      const bd = Eng.scoreBreakdown(dp, oc, this.settings);
+      const ex = Eng.scoreExtras(e.picks.extras, this.extrasActual, this.settings);
       const ord = (set) => [...set].sort((a, b) => D.es(a).localeCompare(D.es(b)));
       return {
         name: e.first_name + " " + e.last_name,
         champion: dp.champion, finalists: ord(dp.final), semis: ord(dp.semis),
         cuartos: ord(dp.cuartos), octavos: ord(dp.octavos),
         groups: e.picks.groups || {}, thirds: e.picks.thirds || [], bd,
+        extras: e.picks.extras || {}, ex, total: bd.total + ex.total,
       };
     },
     refreshLiveBracket() {
@@ -310,31 +410,37 @@ window.porraApp = function () {
     koWinner(match) { return this.liveBr.winnerOf[match] || null; },
     get koAdminList() { return KO_META; },
 
-    liveTable(L) { return Eng.groupStandings(L, this.results, false, null); },
+    liveTable(L) { return (this.outcome && this.outcome.standingsByGroup && this.outcome.standingsByGroup[L]) || Eng.groupStandings(L, this.results, false, null); },
 
     // ---------- clasificación + probabilidades ----------
-    openLeaderboard() { this.tab = "leaderboard"; this.selectedId = null; this.det = null; this.refreshBoard(); },
-    openResults() { this.tab = "results"; this.refreshLiveBracket(); },
+    openLeaderboard() { this.tab = "leaderboard"; this.selectedId = null; this.det = null; this.refreshBoard(); this.fetchEspn(false); },
+    openResults() { this.tab = "results"; this.fetchEspn(false); },
     async refreshBoard() { await this.loadResults(); await this.loadEntries(); },
     recomputeRanking() {
-      const live = Eng.liveOutcome(this.results); const S = this.settings;
+      const oc = this.outcome || Eng.liveOutcome(this.results); const S = this.settings;
       const arr = this.entries.map((e) => {
-        let points = 0; if (e.picks) { try { points = Eng.scoreEntry(Eng.derivePicks(e.picks), live, S); } catch (x) {} }
+        let base = 0, extra = 0;
+        if (e.picks) {
+          try { base = Eng.scoreEntry(Eng.derivePicks(e.picks), oc, S); } catch (x) {}
+          try { extra = Eng.scoreExtras(e.picks.extras, this.extrasActual, S).total; } catch (x) {}
+        }
         const pr = this.probData[e.id];
-        return Object.assign({}, e, { points, win: pr ? pr.win : null, podium: pr ? pr.podium : null, avg: pr ? pr.avg : null });
+        return Object.assign({}, e, { points: base + extra, basePoints: base, extraPts: extra, win: pr ? pr.win : null, podium: pr ? pr.podium : null, avg: pr ? pr.avg : null });
       });
       arr.sort((a, b) => (b.points - a.points) || ((b.win || 0) - (a.win || 0)) || a.last_name.localeCompare(b.last_name));
       this.ranked = arr;
       if (this.selectedId) this.det = this._computeDetail(this.selectedId);
     },
     runProbabilities() {
-      const mcEntries = this.entries.filter((e) => e.picks).map((e) => ({ id: e.id, picks: Eng.derivePicks(e.picks) }));
+      const S = this.settings;
+      const mcEntries = this.entries.filter((e) => e.picks).map((e) => ({ id: e.id, picks: Eng.derivePicks(e.picks), extraPts: Eng.scoreExtras(e.picks.extras, this.extrasActual, S).total }));
       if (!mcEntries.length) return this.toast("No hay quinielas guardadas todavía.", "warn");
       this.simN = mcEntries.length > 60 ? 1500 : mcEntries.length > 30 ? 2500 : 4000;
+      const simResults = (this.outcome && this.outcome.groupMap) ? this.outcome.groupMap : this.results;
       this.probBusy = true;
       setTimeout(() => {
         try {
-          const mc = Eng.monteCarlo(mcEntries, this.results, this.simN, this.settings, Math.random);
+          const mc = Eng.monteCarlo(mcEntries, simResults, this.simN, S, Math.random);
           this.probData = mc.byId; this.lastProb = true; this.recomputeRanking();
           this.toast("🎲 Probabilidades actualizadas (" + this.simN.toLocaleString("es") + " simulaciones).");
         } catch (e) { this.toast("Error simulando: " + e.message, "err"); }

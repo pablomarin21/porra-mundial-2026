@@ -173,11 +173,47 @@ window.PORRA_DATA = (function () {
     semis: 10,      // por cada equipo en semifinales
     finalists: 15,  // por cada finalista
     champion: 25,   // por acertar el campeón
+    // --- predicciones especiales (puntos extra) ---
+    revelacion: 8, decepcion: 8, pichichi: 12, asistente: 10, hattrick: 5, dobleRoja: 5,
   };
+
+  // --- Cierre automático: arranque del primer partido (México–Sudáfrica) ---
+  const LOCK_AT_DEFAULT = "2026-06-11T19:00:00Z";
+
+  // --- Predicciones especiales (aparte de la general) ---
+  const SIDE_BETS = [
+    { key: "hattrick", emoji: "⚽", q: "¿Habrá algún hat-trick (un jugador marca 3 goles) en el Mundial?" },
+    { key: "dobleRoja", emoji: "🟥", q: "¿Habrá un partido con tarjeta roja para los DOS equipos?" },
+  ];
+
+  // --- Mapeo de nombres de ESPN a nuestro nombre canónico (solo los que difieren) ---
+  const ESPN_NAME = {
+    "Bosnia-Herzegovina": "Bosnia and Herzegovina",
+    "Congo DR": "DR Congo",
+    "Curaçao": "Curacao",
+    "Czechia": "Czech Republic",
+    "Türkiye": "Turkey",
+  };
+  const TEAM_SET = new Set([].concat(...GROUP_LETTERS.map((L) => GROUPS[L])));
+  function espnCanon(name) {
+    const n = ESPN_NAME[name] || name;
+    return TEAM_SET.has(n) ? n : null; // null = placeholder ("Group A Winner", etc.)
+  }
+
+  // --- Ventanas de fechas de eliminatorias (para saber qué ronda alcanzó cada equipo) ---
+  // El ganador de un partido jugado en esa ventana "llega" a la ronda indicada.
+  const KO_WINDOWS = [
+    { reached: "octavos", from: "2026-06-28", to: "2026-07-03" }, // gana 1/16 → llega a octavos
+    { reached: "cuartos", from: "2026-07-04", to: "2026-07-07" }, // gana octavos → llega a cuartos
+    { reached: "semis", from: "2026-07-09", to: "2026-07-11" },   // gana cuartos → llega a semis
+    { reached: "final", from: "2026-07-14", to: "2026-07-15" },   // gana semis → llega a la final
+    { reached: "champion", from: "2026-07-19", to: "2026-07-19" },// gana la final → campeón
+  ];
 
   return {
     GROUPS, GROUP_LETTERS, TEAM_INFO, ELO, GROUP_FIXTURES,
     R32, THIRD_SLOTS, R16, QF, SF, FINAL, SCHEDULE, DEFAULT_SCORING,
+    LOCK_AT_DEFAULT, SIDE_BETS, ESPN_NAME, espnCanon, KO_WINDOWS, TEAM_SET,
     es: (t) => (TEAM_INFO[t] ? TEAM_INFO[t].es : t),
     flag: (t) => (TEAM_INFO[t] ? TEAM_INFO[t].flag : "🏳️"),
   };

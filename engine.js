@@ -298,6 +298,77 @@
     return bd;
   }
 
+  // -------- puntos de las predicciones especiales --------
+  function scoreExtras(extras, actuals, S) {
+    const e = extras || {}, a = actuals || {};
+    const bd = { revelacion: 0, decepcion: 0, pichichi: 0, asistente: 0, hattrick: 0, dobleRoja: 0 };
+    const norm = (s) => (s || "").toString().trim().toLowerCase();
+    if (a.revelacion && e.revelacion === a.revelacion) bd.revelacion += S.revelacion;
+    if (a.decepcion && e.decepcion === a.decepcion) bd.decepcion += S.decepcion;
+    if (a.pichichi && norm(e.pichichi) && norm(e.pichichi) === norm(a.pichichi)) bd.pichichi += S.pichichi;
+    if (a.asistente && norm(e.asistente) && norm(e.asistente) === norm(a.asistente)) bd.asistente += S.asistente;
+    const sb = e.sidebets || {}, asb = a.sidebets || {};
+    if (asb.hattrick && sb.hattrick === asb.hattrick) bd.hattrick += S.hattrick;
+    if (asb.dobleRoja && sb.dobleRoja === asb.dobleRoja) bd.dobleRoja += S.dobleRoja;
+    bd.total = bd.revelacion + bd.decepcion + bd.pichichi + bd.asistente + bd.hattrick + bd.dobleRoja;
+    return bd;
+  }
+
+  // -------- outcome en vivo a partir de los datos de ESPN (+ correcciones manuales) --------
+  function outcomeFromEspn(events, dbResults, extrasActual) {
+    dbResults = dbResults || {};
+    const pairToFx = {};
+    for (const fx of DATA.GROUP_FIXTURES) pairToFx[[fx.home, fx.away].slice().sort().join("|")] = fx;
+    const groupMap = {};
+    const ko = { octavos: new Set(), cuartos: new Set(), semis: new Set(), final: new Set(), champion: null };
+    for (const ev of (events || [])) {
+      const comp = ev.competitions && ev.competitions[0]; if (!comp) continue;
+      const cs = comp.competitors || []; if (cs.length !== 2) continue;
+      const A = cs.find((c) => c.homeAway === "home") || cs[0];
+      const B = cs.find((c) => c.homeAway === "away") || cs[1];
+      const tA = DATA.espnCanon(A.team.displayName), tB = DATA.espnCanon(B.team.displayName);
+      if (!tA || !tB) continue; // placeholder: equipos sin decidir todavía
+      const completed = !!(ev.status && ev.status.type && ev.status.type.completed);
+      const date = (ev.date || "").slice(0, 10);
+      const sA = parseInt(A.score, 10), sB = parseInt(B.score, 10);
+      const koWin = DATA.KO_WINDOWS.find((w) => date >= w.from && date <= w.to);
+      const fx = pairToFx[[tA, tB].slice().sort().join("|")];
+      if (fx && !koWin) {
+        if (completed && !isNaN(sA) && !isNaN(sB)) {
+          const home = fx.home === tA ? sA : sB, away = fx.home === tA ? sB : sA;
+          groupMap[fx.code] = { played: true, home_score: home, away_score: away };
+        }
+      } else if (koWin && completed) {
+        let w = A.winner ? tA : (B.winner ? tB : (!isNaN(sA) && !isNaN(sB) ? (sA > sB ? tA : (sB > sA ? tB : null)) : null));
+        if (w) { if (koWin.reached === "champion") ko.champion = w; else ko[koWin.reached].add(w); }
+      }
+    }
+    // correcciones manuales (DB) de grupos
+    for (const fx of DATA.GROUP_FIXTURES) {
+      const r = dbResults[fx.code];
+      if (r && r.played && r.home_score != null) groupMap[fx.code] = { played: true, home_score: r.home_score, away_score: r.away_score };
+    }
+    const oc = liveOutcome(groupMap);
+    // correcciones manuales (DB) de eliminatorias por nº de partido → ronda
+    const roundOf = {};
+    for (const m of DATA.R32) roundOf[m.match] = "octavos";
+    for (const m of DATA.R16) roundOf[m.match] = "cuartos";
+    for (const m of DATA.QF) roundOf[m.match] = "semis";
+    for (const m of DATA.SF) roundOf[m.match] = "final";
+    roundOf[DATA.FINAL.match] = "champion";
+    for (const k in dbResults) {
+      const r = dbResults[k]; if (!r || !r.played || !r.winner) continue;
+      const rr = roundOf[k] || roundOf[Number(k)]; if (!rr) continue;
+      if (rr === "champion") ko.champion = r.winner; else ko[rr].add(r.winner);
+    }
+    oc.reached = {
+      octavos: ko.octavos, cuartos: ko.cuartos, semis: ko.semis, final: ko.final, champion: ko.champion,
+    };
+    oc.extrasActual = extrasActual || {};
+    oc.groupMap = groupMap;
+    return oc;
+  }
+
   // -------- Monte Carlo: probabilidad de ganar la porra en vivo --------
   // entries: [{id, picks(derivados)}].  Devuelve {byId:{id:{win,podium,avg}}, sims}
   function monteCarlo(entries, resultsMap, N, S, rng) {
@@ -310,7 +381,7 @@
       const oc = simulateOutcome(resultsMap, rng);
       let best = -Infinity;
       const scored = entries.map((e) => {
-        const p = scoreEntry(e.picks, oc, S);
+        const p = scoreEntry(e.picks, oc, S) + (e.extraPts || 0);
         sum[e.id] += p;
         if (p > best) best = p;
         return { id: e.id, p };
@@ -332,6 +403,6 @@
     poisson, simGoals, simKnockoutWinner,
     groupStandings, thirdMatching, buildR32Teams, computeQualifiers,
     simulateOutcome, liveOutcome, derivePicks, scoreEntry, scoreBreakdown, monteCarlo,
-    THIRD_SLOT_NUMS,
+    scoreExtras, outcomeFromEspn, THIRD_SLOT_NUMS,
   };
 });
