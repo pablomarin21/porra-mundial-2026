@@ -33,7 +33,7 @@ const ERRORS = {
 window.porraApp = function () {
   return {
     // navegación
-    view: "home", tab: "play", step: 1, rTab: "cal", aTab: "groups",
+    view: "home", tab: "play", step: 1, rTab: "cal", aTab: "groups", calFilter: "all",
     phase: "welcome", gIdx: 0,
     // estado porra / jugador
     pool: null, me: { first: "", last: "", id: null, saved: false },
@@ -104,6 +104,7 @@ window.porraApp = function () {
         out.push({
           id: ev.id, ts: this._d(ev.date) ? this._d(ev.date).getTime() : 0,
           time: this.madridTime(ev.date), dayShort: this.madridDayShort(ev.date), dayLong: this.madridDayLong(ev.date), dayKey: this._dayKey(ev.date),
+          hCanon: cH, aCanon: cA,
           hName: cH ? D.es(cH) : this.koLabel(H.team.displayName), hFlag: cH ? D.flag(cH) : "🏳️",
           aName: cA ? D.es(cA) : this.koLabel(A.team.displayName), aFlag: cA ? D.flag(cA) : "🏳️",
           hs: H.score, as: A.score, live: st.state === "in", done: !!st.completed, pre: st.state === "pre",
@@ -119,9 +120,12 @@ window.porraApp = function () {
       const upcoming = this.liveMatches.filter((m) => m.ts >= this.nowTs - 6 * 3600000);
       return (upcoming.length ? upcoming : this.liveMatches).slice(0, 10);
     },
+    get todayKey() { return this._dayKey(new Date(this.nowTs || Date.now()).toISOString()); },
     get schedule() {
-      const byDay = {};
+      const f = this.calFilter, today = this.todayKey, byDay = {};
       for (const m of this.liveMatches) {
+        if (f === "spain" && m.hCanon !== "Spain" && m.aCanon !== "Spain") continue;
+        if (f === "today" && m.dayKey !== today) continue;
         const k = m.dayKey || "?";
         if (!byDay[k]) byDay[k] = { key: k, label: m.dayLong, matches: [] };
         byDay[k].matches.push(m);
@@ -137,6 +141,8 @@ window.porraApp = function () {
       setInterval(() => { this.nowTs = Date.now(); }, 20000);
       window.addEventListener("beforeinstallprompt", (e) => { e.preventDefault(); this.deferredPrompt = e; });
       window.addEventListener("appinstalled", () => { this.deferredPrompt = null; this.showInstall = false; });
+      // Mostrar el tutorial de instalación una sola vez (primera visita, si no es ya una app)
+      try { if (!this.isStandalone && !localStorage.getItem("porra_install_seen")) setTimeout(() => { if (!this.isStandalone) this.showInstall = true; }, 1800); } catch (e) {}
       this._espnTimer = setInterval(() => { if (this.pool && (this.tab === "leaderboard" || this.tab === "results")) this.fetchEspn(false); }, 60000);
       const code = new URLSearchParams(location.search).get("porra");
       if (code) await this.loadPool(code);

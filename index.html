@@ -573,6 +573,11 @@
     <!-- Calendario: todos los partidos con hora de España (Madrid) -->
     <div x-show="rTab==='cal'" class="rcal">
       <p class="muted tiny">⏰ Horarios en hora de <b>España peninsular (Madrid)</b>. <span x-show="!espnAt">Cargando…</span></p>
+      <div class="cal-filter">
+        <button :class="{on:calFilter==='all'}" @click="calFilter='all'">Todos</button>
+        <button :class="{on:calFilter==='spain'}" @click="calFilter='spain'">🇪🇸 España</button>
+        <button :class="{on:calFilter==='today'}" @click="calFilter='today'">Hoy</button>
+      </div>
       <template x-for="day in schedule" :key="'d'+day.key">
         <div class="cal-day">
           <div class="cal-day-h" x-text="day.label"></div>
@@ -586,7 +591,7 @@
           </template>
         </div>
       </template>
-      <p class="muted" x-show="!schedule.length">Cargando el calendario en vivo…</p>
+      <p class="muted" x-show="!schedule.length" x-text="espnAt ? (calFilter==='today' ? 'No hay partidos hoy.' : (calFilter==='spain' ? 'No hay partidos de España con este filtro.' : 'No hay partidos.')) : 'Cargando el calendario en vivo…'"></p>
     </div>
 
     <div x-show="rTab==='groups'" class="rgroups">
