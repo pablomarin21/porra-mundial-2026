@@ -104,7 +104,7 @@
       <div class="banner warn">🔒 La porra está cerrada (el Mundial ya ha empezado). Puedes mirar tu quiniela pero no cambiarla. Ve a «Clasificación» para ver cómo vas.</div>
     </template>
     <template x-if="!isLocked && lockCountdown">
-      <div class="banner countdown">⏳ Puedes editar hasta el primer partido. <b>Cierra en <span x-text="lockCountdown"></span></b> (11 jun, 19:00 UTC · 21:00 en España).</div>
+      <div class="banner countdown">⏳ Puedes editar hasta <b>1 hora antes</b> del primer partido. <b>Cierra en <span x-text="lockCountdown"></span></b> (jue 11 jun, 18:00 UTC · 20:00 en España).</div>
     </template>
 
     <!-- ===== FASE: BIENVENIDA / NOMBRE ===== -->
@@ -597,7 +597,7 @@
           <div class="admin-row">
             <button class="btn" :class="pool?.locked?'gold':'danger'" @click="toggleLock()" :disabled="busy"
               x-text="pool?.locked ? '🔓 Reabrir pronósticos' : '🔒 Cerrar pronósticos (empieza el Mundial)'"></button>
-            <span class="muted tiny">La porra se <b>cierra sola</b> al empezar el primer partido (11 jun, 19:00 UTC). Este botón es solo por si quieres cerrarla/reabrirla a mano antes.</span>
+            <span class="muted tiny">La porra se <b>cierra sola 1 hora antes</b> del primer partido (jue 11 jun, 18:00 UTC · 20:00 España). Este botón es solo por si quieres cerrarla/reabrirla a mano antes.</span>
           </div>
           <details class="scoring">
             <summary>Puntuación (avanzado)</summary>

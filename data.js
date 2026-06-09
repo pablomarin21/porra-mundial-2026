@@ -177,8 +177,8 @@ window.PORRA_DATA = (function () {
     revelacion: 8, decepcion: 8, pichichi: 12, asistente: 10, hattrick: 5, dobleRoja: 5,
   };
 
-  // --- Cierre automático: arranque del primer partido (México–Sudáfrica) ---
-  const LOCK_AT_DEFAULT = "2026-06-11T19:00:00Z";
+  // --- Cierre automático: 1 hora antes del primer partido (saque 19:00 UTC, jue 11 jun) ---
+  const LOCK_AT_DEFAULT = "2026-06-11T18:00:00Z";
 
   // --- Predicciones especiales (aparte de la general) ---
   const SIDE_BETS = [
