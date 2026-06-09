@@ -137,10 +137,10 @@
       <div class="card welcome-card" x-show="entries.length===0 || chosenNew">
         <button class="btn ghost mini" x-show="entries.length>0" @click="chosenNew=false" style="margin-bottom:8px">← volver a la lista</button>
         <label>Tu nombre</label>
-        <input x-model="me.first" placeholder="Ej: Lucía" :disabled="isLocked" @keydown.enter="createNew()" />
+        <input x-model="me.first" placeholder="Ej: Lucía" :disabled="isLocked" @keydown.enter="submitName()" />
         <label>Tu apellido</label>
-        <input x-model="me.last" placeholder="Ej: Torres" :disabled="isLocked" @keydown.enter="createNew()" />
-        <button class="btn gold block big" @click="createNew()" :disabled="busy || isLocked">🚀 Crear mi porra →</button>
+        <input x-model="me.last" placeholder="Ej: Torres" :disabled="isLocked" @keydown.enter="submitName()" />
+        <button class="btn gold block big" @click="submitName()" :disabled="busy || isLocked">🚀 Entrar →</button>
         <p class="tiny muted">Al entrar ya apareces en la <b>clasificación</b>. Podrás cambiar tus pronósticos hasta que empiece el Mundial.</p>
       </div>
 
@@ -149,10 +149,11 @@
         <div class="modal-bg" @click.self="cancelClaim()">
           <div class="modal" style="max-width:380px;text-align:center">
             <div style="font-size:2.4rem">🙋</div>
-            <h3 style="color:var(--green);margin:4px 0">¿Seguro que eres<br><span x-text="confirmClaim.first_name+' '+confirmClaim.last_name"></span>?</h3>
-            <p class="muted">Entrarás como esta persona y recuperarás <b>su porra</b>. Si no eres tú, dale a «No soy yo» para no liarla.</p>
-            <button class="btn gold block big" @click="doClaim()" :disabled="busy">✅ Sí, soy yo</button>
-            <button class="btn ghost block" @click="cancelClaim()">No soy yo</button>
+            <h3 style="color:var(--green);margin:4px 0">¿Eres<br><span x-text="confirmClaim.first_name+' '+confirmClaim.last_name"></span>?</h3>
+            <p class="muted" x-show="claimFromName">Ya hay una porra con ese nombre. Si eres tú, <b>recupérala</b> con todos tus pronósticos.</p>
+            <p class="muted" x-show="!claimFromName">Entrarás como esta persona y recuperarás <b>su porra</b>. Si no eres tú, dale a «No».</p>
+            <button class="btn gold block big" @click="doClaim()" :disabled="busy">✅ Sí, soy yo — recuperar mi porra</button>
+            <button class="btn ghost block" @click="rejectClaim()" :disabled="busy" x-text="claimFromName ? 'No, soy otra persona (crear nueva)' : 'No soy yo'"></button>
           </div>
         </div>
       </template>

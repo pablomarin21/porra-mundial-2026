@@ -36,7 +36,7 @@ window.porraApp = function () {
     // navegación
     view: "home", tab: "play", step: 1, rTab: "cal", aTab: "groups", calFilter: "all",
     teamProbs: {}, teamProbsSims: 0, scorers: [], assisters: [],
-    phase: "welcome", gIdx: 0, chosenNew: false, confirmClaim: null,
+    phase: "welcome", gIdx: 0, chosenNew: false, confirmClaim: null, claimFromName: false,
     // estado porra / jugador
     pool: null, me: { first: "", last: "", id: null, saved: false },
     joinCode: "", newPool: { name: "", code: "", pin: "" }, recent: [],
@@ -407,8 +407,31 @@ window.porraApp = function () {
       return true;
     },
     chooseNew() { this.chosenNew = true; },
-    askClaim(e) { this.confirmClaim = e; },
-    cancelClaim() { this.confirmClaim = null; },
+    askClaim(e) { this.claimFromName = false; this.confirmClaim = e; },
+    cancelClaim() { this.confirmClaim = null; this.claimFromName = false; },
+    rejectClaim() { const fromName = this.claimFromName; this.confirmClaim = null; this.claimFromName = false; if (fromName) this.createNew(); },
+    _sameName(e) { const n = (s) => (s || "").trim().toLowerCase(); return n(e.first_name) === n(this.me.first) && n(e.last_name) === n(this.me.last); },
+    // Botón de la pantalla de nombre: reconoce SIEMPRE si ya existe (espera a que cargue la lista; el servidor también revisa)
+    async submitName() {
+      if (!this.me.first.trim() || !this.me.last.trim()) return this.toast("Pon tu nombre y tu apellido.", "warn");
+      if (!this.entries.length) { try { await this.loadEntries({ recompute: false }); } catch (e) {} }
+      const m = (this.entries || []).find((e) => this._sameName(e));
+      if (m) { this.claimFromName = true; this.confirmClaim = m; return; }   // ya existe ese nombre → confirmar y recuperar
+      await this.registerOrClaim();                                          // sin match → crear (el servidor reclama si lo hubiera)
+    },
+    async registerOrClaim() {
+      if (!this.me.first.trim() || !this.me.last.trim()) return this.toast("Pon tu nombre y tu apellido.", "warn");
+      this.busy = true;
+      try {
+        const res = await this.rpc("porra_register", { p_code: this.pool.code, p_first: this.me.first, p_last: this.me.last });
+        this.me.id = res.participant_id; this.me.saved = true;
+        if (res.claimed && res.picks && Object.keys(res.picks).length) this.applyPicks(res.picks);
+        this._persistMe();
+        this.chosenNew = false; this.phase = "hub";
+        this.toast(res.claimed ? ("¡Hola de nuevo, " + this.me.first + "! He recuperado tu porra. 👌") : ("¡Estás dentro, " + this.me.first + "! Ya apareces en la clasificación. 🎉"));
+      } catch (e) { this.toast(this.errMsg(e), "err"); }
+      finally { this.busy = false; }
+    },
     async createNew() {
       if (!this.me.first.trim() || !this.me.last.trim()) return this.toast("Pon tu nombre y tu apellido.", "warn");
       this.busy = true;
@@ -429,7 +452,7 @@ window.porraApp = function () {
         this.me.id = res.participant_id; this.me.first = res.first_name; this.me.last = res.last_name; this.me.saved = true;
         if (res.picks && Object.keys(res.picks).length) this.applyPicks(res.picks);
         this._persistMe();
-        this.confirmClaim = null; this.chosenNew = false; this.phase = "hub";
+        this.confirmClaim = null; this.claimFromName = false; this.chosenNew = false; this.phase = "hub";
         this.toast("¡Hola de nuevo, " + this.me.first + "! He recuperado tu porra. 👌");
       } catch (e) { this.toast(this.errMsg(e), "err"); }
       finally { this.busy = false; }
