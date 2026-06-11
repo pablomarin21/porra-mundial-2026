@@ -163,6 +163,8 @@ window.porraApp = function () {
       // Mostrar el tutorial de instalación una sola vez (primera visita, si no es ya una app)
       try { if (!this.isStandalone && !localStorage.getItem("porra_install_seen")) setTimeout(() => { if (!this.isStandalone) this.showInstall = true; }, 1800); } catch (e) {}
       this._espnTimer = setInterval(() => { if (!this.pool) return; if (this.tab === "leaderboard") this.loadBoard(); else if (this.tab === "results") this.fetchEspn(false); }, 60000);
+      // Al volver a la pestaña/app, refresca al instante (clasificación siempre al día con lo que se está jugando).
+      document.addEventListener("visibilitychange", () => { if (!document.hidden && this.pool) { if (this.tab === "leaderboard") this.loadBoard(); else if (this.tab === "results") this.fetchEspn(false); } });
       const code = new URLSearchParams(location.search).get("porra");
       if (code) await this.loadPool(code);
     },
