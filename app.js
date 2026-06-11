@@ -274,10 +274,12 @@ window.porraApp = function () {
         this.rememberPool(pool);
         this.loadMine(pool.code);
         this.phase = this.me.id ? "hub" : "welcome"; this.gIdx = 0; this.chosenNew = false; this.confirmClaim = null; this.wmode = "choose"; this.entriesLoaded = false;
+        if (this.me.id) this.tab = "leaderboard";   // quien ya juega entra directo a la Clasificación en directo
         await this.loadExtrasActual();
         await this.loadResults();
         await this.loadEntries();
         this.fetchEspn(true);
+        if (this.tab === "leaderboard") this.loadBoard();
       } catch (e) { this.toast(this.errMsg(e), "err"); } finally { this.busy = false; }
     },
     async loadExtrasActual() {
@@ -552,11 +554,12 @@ window.porraApp = function () {
     },
 
     // ---------- ver la quiniela de un participante ----------
-    get canViewPicks() { return !!(this.pool && (this.boardLocked || this.adminOk)); },
+    get canViewPicks() { return !!this.pool; },   // quinielas públicas: todos ven la de todos
+    get detRank() { return (this.ranked || []).find((r) => r.id === this.selectedId) || null; },
     toggleDetail(id) {
       const e = this.entries.find((x) => x.id === id);
       if (!e) return;
-      if (!e.picks) { this.toast("Las quinielas se revelan cuando se cierra la porra (para que nadie copie).", "warn"); return; }
+      if (!e.picks) { this.toast("Este participante aún no ha guardado su porra.", "warn"); return; }
       if (this.selectedId === id) { this.selectedId = null; this.det = null; }
       else { this.selectedId = id; this.det = this._computeDetail(id); }
     },
@@ -605,6 +608,19 @@ window.porraApp = function () {
 
     // ---------- clasificación + probabilidades ----------
     openLeaderboard() { this.tab = "leaderboard"; this.selectedId = null; this.det = null; this.loadBoard(); },
+    openQuinielas() { this.tab = "quinielas"; this.selectedId = null; this.det = null; this.loadEntries({ recompute: false }); if (!this.ranked.length) this.loadBoard(); },
+    // tarjetas para el apartado Quinielas (campeón + estado de cada participante)
+    get quinielaCards() {
+      const rankMap = {}; (this.ranked || []).forEach((r) => { rankMap[r.id] = r; });
+      const arr = (this.entries || []).map((e) => {
+        let champion = null;
+        if (e.picks) { try { champion = Eng.derivePicks(e.picks).champion; } catch (x) {} }
+        const rr = rankMap[e.id];
+        return { id: e.id, name: (e.first_name + " " + e.last_name).trim(), first_name: e.first_name, complete: rr ? rr.complete !== false : !!e.picks, hasPicks: !!e.picks, champion, isMe: e.id === this.me.id };
+      });
+      arr.sort((a, b) => (b.hasPicks - a.hasPicks) || a.name.localeCompare(b.name));
+      return arr;
+    },
     async loadBoard() {
       if (!this.pool) return;
       this.probBusy = true;
@@ -621,7 +637,7 @@ window.porraApp = function () {
         }
       } catch (e) { /* fallback abajo */ }
       // marcadores en vivo + picks (no deben afectar a la tabla del servidor)
-      try { await this.loadResults(); if (ok && this.boardLocked) await this.loadEntries({ recompute: false }); } catch (e) {}
+      try { await this.loadResults(); if (ok) await this.loadEntries({ recompute: false }); } catch (e) {}
       if (!ok) { this.usingServerBoard = false; try { await this.refreshBoard(); } catch (e) {} }
       this.probBusy = false;
     },
