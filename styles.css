@@ -120,21 +120,45 @@ input:focus,select:focus{outline:none;border-color:var(--green2)}
 
 /* ===== Bracket ===== */
 /* Cuadro eliminatorio: vertical, ronda por ronda (bien estructurado en móvil) */
-.bracket-scroll{overflow:visible;padding:0}
-.bracket{display:flex;flex-direction:column;gap:16px;min-width:0}
-.bcol{display:flex;flex-wrap:wrap;justify-content:center;gap:8px;min-width:0}
-.bcol-h{flex:0 0 100%;font-weight:900;color:#fff;font-size:.84rem;text-transform:uppercase;letter-spacing:.6px;text-align:center;background:linear-gradient(120deg,var(--green),var(--green2));border-radius:9px;padding:7px 12px;box-shadow:0 5px 14px rgba(0,0,0,.22);margin-bottom:2px}
-.bcol:not(.champ-col):not(:last-child)::after{content:"⬇";flex:0 0 100%;text-align:center;color:var(--green2);font-size:.8rem;opacity:.6;margin-top:2px}
-.bmatch{flex:1 1 calc(50% - 5px);min-width:150px;max-width:250px;background:#fff;border:1px solid var(--line);border-radius:11px;padding:5px;display:flex;flex-direction:column;gap:4px;box-shadow:0 5px 12px rgba(0,0,0,.07)}
-.bmatch.nope{opacity:.45}
-.bteam{display:flex;align-items:center;gap:7px;background:#f7faf8;border:1.5px solid var(--line);border-radius:8px;padding:8px 9px;font-size:.84rem;font-weight:600;text-align:left;width:100%}
-.bteam .flag{font-size:1.05rem}
-.bteam.sel{border-color:var(--ok);background:#e7f9ee;color:#0a6c39}
-.bteam.dim{opacity:.4}
-.champ-col{margin-top:2px}
-.champ-box{flex:0 0 100%;display:flex;flex-direction:column;align-items:center;gap:6px;background:linear-gradient(140deg,#fff7e3,#fff);border:2px dashed var(--gold);border-radius:14px;padding:18px 14px;font-weight:800;color:var(--green);font-size:1.05rem}
+/* cuadro tipo stepper: UNA ronda cada vez (cabe en móvil), pestañas 1/16→final */
+.brk{margin-top:4px}
+.brk-tabs{display:flex;gap:6px;overflow-x:auto;-webkit-overflow-scrolling:touch;padding:2px 2px 9px;margin:0 -2px}
+.brk-tab{flex:0 0 auto;display:flex;flex-direction:column;align-items:center;gap:1px;background:#fff;border:1.5px solid var(--line);border-radius:11px;padding:7px 13px;color:var(--muted);box-shadow:0 3px 8px rgba(0,0,0,.05)}
+.brk-tab b{font-size:.82rem;font-weight:800;color:#2a3b33}
+.brk-tab small{font-weight:700;font-size:.66rem}
+.brk-tab.on{border-color:var(--green);background:linear-gradient(120deg,var(--green),var(--green2));box-shadow:0 5px 14px rgba(0,0,0,.18)}
+.brk-tab.on b,.brk-tab.on small{color:#fff}
+.brk-tab.done{border-color:var(--ok)}
+.brk-tab.done small{color:var(--ok)}
+.brk-tab.on.done small{color:#d7ffe6}
+.brk-body{display:flex;flex-direction:column;gap:11px;animation:brkin .18s ease}
+@keyframes brkin{from{opacity:0;transform:translateX(10px)}to{opacity:1;transform:none}}
+.bmatch{background:#fff;border:1px solid var(--line);border-radius:13px;padding:9px;display:flex;flex-direction:column;gap:4px;box-shadow:0 5px 12px rgba(0,0,0,.07)}
+.bmatch.nope{border-style:dashed;border-color:#cdd9d3}
+.bvs{align-self:center;font-size:.64rem;font-weight:800;color:var(--muted);letter-spacing:1px;text-transform:uppercase;margin:-1px 0}
+.bteam{display:flex;align-items:center;gap:9px;background:#f7faf8;border:1.5px solid var(--line);border-radius:10px;padding:13px 12px;font-size:.95rem;font-weight:700;text-align:left;width:100%;min-width:0}
+.bteam>span:last-child{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.bteam .flag{font-size:1.25rem;flex:none}
+.bteam .bslot{color:var(--muted);font-weight:600;font-style:italic;font-size:.86rem}
+.bteam.sel{border-color:var(--ok);background:#e7f9ee;color:#0a6c39;box-shadow:0 0 0 2px rgba(31,179,99,.16)}
+.bteam.sel::after{content:"✓";margin-left:auto;font-weight:900;color:var(--ok)}
+.bteam.dim{opacity:.45}
+.brk-nav{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:14px}
+.brk-now{font-weight:800;color:var(--green);font-size:.92rem}
+.brk-arrow{background:#fff;border:1.5px solid var(--line);border-radius:10px;padding:10px 14px;font-weight:800;font-size:.86rem;color:var(--green)}
+.brk-arrow:disabled{opacity:.4}
+.champ-box{display:flex;flex-direction:column;align-items:center;gap:7px;background:linear-gradient(140deg,#fff7e3,#fff);border:2px dashed var(--gold);border-radius:15px;padding:20px 14px;font-weight:800;color:var(--green);font-size:1.05rem;text-align:center;margin-top:3px}
 .champ-box.set{border-style:solid;box-shadow:0 0 0 4px rgba(245,197,66,.18)}
-.champ-box .flag.big{font-size:2.2rem}
+.champ-box .flag.big{font-size:2.4rem}
+/* cuadro de RESULTADOS en vivo (solo lectura, Resultados→Eliminatorias): vertical compacto */
+.bracket{display:flex;flex-direction:column;gap:16px;min-width:0}
+.bracket .bcol{display:flex;flex-wrap:wrap;justify-content:center;gap:8px;min-width:0}
+.bracket .bcol-h{flex:0 0 100%;font-weight:900;color:#fff;font-size:.84rem;text-transform:uppercase;letter-spacing:.6px;text-align:center;background:linear-gradient(120deg,var(--green),var(--green2));border-radius:9px;padding:7px 12px;box-shadow:0 5px 14px rgba(0,0,0,.22);margin-bottom:2px}
+.bracket .bcol:not(:last-child)::after{content:"⬇";flex:0 0 100%;text-align:center;color:var(--green2);font-size:.8rem;opacity:.6;margin-top:2px}
+.bracket .bmatch{flex:1 1 calc(50% - 5px);min-width:148px;max-width:250px;padding:5px;gap:4px}
+.bracket .bteam{padding:8px 9px;font-size:.84rem;font-weight:600}
+.bracket .bteam .flag{font-size:1.05rem}
+.bracket .bteam.sel::after{content:""}
 
 /* ===== Review ===== */
 .review{background:#fbfdfc;border:1px solid var(--line);border-radius:12px;padding:14px}
