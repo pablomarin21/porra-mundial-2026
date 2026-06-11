@@ -198,7 +198,8 @@ const ENGINE=(function(DATA){
     for (const L of LETTERS) {
       const s = groupStandings(L, resultsMap, false, null);
       standingsByGroup[L] = s;
-      if (s._complete) groupOrder[L] = s.map((x) => x.team); else allComplete = false;
+      if (s._complete) { groupOrder[L] = s.map((x) => x.team); }
+      else { allComplete = false; if (s.some((x) => x.pj > 0)) groupOrder[L] = s.map((x) => x.team); }
     }
     let qualifiedThirdTeams = null;
     if (allComplete) qualifiedThirdTeams = new Set(computeQualifiers(standingsByGroup).qualifiedThirdTeams);
