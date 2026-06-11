@@ -13,7 +13,7 @@
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="Porra Mundial" />
-  <link rel="stylesheet" href="styles.css?v=5" />
+  <link rel="stylesheet" href="styles.css?v=6" />
 </head>
 <body x-data="porraApp()" x-init="init()" x-cloak>
 
@@ -234,7 +234,7 @@
           <div class="how-card"><div class="how-n">2</div><h4>🥉 Mejores terceros</h4><p>Novedad 2026: también clasifican los <b>8 mejores terceros</b>. Elige cuáles crees.</p></div>
           <div class="how-card"><div class="how-n">3</div><h4>🏆 El cuadro</h4><p>Con los 32 clasificados eliges quién gana cada cruce hasta el <b>campeón</b>.</p></div>
         </div>
-        <div class="how-points">🎯 <b>Puntos:</b> aciertos de grupo, terceros que clasifican y cada equipo que llega a octavos, cuartos, semis, final y campeón. ¡Cuanto más lejos, más puntos! Las <b>especiales</b> dan puntos extra aparte.</div>
+        <div class="how-points">🎯 <b>Puntos (en vivo):</b> aciertas el <b>orden de cada grupo</b> (1º/2º/3º) y los equipos que <b>clasifican</b> → suma según se van decidiendo los partidos (provisional hasta que el grupo acaba). Luego los <b>mejores terceros</b>, cada equipo que avanza en el <b>cuadro</b> (octavos→campeón) y las <b>especiales</b> (aparte). Detalle completo en la pestaña <b>Clasificación</b>.</div>
       </details>
     </div>
 
@@ -447,31 +447,31 @@
     <details class="scoring-explain">
       <summary>📋 ¿Cómo se puntúa? — el modelo de la porra</summary>
       <div class="se-body">
-        <p><b>Tu pronóstico:</b> el orden de los 12 grupos, los 8 mejores terceros y el cuadro hasta el campeón. Sumas puntos por cada acierto, y cuanto más lejos llega tu equipo, más puntos.</p>
+        <p>En esta porra <b>ordenaste cada grupo</b> (1º→4º), elegiste tus <b>8 mejores terceros</b> y montaste el <b>cuadro</b> hasta el campeón. Ganas puntos por cada acierto y <b>la clasificación se mueve sola</b> con cada partido.</p>
         <div class="se-grid">
           <div class="se-card">
-            <h4>📊 Fase de grupos <small>(en cada grupo)</small></h4>
+            <h4>📊 Grupos <small>· en vivo, según se decide</small></h4>
             <ul>
-              <li>Acertar el <b>1º</b> <span class="pp" x-text="'+'+settings.g1"></span></li>
-              <li>Acertar el <b>2º</b> <span class="pp" x-text="'+'+settings.g2"></span></li>
-              <li>Acertar el <b>3º</b> <span class="pp" x-text="'+'+settings.g3"></span></li>
-              <li>Equipo que <b>clasifica</b> (top 2), aunque falles el orden <span class="pp" x-text="'+'+settings.qual"></span></li>
+              <li>Aciertas el <b>1º</b> del grupo <span class="pp" x-text="'+'+settings.g1"></span></li>
+              <li>Aciertas el <b>2º</b> <span class="pp" x-text="'+'+settings.g2"></span></li>
+              <li>Aciertas el <b>3º</b> <span class="pp" x-text="'+'+settings.g3"></span></li>
+              <li>Cada equipo que <b>clasifica</b> (queda 1º o 2º) <span class="pp" x-text="'+'+settings.qual"></span></li>
             </ul>
+            <p class="tiny muted">Solo suma lo que los resultados <b>ya han decidido</b>. Mientras el grupo no termine es <b>provisional</b>: si cambia la tabla, tus puntos suben o bajan.</p>
           </div>
           <div class="se-card">
-            <h4>🥉 Mejores terceros</h4>
-            <ul><li>Por cada tercero tuyo que <b>clasifica</b> <span class="pp" x-text="'+'+settings.thirdQual"></span></li></ul>
-            <h4>🏆 Eliminatorias <small>(por cada equipo que llega)</small></h4>
+            <h4>🥉 Mejores terceros <small>· al acabar los grupos</small></h4>
+            <ul><li>Cada tercero tuyo que acaba <b>clasificando</b> <span class="pp" x-text="'+'+settings.thirdQual"></span></li></ul>
+            <h4>🏆 Eliminatorias <small>· según avanzan</small></h4>
             <ul>
-              <li>Llega a <b>octavos</b> <span class="pp" x-text="'+'+settings.octavos"></span></li>
-              <li>Llega a <b>cuartos</b> <span class="pp" x-text="'+'+settings.cuartos"></span></li>
-              <li>Llega a <b>semifinal</b> <span class="pp" x-text="'+'+settings.semis"></span></li>
-              <li>Llega a la <b>final</b> <span class="pp" x-text="'+'+settings.finalists"></span></li>
-              <li>Acierta el <b>campeón</b> <span class="pp" x-text="'+'+settings.champion"></span></li>
+              <li>Tu equipo llega a <b>octavos</b> <span class="pp" x-text="'+'+settings.octavos"></span> · <b>cuartos</b> <span class="pp" x-text="'+'+settings.cuartos"></span></li>
+              <li><b>semis</b> <span class="pp" x-text="'+'+settings.semis"></span> · <b>final</b> <span class="pp" x-text="'+'+settings.finalists"></span> · <b>campeón</b> <span class="pp" x-text="'+'+settings.champion"></span></li>
             </ul>
+            <h4>⭐ Especiales <small>· aparte</small></h4>
+            <ul><li>Revelación <span class="pp" x-text="'+'+settings.revelacion"></span> · Decepción <span class="pp" x-text="'+'+settings.decepcion"></span> · Pichichi <span class="pp" x-text="'+'+settings.pichichi"></span> · Asistente <span class="pp" x-text="'+'+settings.asistente"></span> · Hat-trick <span class="pp" x-text="'+'+settings.hattrick"></span> · Doble roja <span class="pp" x-text="'+'+settings.dobleRoja"></span></li></ul>
           </div>
         </div>
-        <p class="tiny muted">El organizador puede ajustar estos valores en Admin → Puntuación. Los puntos se recalculan solos según se juegan los partidos.</p>
+        <p class="tiny muted">💡 Cuanto más lejos llega tu equipo, más puntos. El organizador puede ajustar los valores en Admin → Puntuación.</p>
       </div>
     </details>
 
@@ -1013,10 +1013,10 @@
   </div>
 
   <!-- ====== Dependencias ====== -->
-  <script src="data.js?v=5"></script>
-  <script src="engine.js?v=5"></script>
+  <script src="data.js?v=6"></script>
+  <script src="engine.js?v=6"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
-  <script src="app.js?v=5"></script>
+  <script src="app.js?v=6"></script>
   <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.1/dist/cdn.min.js"></script>
 </body>
 </html>
