@@ -204,19 +204,34 @@
   }
 
   // -------- outcome real (parcial, sin simular) para la clasificación en vivo --------
+  // Bandas de empate de una tabla: posiciones DECIDIDAS por resultados reales (pts/dg/gf).
+  // Equipos empatados a pts/dg/gf (p.ej. los que aún no han jugado) comparten banda → su
+  // posición exacta NO está decidida y no debe puntuar hasta que un resultado los separe.
+  function rankBands(s) {
+    const key = (t) => t.pts + "|" + t.gd + "|" + t.gf;
+    const info = new Array(s.length); let i = 0;
+    while (i < s.length) {
+      let j = i; while (j + 1 < s.length && key(s[j + 1]) === key(s[i])) j++;
+      for (let k = i; k <= j; k++) info[k] = { firm: i === j, worstRank: j };
+      i = j + 1;
+    }
+    return info;
+  }
   function liveOutcome(resultsMap) {
-    const groupOrder = {}; let allComplete = true;
+    const groupOrder = {}, groupRank = {}; let allComplete = true;
     const standingsByGroup = {};
     for (const L of LETTERS) {
       const s = groupStandings(L, resultsMap, false, null);
       standingsByGroup[L] = s;
-      if (s._complete) { groupOrder[L] = s.map((x) => x.team); }
-      else {
+      if (s._complete) {
+        // Grupo terminado: el orden es definitivo (todas las posiciones cuentan).
+        groupOrder[L] = s.map((x) => x.team);
+        groupRank[L] = s.map((x, i) => ({ firm: true, worstRank: i }));
+      } else {
         allComplete = false;
-        // Puntuación EN DIRECTO (provisional): si el grupo YA ha empezado, puntuamos con la
-        // tabla actual "como si acabara ahora". Se recalcula con cada partido. Los grupos que
-        // aún no han jugado nada no dan puntos (no hay resultado del que depender).
-        if (s.some((x) => x.pj > 0)) groupOrder[L] = s.map((x) => x.team);
+        // EN DIRECTO: usamos la tabla actual, pero SOLO puntúan las posiciones que los
+        // resultados ya han decidido (rankBands marca empatados como "no decididos").
+        if (s.some((x) => x.pj > 0)) { groupOrder[L] = s.map((x) => x.team); groupRank[L] = rankBands(s); }
       }
     }
     let qualifiedThirdTeams = null;
@@ -231,7 +246,7 @@
     const champion = wOf(DATA.FINAL.match);
 
     return {
-      complete: false, allGroupsComplete: allComplete, groupOrder, standingsByGroup,
+      complete: false, allGroupsComplete: allComplete, groupOrder, groupRank, standingsByGroup,
       qualifiedThirdTeams,
       reached: { octavos, cuartos, semis, final: finalists, champion },
     };
@@ -260,12 +275,14 @@
       const act = oc.groupOrder[L];
       const pred = P.groups[L];
       if (!act || !pred) continue;
-      if (pred[0] && pred[0] === act[0]) total += S.g1;
-      if (pred[1] && pred[1] === act[1]) total += S.g2;
-      if (pred[2] && pred[2] === act[2]) total += S.g3;
-      const top2 = new Set([act[0], act[1]]);
-      if (pred[0] && top2.has(pred[0])) total += S.qual;
-      if (pred[1] && top2.has(pred[1])) total += S.qual;
+      const ri = oc.groupRank && oc.groupRank[L];
+      const firm = (i) => !ri || (ri[i] && ri[i].firm);                                   // posición decidida por resultados
+      const defTop2 = (team) => { const idx = act.indexOf(team); return idx < 0 ? false : (ri ? !!(ri[idx] && ri[idx].worstRank <= 1) : idx <= 1); };
+      if (pred[0] && pred[0] === act[0] && firm(0)) total += S.g1;
+      if (pred[1] && pred[1] === act[1] && firm(1)) total += S.g2;
+      if (pred[2] && pred[2] === act[2] && firm(2)) total += S.g3;
+      if (pred[0] && defTop2(pred[0])) total += S.qual;
+      if (pred[1] && defTop2(pred[1])) total += S.qual;
     }
     if (oc.qualifiedThirdTeams) {
       for (const t of P.thirds) if (oc.qualifiedThirdTeams.has(t)) total += S.thirdQual;
@@ -286,12 +303,14 @@
     for (const L of LETTERS) {
       const act = oc.groupOrder[L]; const pred = P.groups[L];
       if (!act || !pred) continue;
-      if (pred[0] && pred[0] === act[0]) bd.grupos += S.g1;
-      if (pred[1] && pred[1] === act[1]) bd.grupos += S.g2;
-      if (pred[2] && pred[2] === act[2]) bd.grupos += S.g3;
-      const top2 = new Set([act[0], act[1]]);
-      if (pred[0] && top2.has(pred[0])) bd.grupos += S.qual;
-      if (pred[1] && top2.has(pred[1])) bd.grupos += S.qual;
+      const ri = oc.groupRank && oc.groupRank[L];
+      const firm = (i) => !ri || (ri[i] && ri[i].firm);
+      const defTop2 = (team) => { const idx = act.indexOf(team); return idx < 0 ? false : (ri ? !!(ri[idx] && ri[idx].worstRank <= 1) : idx <= 1); };
+      if (pred[0] && pred[0] === act[0] && firm(0)) bd.grupos += S.g1;
+      if (pred[1] && pred[1] === act[1] && firm(1)) bd.grupos += S.g2;
+      if (pred[2] && pred[2] === act[2] && firm(2)) bd.grupos += S.g3;
+      if (pred[0] && defTop2(pred[0])) bd.grupos += S.qual;
+      if (pred[1] && defTop2(pred[1])) bd.grupos += S.qual;
     }
     if (oc.qualifiedThirdTeams) for (const t of P.thirds) if (oc.qualifiedThirdTeams.has(t)) bd.terceros += S.thirdQual;
     const stages = [["octavos", S.octavos, "octavos"], ["cuartos", S.cuartos, "cuartos"], ["semis", S.semis, "semis"], ["final", S.finalists, "final"]];

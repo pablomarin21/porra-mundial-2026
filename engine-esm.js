@@ -17,10 +17,13 @@ function espnCanon(name){const n=ESPN_NAME[name]||name;return TEAM_SET.has(n)?n:
 const DATA={GROUPS,GROUP_LETTERS,ELO,GROUP_FIXTURES,R32,THIRD_SLOTS,R16,QF,SF,FINAL,DEFAULT_SCORING,ESPN_NAME,KO_WINDOWS,TEAM_SET,espnCanon};
 
 const ENGINE=(function(DATA){
+
   "use strict";
+
   const ELO = DATA.ELO;
   const LETTERS = DATA.GROUP_LETTERS;
   const THIRD_SLOT_NUMS = [74, 77, 79, 80, 81, 82, 85, 87];
+
   // -------- utilidades aleatorias / partidos --------
   function poisson(lambda, rng) {
     const L = Math.exp(-lambda);
@@ -28,6 +31,7 @@ const ENGINE=(function(DATA){
     do { k++; p *= rng(); } while (p > L);
     return k - 1;
   }
+
   // Marcador simulado a partir de la diferencia de Elo (modelo Poisson).
   function simGoals(home, away, rng) {
     const diff = (ELO[home] || 1500) - (ELO[away] || 1500);
@@ -37,6 +41,7 @@ const ENGINE=(function(DATA){
     const muB = Math.max(0.12, (exp - gd) / 2);
     return [poisson(muA, rng), poisson(muB, rng)];
   }
+
   // Ganador de un cruce de eliminatoria simulado (prórroga -> penaltis por Elo).
   function simKnockoutWinner(a, b, rng) {
     const g = simGoals(a, b, rng);
@@ -45,9 +50,11 @@ const ENGINE=(function(DATA){
     const pa = 1 / (1 + Math.pow(10, ((ELO[b] || 1500) - (ELO[a] || 1500)) / 400));
     return rng() < pa ? a : b;
   }
+
   function fixturesOf(letter) {
     return DATA.GROUP_FIXTURES.filter((f) => f.group === letter);
   }
+
   // -------- tabla de un grupo --------
   // resultsMap: { match_code|matchNum : {home_score, away_score, winner, played} }
   // Devuelve [{team,pts,gd,gf,ga,pj}] ordenado, o null si !simulate y faltan partidos.
@@ -85,6 +92,7 @@ const ENGINE=(function(DATA){
     arr._complete = simulate || played === 6;
     return arr;
   }
+
   // -------- matching de terceros a slots del bracket --------
   // qualGroups: array de 8 letras (grupos cuyo 3º clasifica). -> {matchNum: letra}
   function thirdMatching(qualGroups) {
@@ -114,6 +122,7 @@ const ENGINE=(function(DATA){
     }
     return res;
   }
+
   // Resuelve un código de slot ("W-A","RU-B","3rd") a un equipo concreto.
   function resolveSlot(matchNum, code, q, thirdAssign) {
     if (code === "3rd") { const g = thirdAssign[matchNum]; return g ? q.thirdByGroup[g] : null; }
@@ -123,6 +132,7 @@ const ENGINE=(function(DATA){
     if (type === "RU") return q.runnersUp[grp];
     return null;
   }
+
   // Construye los 16 cruces de 1/16 (matchNum -> {a,b}) a partir de los clasificados.
   function buildR32Teams(q) {
     const thirdAssign = thirdMatching(q.qualifiedThirdGroups);
@@ -135,6 +145,7 @@ const ENGINE=(function(DATA){
     }
     return { teams: res, thirdAssign };
   }
+
   // qualifiers a partir de las tablas de los 12 grupos
   function computeQualifiers(standingsByGroup) {
     const winners = {}, runnersUp = {}, thirdByGroup = {};
@@ -150,6 +161,7 @@ const ENGINE=(function(DATA){
     const qualifiedThirdTeams = thirds.slice(0, 8).map((t) => t.team);
     return { winners, runnersUp, thirdByGroup, qualifiedThirdGroups, qualifiedThirdTeams, thirdsRanked: thirds };
   }
+
   // -------- outcome completo (simulado) --------
   function simulateOutcome(resultsMap, rng) {
     const standingsByGroup = {}, groupOrder = {};
@@ -177,6 +189,7 @@ const ENGINE=(function(DATA){
     }
     round(DATA.R16); round(DATA.QF); round(DATA.SF);
     { const m = DATA.FINAL; const a = winnerOf[m.a], b = winnerOf[m.b]; teamsByMatch[m.match] = { a, b }; winnerOf[m.match] = decide(m.match, a, b); }
+
     const r32set = new Set();
     for (const m of DATA.R32) { r32set.add(built.teams[m.match].a); r32set.add(built.teams[m.match].b); }
     const octavos = new Set(DATA.R32.map((m) => winnerOf[m.match]).filter(Boolean));
@@ -184,6 +197,7 @@ const ENGINE=(function(DATA){
     const semis = new Set(DATA.QF.map((m) => winnerOf[m.match]).filter(Boolean));
     const finalists = new Set(DATA.SF.map((m) => winnerOf[m.match]).filter(Boolean));
     const champion = winnerOf[DATA.FINAL.match];
+
     return {
       complete: true, allGroupsComplete: true, groupOrder,
       qualifiedThirdTeams: new Set(q.qualifiedThirdTeams),
@@ -191,18 +205,41 @@ const ENGINE=(function(DATA){
       qualifiers: q, teamsByMatch, winnerOf,
     };
   }
+
   // -------- outcome real (parcial, sin simular) para la clasificación en vivo --------
+  // Bandas de empate de una tabla: posiciones DECIDIDAS por resultados reales (pts/dg/gf).
+  // Equipos empatados a pts/dg/gf (p.ej. los que aún no han jugado) comparten banda → su
+  // posición exacta NO está decidida y no debe puntuar hasta que un resultado los separe.
+  function rankBands(s) {
+    const key = (t) => t.pts + "|" + t.gd + "|" + t.gf;
+    const info = new Array(s.length); let i = 0;
+    while (i < s.length) {
+      let j = i; while (j + 1 < s.length && key(s[j + 1]) === key(s[i])) j++;
+      for (let k = i; k <= j; k++) info[k] = { firm: i === j, worstRank: j };
+      i = j + 1;
+    }
+    return info;
+  }
   function liveOutcome(resultsMap) {
-    const groupOrder = {}; let allComplete = true;
+    const groupOrder = {}, groupRank = {}; let allComplete = true;
     const standingsByGroup = {};
     for (const L of LETTERS) {
       const s = groupStandings(L, resultsMap, false, null);
       standingsByGroup[L] = s;
-      if (s._complete) { groupOrder[L] = s.map((x) => x.team); }
-      else { allComplete = false; if (s.some((x) => x.pj > 0)) groupOrder[L] = s.map((x) => x.team); }
+      if (s._complete) {
+        // Grupo terminado: el orden es definitivo (todas las posiciones cuentan).
+        groupOrder[L] = s.map((x) => x.team);
+        groupRank[L] = s.map((x, i) => ({ firm: true, worstRank: i }));
+      } else {
+        allComplete = false;
+        // EN DIRECTO: usamos la tabla actual, pero SOLO puntúan las posiciones que los
+        // resultados ya han decidido (rankBands marca empatados como "no decididos").
+        if (s.some((x) => x.pj > 0)) { groupOrder[L] = s.map((x) => x.team); groupRank[L] = rankBands(s); }
+      }
     }
     let qualifiedThirdTeams = null;
     if (allComplete) qualifiedThirdTeams = new Set(computeQualifiers(standingsByGroup).qualifiedThirdTeams);
+
     // reached: directamente de los ganadores registrados en eliminatorias
     const wOf = (n) => { const r = resultsMap[n] || resultsMap[String(n)]; return r && r.played && r.winner ? r.winner : null; };
     const octavos = new Set(DATA.R32.map((m) => wOf(m.match)).filter(Boolean));
@@ -210,12 +247,14 @@ const ENGINE=(function(DATA){
     const semis = new Set(DATA.QF.map((m) => wOf(m.match)).filter(Boolean));
     const finalists = new Set(DATA.SF.map((m) => wOf(m.match)).filter(Boolean));
     const champion = wOf(DATA.FINAL.match);
+
     return {
-      complete: false, allGroupsComplete: allComplete, groupOrder, standingsByGroup,
+      complete: false, allGroupsComplete: allComplete, groupOrder, groupRank, standingsByGroup,
       qualifiedThirdTeams,
       reached: { octavos, cuartos, semis, final: finalists, champion },
     };
   }
+
   // -------- derivar de una quiniela los conjuntos "llega a la ronda X" --------
   // picks = { groups:{L:[4]}, thirds:[...], bracket:{matchNum: team} }
   function derivePicks(picks) {
@@ -231,6 +270,7 @@ const ENGINE=(function(DATA){
       champion: b[DATA.FINAL.match] || b[String(DATA.FINAL.match)] || null,
     };
   }
+
   // -------- puntuación de una quiniela frente a un outcome --------
   function scoreEntry(P, oc, S) {
     let total = 0;
@@ -238,12 +278,14 @@ const ENGINE=(function(DATA){
       const act = oc.groupOrder[L];
       const pred = P.groups[L];
       if (!act || !pred) continue;
-      if (pred[0] && pred[0] === act[0]) total += S.g1;
-      if (pred[1] && pred[1] === act[1]) total += S.g2;
-      if (pred[2] && pred[2] === act[2]) total += S.g3;
-      const top2 = new Set([act[0], act[1]]);
-      if (pred[0] && top2.has(pred[0])) total += S.qual;
-      if (pred[1] && top2.has(pred[1])) total += S.qual;
+      const ri = oc.groupRank && oc.groupRank[L];
+      const firm = (i) => !ri || (ri[i] && ri[i].firm);                                   // posición decidida por resultados
+      const defTop2 = (team) => { const idx = act.indexOf(team); return idx < 0 ? false : (ri ? !!(ri[idx] && ri[idx].worstRank <= 1) : idx <= 1); };
+      if (pred[0] && pred[0] === act[0] && firm(0)) total += S.g1;
+      if (pred[1] && pred[1] === act[1] && firm(1)) total += S.g2;
+      if (pred[2] && pred[2] === act[2] && firm(2)) total += S.g3;
+      if (pred[0] && defTop2(pred[0])) total += S.qual;
+      if (pred[1] && defTop2(pred[1])) total += S.qual;
     }
     if (oc.qualifiedThirdTeams) {
       for (const t of P.thirds) if (oc.qualifiedThirdTeams.has(t)) total += S.thirdQual;
@@ -257,18 +299,21 @@ const ENGINE=(function(DATA){
     if (oc.reached.champion && P.champion && P.champion === oc.reached.champion) total += S.champion;
     return total;
   }
+
   // -------- desglose de puntos por categoría (para mostrar en la app) --------
   function scoreBreakdown(P, oc, S) {
     const bd = { grupos: 0, terceros: 0, octavos: 0, cuartos: 0, semis: 0, final: 0, campeon: 0 };
     for (const L of LETTERS) {
       const act = oc.groupOrder[L]; const pred = P.groups[L];
       if (!act || !pred) continue;
-      if (pred[0] && pred[0] === act[0]) bd.grupos += S.g1;
-      if (pred[1] && pred[1] === act[1]) bd.grupos += S.g2;
-      if (pred[2] && pred[2] === act[2]) bd.grupos += S.g3;
-      const top2 = new Set([act[0], act[1]]);
-      if (pred[0] && top2.has(pred[0])) bd.grupos += S.qual;
-      if (pred[1] && top2.has(pred[1])) bd.grupos += S.qual;
+      const ri = oc.groupRank && oc.groupRank[L];
+      const firm = (i) => !ri || (ri[i] && ri[i].firm);
+      const defTop2 = (team) => { const idx = act.indexOf(team); return idx < 0 ? false : (ri ? !!(ri[idx] && ri[idx].worstRank <= 1) : idx <= 1); };
+      if (pred[0] && pred[0] === act[0] && firm(0)) bd.grupos += S.g1;
+      if (pred[1] && pred[1] === act[1] && firm(1)) bd.grupos += S.g2;
+      if (pred[2] && pred[2] === act[2] && firm(2)) bd.grupos += S.g3;
+      if (pred[0] && defTop2(pred[0])) bd.grupos += S.qual;
+      if (pred[1] && defTop2(pred[1])) bd.grupos += S.qual;
     }
     if (oc.qualifiedThirdTeams) for (const t of P.thirds) if (oc.qualifiedThirdTeams.has(t)) bd.terceros += S.thirdQual;
     const stages = [["octavos", S.octavos, "octavos"], ["cuartos", S.cuartos, "cuartos"], ["semis", S.semis, "semis"], ["final", S.finalists, "final"]];
@@ -281,6 +326,7 @@ const ENGINE=(function(DATA){
     bd.total = bd.grupos + bd.terceros + bd.octavos + bd.cuartos + bd.semis + bd.final + bd.campeon;
     return bd;
   }
+
   // -------- puntos de las predicciones especiales --------
   function scoreExtras(extras, actuals, S) {
     const e = extras || {}, a = actuals || {};
@@ -296,6 +342,7 @@ const ENGINE=(function(DATA){
     bd.total = bd.revelacion + bd.decepcion + bd.pichichi + bd.asistente + bd.hattrick + bd.dobleRoja;
     return bd;
   }
+
   // -------- outcome en vivo a partir de los datos de ESPN (+ correcciones manuales) --------
   function outcomeFromEspn(events, dbResults, extrasActual) {
     dbResults = dbResults || {};
@@ -350,6 +397,7 @@ const ENGINE=(function(DATA){
     oc.groupMap = groupMap;
     return oc;
   }
+
   // -------- Monte Carlo: probabilidad de ganar la porra en vivo --------
   // entries: [{id, picks(derivados)}].  Devuelve {byId:{id:{win,podium,avg}}, sims}
   function monteCarlo(entries, resultsMap, N, S, rng) {
@@ -379,10 +427,34 @@ const ENGINE=(function(DATA){
     ids.forEach((id) => { byId[id] = { win: win[id] / n, podium: pod[id] / n, avg: sum[id] / n }; });
     return { byId, sims: n };
   }
+
+  // -------- Monte Carlo por SELECCIÓN: prob. de clasificar / 1º / top2 (solo fase de grupos) --------
+  function monteCarloTeams(resultsMap, N, rng) {
+    rng = rng || Math.random;
+    const teams = [].concat(...LETTERS.map((L) => DATA.GROUPS[L]));
+    const acc = {}; teams.forEach((t) => (acc[t] = { qualify: 0, first: 0, top2: 0 }));
+    const n = Math.max(1, N | 0);
+    for (let s = 0; s < n; s++) {
+      const standingsByGroup = {};
+      for (const L of LETTERS) standingsByGroup[L] = groupStandings(L, resultsMap, true, rng);
+      const q = computeQualifiers(standingsByGroup);
+      for (const L of LETTERS) {
+        const st = standingsByGroup[L];
+        acc[st[0].team].first++;
+        acc[st[0].team].top2++; acc[st[1].team].top2++;
+      }
+      const qset = new Set([].concat(Object.values(q.winners), Object.values(q.runnersUp), q.qualifiedThirdTeams));
+      qset.forEach((t) => { if (acc[t]) acc[t].qualify++; });
+    }
+    const out = {};
+    teams.forEach((t) => (out[t] = { qualify: acc[t].qualify / n, first: acc[t].first / n, top2: acc[t].top2 / n }));
+    return { byTeam: out, sims: n };
+  }
+
   return {
     poisson, simGoals, simKnockoutWinner,
     groupStandings, thirdMatching, buildR32Teams, computeQualifiers,
-    simulateOutcome, liveOutcome, derivePicks, scoreEntry, scoreBreakdown, monteCarlo,
+    simulateOutcome, liveOutcome, derivePicks, scoreEntry, scoreBreakdown, monteCarlo, monteCarloTeams,
     scoreExtras, outcomeFromEspn, THIRD_SLOT_NUMS,
   };
 })(DATA);
