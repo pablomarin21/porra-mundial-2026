@@ -497,6 +497,20 @@ tr.clickrow.sel td{background:#e7f1ec}
 .pod-name{font-weight:800;font-size:.88rem;margin-top:2px}
 .pod-pts{color:var(--muted);font-weight:600;font-size:.72rem}
 .pod-win{font-size:1rem;color:var(--gold2);font-weight:800}
+/* ===== fotos de perfil (avatares) ===== */
+.av{display:inline-flex;align-items:center;justify-content:center;width:34px;height:34px;border-radius:50%;overflow:hidden;flex:none;vertical-align:middle;background:#dfe7e3;box-shadow:0 1px 3px rgba(0,0,0,.18)}
+.av .av-i{width:100%;height:100%;object-fit:cover;display:block}
+.av .av-ini{width:100%;height:100%;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;line-height:1}
+.av.sm{width:30px;height:30px;font-size:.74rem}
+.av.md{width:48px;height:48px;font-size:1rem}
+.av.lg{width:74px;height:74px;font-size:1.5rem;box-shadow:0 3px 10px rgba(0,0,0,.2)}
+.av.busy{opacity:.45}
+.lr-name>.av+span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
+.pod-av{display:flex;margin:5px auto 2px}
+.profile-row{display:flex;align-items:center;gap:14px;background:#fff;border:1px solid var(--line);border-radius:14px;padding:12px 14px;margin-bottom:14px;cursor:pointer;box-shadow:0 4px 12px rgba(0,0,0,.06)}
+.profile-row .av.lg{border:3px solid var(--gold)}
+.profile-name{font-weight:800;color:#26342e;font-size:1.05rem}
+.file-hidden{position:absolute;width:1px;height:1px;opacity:0;overflow:hidden;clip:rect(0 0 0 0)}
 @media(max-width:640px){ .extras-grid{grid-template-columns:1fr} }
 
 /* ===== Panel "Mi porra" (resumen / hub) ===== */

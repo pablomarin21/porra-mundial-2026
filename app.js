@@ -34,7 +34,7 @@ const ERRORS = {
 window.porraApp = function () {
   return {
     // navegación
-    view: "home", tab: "play", step: 1, rTab: "cal", aTab: "groups", calFilter: "all", brRound: 0,
+    view: "home", tab: "play", step: 1, rTab: "cal", aTab: "groups", calFilter: "all", brRound: 0, avatarMap: {}, avatarBusy: false,
     teamProbs: {}, teamProbsSims: 0, scorers: [], assisters: [],
     phase: "welcome", gIdx: 0, chosenNew: false, confirmClaim: null, claimFromName: false,
     wmode: "choose", entriesLoaded: false,
@@ -280,9 +280,64 @@ window.porraApp = function () {
         await this.loadExtrasActual();
         await this.loadResults();
         await this.loadEntries();
+        this.loadAvatars();
         this.fetchEspn(true);
         if (this.tab === "leaderboard") this.loadBoard();
       } catch (e) { this.toast(this.errMsg(e), "err"); } finally { this.busy = false; }
+    },
+    // ---------- fotos de perfil (avatares) ----------
+    async loadAvatars() {
+      try {
+        const r = await this.rpc("porra_list_avatars", { p_code: this.pool.code });
+        const m = {}; (r.avatars || []).forEach((a) => { m[a.id] = a.avatar; });
+        this.avatarMap = m;
+      } catch (e) { /* sin avatares no pasa nada */ }
+    },
+    avatarOf(id) { return (id && this.avatarMap[id]) || null; },
+    initials(name) {
+      const n = (name || "").trim();
+      if (n.startsWith("🤖")) return "🤖";
+      const p = n.split(/\s+/).filter(Boolean);
+      return (((p[0] && p[0][0]) || "") + ((p[1] && p[1][0]) || "") || "?").toUpperCase();
+    },
+    avatarHue(name) {
+      let h = 0; const s = name || "";
+      for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) % 360;
+      return "hsl(" + h + ",52%,52%)";
+    },
+    avatarHtml(id, name) {
+      const a = this.avatarOf(id);
+      if (a && /^data:image\//.test(a)) return '<img class="av-i" src="' + a.replace(/"/g, "") + '" alt="">';
+      return '<span class="av-ini" style="background:' + this.avatarHue(name) + '">' + this.initials(name) + "</span>";
+    },
+    async setAvatarFile(ev) {
+      const file = ev.target && ev.target.files && ev.target.files[0];
+      if (ev.target) ev.target.value = "";
+      if (!file || !this.me.id) return;
+      if (!/^image\//.test(file.type || "")) return this.toast("Elige una imagen (foto).", "warn");
+      this.avatarBusy = true;
+      try {
+        const dataUrl = await this._resizeImage(file, 200);
+        await this.rpc("porra_set_avatar", { p_participant_id: this.me.id, p_avatar: dataUrl });
+        await this.loadAvatars();
+        this.toast("¡Foto actualizada! 📸");
+      } catch (e) { this.toast("No se pudo subir la foto. Prueba con otra.", "err"); }
+      finally { this.avatarBusy = false; }
+    },
+    _resizeImage(file, size) {
+      return new Promise((resolve, reject) => {
+        const img = new Image();
+        const url = URL.createObjectURL(file);
+        img.onload = () => {
+          const s = Math.min(img.width, img.height);
+          const c = document.createElement("canvas"); c.width = size; c.height = size;
+          c.getContext("2d").drawImage(img, (img.width - s) / 2, (img.height - s) / 2, s, s, 0, 0, size, size);
+          URL.revokeObjectURL(url);
+          try { resolve(c.toDataURL("image/jpeg", 0.72)); } catch (e) { reject(e); }
+        };
+        img.onerror = () => { URL.revokeObjectURL(url); reject(new Error("img")); };
+        img.src = url;
+      });
     },
     async loadExtrasActual() {
       try { this.extrasActual = (await this.rpc("porra_get_extras", {})) || {}; } catch (e) { this.extrasActual = {}; }

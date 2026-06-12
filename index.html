@@ -13,7 +13,7 @@
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="Porra Mundial" />
-  <link rel="stylesheet" href="styles.css?v=8" />
+  <link rel="stylesheet" href="styles.css?v=9" />
 </head>
 <body x-data="porraApp()" x-init="init()" x-cloak>
 
@@ -187,6 +187,15 @@
         <h2 x-text="'Hola, '+(me.first||'')+' 👋'"></h2>
         <p class="muted">Esta es <b>tu porra</b>. Toca un apartado para verlo o cambiarlo cuando quieras. <b>Se guarda solo.</b></p>
       </div>
+
+      <label class="profile-row" title="Cambiar tu foto">
+        <span class="av lg" :class="{busy:avatarBusy}" x-html="avatarHtml(me.id, (me.first||'')+' '+(me.last||''))"></span>
+        <input type="file" accept="image/*" class="file-hidden" @change="setAvatarFile($event)">
+        <div class="profile-meta">
+          <div class="profile-name" x-text="(me.first||'')+' '+(me.last||'')"></div>
+          <div class="tiny muted" x-text="avatarBusy ? 'Subiendo foto…' : '📷 Toca para poner o cambiar tu foto'"></div>
+        </div>
+      </label>
 
       <template x-if="status.complete">
         <div class="hub-status ok">✅ <b>¡Tu porra está completa!</b> 🍀 ¡Mucha suerte!</div>
@@ -492,6 +501,7 @@
         <template x-for="(e,i) in ranked.slice(0,3)" :key="'pod'+e.id">
           <div class="pod" :class="['p'+(i+1), {bot:(e.first_name||'').startsWith('🤖')}]">
             <div class="pod-medal" x-text="['🥇','🥈','🥉'][i]"></div>
+            <span class="av md pod-av" x-html="avatarHtml(e.id, e.first_name+' '+e.last_name)"></span>
             <div class="pod-name" x-text="e.first_name"></div>
             <div class="pod-win" x-text="pct(e.win)+' 🏆'"></div>
             <div class="pod-pts" x-text="boardLocked ? (e.points+' pts') : 'de ganar'"></div>
@@ -511,7 +521,7 @@
       <template x-for="(e,i) in ranked" :key="e.id">
         <div class="league-row clickrow" :class="{me:e.id===me.id, bot:(e.first_name||'').startsWith('🤖'), sel:selectedId===e.id, pos1:i===0, pos2:i===1, pos3:i===2}" @click="toggleDetail(e.id)">
           <span class="lr-pos" x-text="i+1"></span>
-          <span class="lr-name"><span x-text="e.first_name+' '+e.last_name"></span><span class="incompleto" x-show="e.complete===false">⚠️ sin terminar</span><span class="youtag" x-show="e.id===me.id">tú</span><span class="seehint" x-show="canViewPicks">👁️</span></span>
+          <span class="lr-name"><span class="av sm" x-html="avatarHtml(e.id, e.first_name+' '+e.last_name)"></span><span x-text="e.first_name+' '+e.last_name"></span><span class="incompleto" x-show="e.complete===false">⚠️ sin terminar</span><span class="youtag" x-show="e.id===me.id">tú</span><span class="seehint" x-show="canViewPicks">👁️</span></span>
           <span class="lr-num" x-show="boardLocked"><b x-text="e.points"></b></span>
           <span class="lr-win"><span class="lr-winbar" :style="'width:'+Math.min(100,(e.win||0)*100)+'%'"></span><span class="lr-winval" x-text="pct(e.win)"></span></span>
         </div>
@@ -594,6 +604,7 @@
       <template x-for="c in quinielaCards" :key="'qc'+c.id">
         <button class="qcard" :class="{me:c.isMe, sel:selectedId===c.id, bot:(c.first_name||'').startsWith('🤖')}" @click="toggleDetail(c.id)">
           <div class="qcard-l">
+            <span class="av sm" x-html="avatarHtml(c.id, c.name)"></span>
             <span class="qcard-name" x-text="c.name"></span>
             <span class="youtag" x-show="c.isMe">tú</span>
             <span class="incompleto" x-show="!c.complete">⚠️ sin terminar</span>
@@ -1013,10 +1024,10 @@
   </div>
 
   <!-- ====== Dependencias ====== -->
-  <script src="data.js?v=8"></script>
-  <script src="engine.js?v=8"></script>
+  <script src="data.js?v=9"></script>
+  <script src="engine.js?v=9"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
-  <script src="app.js?v=8"></script>
+  <script src="app.js?v=9"></script>
   <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.1/dist/cdn.min.js"></script>
 </body>
 </html>
