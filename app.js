@@ -297,6 +297,7 @@ window.porraApp = function () {
     initials(name) {
       const n = (name || "").trim();
       if (n.startsWith("🤖")) return "🤖";
+      if (n.startsWith("🎙")) return "🎙️";
       const p = n.split(/\s+/).filter(Boolean);
       return (((p[0] && p[0][0]) || "") + ((p[1] && p[1][0]) || "") || "?").toUpperCase();
     },
