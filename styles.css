@@ -513,18 +513,28 @@ tr.clickrow.sel td{background:#e7f1ec}
 .file-hidden{position:absolute;width:1px;height:1px;opacity:0;overflow:hidden;clip:rect(0 0 0 0)}
 /* clasificación GRANDE y chula: fotos prominentes */
 .league-row{padding:13px 12px}
-.league-row .av{width:50px;height:50px;font-size:1.1rem}
+.league-row .av{width:58px;height:58px;font-size:1.25rem}
 .lr-name{font-size:1.02rem;gap:11px}
 .league-row.pos1 .av{box-shadow:0 0 0 2.5px var(--gold)}
 .league-row.pos2 .av{box-shadow:0 0 0 2.5px #c2cdc7}
 .league-row.pos3 .av{box-shadow:0 0 0 2.5px #d8b483}
 .pod{padding:14px 8px 12px}
-.pod .av{width:66px;height:66px;font-size:1.35rem;margin:6px auto 4px}
+.pod .av{width:80px;height:80px;font-size:1.6rem;margin:7px auto 5px}
 .pod.p1 .av{box-shadow:0 0 0 3px var(--gold)}
 .pod.p2 .av{box-shadow:0 0 0 3px #c2cdc7}
 .pod.p3 .av{box-shadow:0 0 0 3px #d8b483}
 .pod-name{font-size:.95rem}
-.qcard .av{width:46px;height:46px;font-size:1rem}
+.qcard .av{width:48px;height:48px;font-size:1.05rem}
+/* clicar una foto la abre entera */
+.av{transition:transform .12s ease}
+.clickav{cursor:zoom-in}
+.clickav:hover{transform:scale(1.07)}
+.lightbox{position:fixed;inset:0;z-index:1000;background:rgba(0,0,0,.86);display:flex;align-items:center;justify-content:center;padding:24px;cursor:zoom-out}
+.lightbox-in{position:relative;display:flex;flex-direction:column;align-items:center;gap:10px;max-width:min(94vw,560px);cursor:default}
+.lightbox-in img{max-width:100%;max-height:80vh;border-radius:16px;box-shadow:0 14px 50px rgba(0,0,0,.55);object-fit:contain;background:#111}
+.lightbox-name{color:#fff;font-weight:800;font-size:1.15rem;text-shadow:0 1px 4px rgba(0,0,0,.6)}
+.lightbox-load{color:#fff;padding:60px 30px;font-weight:600}
+.lightbox-x{position:absolute;top:-46px;right:-2px;width:38px;height:38px;border-radius:50%;border:0;background:rgba(255,255,255,.18);color:#fff;font-size:1.1rem;cursor:pointer}
 @media(max-width:640px){ .extras-grid{grid-template-columns:1fr} }
 
 /* ===== Panel "Mi porra" (resumen / hub) ===== */

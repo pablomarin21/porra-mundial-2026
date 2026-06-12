@@ -34,7 +34,7 @@ const ERRORS = {
 window.porraApp = function () {
   return {
     // navegación
-    view: "home", tab: "play", step: 1, rTab: "cal", aTab: "groups", calFilter: "all", brRound: 0, avatarMap: {}, avatarBusy: false,
+    view: "home", tab: "play", step: 1, rTab: "cal", aTab: "groups", calFilter: "all", brRound: 0, avatarMap: {}, avatarBusy: false, lightbox: null, photoCache: {},
     teamProbs: {}, teamProbsSims: 0, scorers: [], assisters: [],
     phase: "welcome", gIdx: 0, chosenNew: false, confirmClaim: null, claimFromName: false,
     wmode: "choose", entriesLoaded: false,
@@ -310,6 +310,17 @@ window.porraApp = function () {
       if (a && /^data:image\//.test(a)) return '<img class="av-i" src="' + a.replace(/"/g, "") + '" alt="">';
       return '<span class="av-ini" style="background:' + this.avatarHue(name) + '">' + this.initials(name) + "</span>";
     },
+    // Tocar una foto → abrir la foto COMPLETA (se pide al servidor solo en ese momento).
+    async openPhoto(id, name) {
+      if (!id || !this.avatarOf(id)) return;   // sin foto (iniciales) no abre nada
+      this.lightbox = { name: name || "", src: this.photoCache[id] || null, loading: !this.photoCache[id] };
+      if (!this.photoCache[id]) {
+        try { const r = await this.rpc("porra_get_photo", { p_participant_id: id }); this.photoCache[id] = (r && r.photo) || this.avatarOf(id); }
+        catch (e) { this.photoCache[id] = this.avatarOf(id); }
+        if (this.lightbox) { this.lightbox.src = this.photoCache[id]; this.lightbox.loading = false; }
+      }
+    },
+    closePhoto() { this.lightbox = null; },
     async setAvatarFile(ev) {
       const file = ev.target && ev.target.files && ev.target.files[0];
       if (ev.target) ev.target.value = "";
