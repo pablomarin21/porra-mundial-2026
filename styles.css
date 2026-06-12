@@ -511,6 +511,20 @@ tr.clickrow.sel td{background:#e7f1ec}
 .profile-row .av.lg{border:3px solid var(--gold)}
 .profile-name{font-weight:800;color:#26342e;font-size:1.05rem}
 .file-hidden{position:absolute;width:1px;height:1px;opacity:0;overflow:hidden;clip:rect(0 0 0 0)}
+/* clasificación GRANDE y chula: fotos prominentes */
+.league-row{padding:13px 12px}
+.league-row .av{width:50px;height:50px;font-size:1.1rem}
+.lr-name{font-size:1.02rem;gap:11px}
+.league-row.pos1 .av{box-shadow:0 0 0 2.5px var(--gold)}
+.league-row.pos2 .av{box-shadow:0 0 0 2.5px #c2cdc7}
+.league-row.pos3 .av{box-shadow:0 0 0 2.5px #d8b483}
+.pod{padding:14px 8px 12px}
+.pod .av{width:66px;height:66px;font-size:1.35rem;margin:6px auto 4px}
+.pod.p1 .av{box-shadow:0 0 0 3px var(--gold)}
+.pod.p2 .av{box-shadow:0 0 0 3px #c2cdc7}
+.pod.p3 .av{box-shadow:0 0 0 3px #d8b483}
+.pod-name{font-size:.95rem}
+.qcard .av{width:46px;height:46px;font-size:1rem}
 @media(max-width:640px){ .extras-grid{grid-template-columns:1fr} }
 
 /* ===== Panel "Mi porra" (resumen / hub) ===== */
