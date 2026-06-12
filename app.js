@@ -629,8 +629,13 @@ window.porraApp = function () {
       if (!e) return;
       if (!e.picks) { this.toast("Este participante aún no ha guardado su porra.", "warn"); return; }
       if (this.selectedId === id) { this.selectedId = null; this.det = null; }
-      else { this.selectedId = id; this.det = this._computeDetail(id); }
+      else { this.selectedId = id; this.det = this._computeDetail(id); this._ensurePhoto(id); }
     },
+    async _ensurePhoto(id) {
+      if (!id || this.photoCache[id] || !this.avatarOf(id)) return;
+      try { const r = await this.rpc("porra_get_photo", { p_participant_id: id }); this.photoCache[id] = (r && r.photo) || this.avatarOf(id); } catch (e) {}
+    },
+    get detPhoto() { const id = this.selectedId; return id ? (this.photoCache[id] || this.avatarOf(id)) : null; },
     _computeDetail(id) {
       const e = this.entries.find((x) => x.id === id);
       if (!e || !e.picks) return null;

@@ -535,6 +535,10 @@ tr.clickrow.sel td{background:#e7f1ec}
 .lightbox-name{color:#fff;font-weight:800;font-size:1.15rem;text-shadow:0 1px 4px rgba(0,0,0,.6)}
 .lightbox-load{color:#fff;padding:60px 30px;font-weight:600}
 .lightbox-x{position:absolute;top:-46px;right:-2px;width:38px;height:38px;border-radius:50%;border:0;background:rgba(255,255,255,.18);color:#fff;font-size:1.1rem;cursor:pointer}
+.podclick{cursor:pointer}
+/* foto grande dentro de la ficha del participante (clic = ampliar) */
+.det-photo-wrap{text-align:center;margin:2px 0 14px}
+.det-photo{max-width:300px;max-height:400px;width:auto;border-radius:16px;box-shadow:0 8px 26px rgba(0,0,0,.2);vertical-align:middle}
 @media(max-width:640px){ .extras-grid{grid-template-columns:1fr} }
 
 /* ===== Panel "Mi porra" (resumen / hub) ===== */
