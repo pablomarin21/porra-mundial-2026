@@ -634,3 +634,11 @@ tr.clickrow.sel td{background:#e7f1ec}
   .tabs button{flex:1}
   .row2{grid-template-columns:1fr 1fr}
 }
+
+/* ===== Aviso "por qué algunos grupos aún no puntúan" (justicia por jornadas) ===== */
+.scoring-status{background:#fff8ec;border:1px solid #f0dcae;border-radius:12px;padding:12px 14px;margin:12px 0}
+.scoring-status .ss-h{font-weight:800;color:#8a6d1f;font-size:.92rem;margin:0 0 4px}
+.scoring-status .ss-txt{font-size:.82rem;color:#5c4d2a;margin:0 0 8px;line-height:1.4}
+.scoring-status .ss-list{margin:0;padding-left:2px;list-style:none;display:flex;flex-direction:column;gap:5px}
+.scoring-status .ss-list li{font-size:.84rem;color:#3a3320;line-height:1.35}
+.scoring-status .ss-ok{font-size:.8rem;color:var(--green);margin:8px 0 0;font-weight:600}

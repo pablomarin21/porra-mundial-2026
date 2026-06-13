@@ -202,6 +202,25 @@ window.porraApp = function () {
       this.refreshLiveBracket();
       this.explain = this.buildExplain();
     },
+    // ---------- estado de puntuación por jornadas (para el aviso de la clasificación) ----------
+    get scoringStatus() {
+      const oc = this.outcome; if (!oc || !oc.groupScored) return null;
+      const gm = oc.groupMap || {};
+      const scoring = [], waiting = [];
+      for (const L of D.GROUP_LETTERS) {
+        const s = oc.standingsByGroup && oc.standingsByGroup[L];
+        const played = s ? Math.round(s.reduce((a, t) => a + (t.pj || 0), 0) / 2) : 0;
+        if (played === 0) continue;
+        const K = oc.groupScored[L] || 0;
+        if (K >= 1 || (s && s._complete)) { scoring.push(L); continue; }
+        // jornada incompleta: el partido que falta de la jornada más baja sin cerrar
+        const fx = D.GROUP_FIXTURES.filter((f) => f.group === L).slice().sort((a, b) => a.md - b.md);
+        let pending = null;
+        for (const f of fx) { const r = gm[f.code]; if (!(r && r.played)) { pending = D.es(f.home) + "–" + D.es(f.away); break; } }
+        waiting.push({ L, pending });
+      }
+      return (scoring.length || waiting.length) ? { scoring, waiting } : null;
+    },
     // ---------- explicación de la puntuación (por qué cada uno tiene sus puntos) ----------
     buildExplain() {
       const oc = this.outcome || Eng.liveOutcome(this.results);

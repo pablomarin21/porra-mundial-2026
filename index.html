@@ -13,7 +13,7 @@
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="Porra Mundial" />
-  <link rel="stylesheet" href="styles.css?v=16" />
+  <link rel="stylesheet" href="styles.css?v=17" />
 </head>
 <body x-data="porraApp()" x-init="init()" x-cloak>
 
@@ -495,6 +495,18 @@
     </div>
 
     <p class="tiny muted live-note" x-show="boardLocked">⚡ <b>Puntuación EN DIRECTO</b>: se calcula con los resultados de ahora mismo y se recalcula sola con cada partido. Mientras un grupo no termine, sus puntos son <b>provisionales</b> (pueden cambiar).</p>
+
+    <!-- Aviso: por qué algunos grupos aún no puntúan (justicia por jornadas completas) -->
+    <div class="scoring-status" x-show="boardLocked && scoringStatus && scoringStatus.waiting.length">
+      <p class="ss-h">⚖️ Por qué algunos puntos aún no cuentan</p>
+      <p class="ss-txt">El orden de cada grupo se puntúa <b>por jornadas completas</b>: hace falta que los <b>4 equipos</b> hayan jugado la ronda. Así nadie cobra por ir "1º" mientras sus rivales todavía no han jugado.</p>
+      <ul class="ss-list">
+        <template x-for="w in scoringStatus.waiting" :key="'sw'+w.L">
+          <li>⏳ <b>Grupo <span x-text="w.L"></span></b> aún no puntúa — falta <b x-text="w.pending || 'un partido'"></b>. En cuanto se juegue, sumará.</li>
+        </template>
+      </ul>
+      <p class="ss-ok" x-show="scoringStatus.scoring.length">✅ Ya puntúan: <b>grupo<span x-show="scoringStatus.scoring.length>1">s</span> <span x-text="scoringStatus.scoring.join(', ')"></span></b>.</p>
+    </div>
 
     <!-- Podio -->
     <template x-if="ranked.length>=2">
@@ -1071,10 +1083,10 @@
   </div>
 
   <!-- ====== Dependencias ====== -->
-  <script src="data.js?v=16"></script>
-  <script src="engine.js?v=16"></script>
+  <script src="data.js?v=17"></script>
+  <script src="engine.js?v=17"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
-  <script src="app.js?v=16"></script>
+  <script src="app.js?v=17"></script>
   <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.1/dist/cdn.min.js"></script>
 </body>
 </html>
