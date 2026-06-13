@@ -217,21 +217,48 @@
     }
     return info;
   }
+  // -------- jornadas COMPLETAS de un grupo (justicia: "partidos en mano") --------
+  // Una jornada cuenta para puntuar SOLO cuando los 4 equipos la han jugado (mismo nº de
+  // partidos = comparación justa). Así no se paga "1º" a un equipo cuyos rivales aún no han
+  // jugado. Devuelve { K = jornadas consecutivas completas desde la 1, sub = sus resultados }.
+  function completedMatchdays(letter, resultsMap) {
+    const fx = fixturesOf(letter);
+    const byMd = {};
+    fx.forEach((f) => { (byMd[f.md] || (byMd[f.md] = [])).push(f); });
+    let K = 0;
+    for (let m = 1; m <= 3; m++) {
+      const games = byMd[m] || [];
+      const done = games.length > 0 && games.every((f) => { const r = resultsMap[f.code]; return r && r.played && r.home_score != null && r.away_score != null; });
+      if (done) K = m; else break;
+    }
+    if (K === 0) return { K: 0, sub: null };
+    const sub = {};
+    fx.forEach((f) => { if (f.md <= K) { const r = resultsMap[f.code]; if (r) sub[f.code] = r; } });
+    return { K, sub };
+  }
   function liveOutcome(resultsMap) {
-    const groupOrder = {}, groupRank = {}; let allComplete = true;
+    const groupOrder = {}, groupRank = {}, groupScored = {}; let allComplete = true;
     const standingsByGroup = {};
     for (const L of LETTERS) {
       const s = groupStandings(L, resultsMap, false, null);
-      standingsByGroup[L] = s;
+      standingsByGroup[L] = s;                       // tabla REAL (para mostrar)
       if (s._complete) {
         // Grupo terminado: el orden es definitivo (todas las posiciones cuentan).
         groupOrder[L] = s.map((x) => x.team);
         groupRank[L] = s.map((x, i) => ({ firm: true, worstRank: i }));
+        groupScored[L] = 3;
       } else {
         allComplete = false;
-        // EN DIRECTO: usamos la tabla actual, pero SOLO puntúan las posiciones que los
-        // resultados ya han decidido (rankBands marca empatados como "no decididos").
-        if (s.some((x) => x.pj > 0)) { groupOrder[L] = s.map((x) => x.team); groupRank[L] = rankBands(s); }
+        // EN DIRECTO con JUSTICIA MÁXIMA: el orden solo puntúa por JORNADAS COMPLETAS (todos
+        // los equipos han jugado lo mismo) — evita el sesgo de partidos en mano. Dentro de esas
+        // jornadas, rankBands marca empatados como "no decididos" (no puntúan hasta separarse).
+        const cm = completedMatchdays(L, resultsMap);
+        groupScored[L] = cm.K;
+        if (cm.K >= 1) {
+          const ss = groupStandings(L, cm.sub, false, null);   // tabla de las jornadas completas
+          groupOrder[L] = ss.map((x) => x.team);
+          groupRank[L] = rankBands(ss);
+        }
       }
     }
     let qualifiedThirdTeams = null;
@@ -246,7 +273,7 @@
     const champion = wOf(DATA.FINAL.match);
 
     return {
-      complete: false, allGroupsComplete: allComplete, groupOrder, groupRank, standingsByGroup,
+      complete: false, allGroupsComplete: allComplete, groupOrder, groupRank, groupScored, standingsByGroup,
       qualifiedThirdTeams,
       reached: { octavos, cuartos, semis, final: finalists, champion },
     };

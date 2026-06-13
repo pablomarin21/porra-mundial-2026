@@ -211,11 +211,20 @@ window.porraApp = function () {
       const groups = D.GROUP_LETTERS.map((L) => {
         const s = oc.standingsByGroup && oc.standingsByGroup[L];
         const order = oc.groupOrder && oc.groupOrder[L];
+        const K = (oc.groupScored && oc.groupScored[L]) || 0;   // jornadas completas que puntúan
         const played = s ? Math.round(s.reduce((a, t) => a + (t.pj || 0), 0) / 2) : 0;
-        let estado = "⏳ sin empezar", detalle = "";
-        if (s && s._complete) { estado = "✅ terminado"; detalle = order.map((t, i) => (i + 1) + "º " + es(t)).join(" · "); }
-        else if (order) { estado = "🔴 en juego (" + played + "/6)"; const ri = oc.groupRank[L]; detalle = order.map((t, i) => (i + 1) + "º " + es(t) + (ri && ri[i] && ri[i].firm ? "" : "?")).join(" · "); }
-        return { L, estado, detalle, started: !!order };
+        let estado = "⏳ sin empezar", detalle = "", started = false;
+        if (s && s._complete) {
+          estado = "✅ terminado"; started = true;
+          detalle = order.map((t, i) => (i + 1) + "º " + es(t)).join(" · ");
+        } else if (K >= 1 && order) {
+          estado = "🔴 puntúa jornada " + K + (K > 1 ? "s 1-" + K : "") + " (" + played + "/6)"; started = true;
+          const ri = oc.groupRank[L];
+          detalle = order.map((t, i) => (i + 1) + "º " + es(t) + (ri && ri[i] && ri[i].firm ? "" : "?")).join(" · ");
+        } else if (played > 0) {
+          estado = "⏳ jornada 1 incompleta (" + played + "/6) — aún no puntúa (faltan equipos por jugar)";
+        }
+        return { L, estado, detalle, started };
       });
       const byId = {}; this.entries.forEach((e) => { byId[e.id] = e; });
       const people = (this.ranked || []).map((r) => {
