@@ -13,7 +13,7 @@
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="Porra Mundial" />
-  <link rel="stylesheet" href="styles.css?v=18" />
+  <link rel="stylesheet" href="styles.css?v=19" />
 </head>
 <body x-data="porraApp()" x-init="init()" x-cloak>
 
@@ -494,7 +494,22 @@
       <button class="btn mini ghost" @click="loadBoard()" :disabled="probBusy"><span x-show="!probBusy">↻ actualizar</span><span x-show="probBusy">…</span></button>
     </div>
 
-    <p class="tiny muted live-note" x-show="boardLocked">⚡ <b>Puntuación EN DIRECTO</b>: se calcula con los resultados de ahora mismo y se recalcula sola con cada partido. Mientras un grupo no termine, sus puntos son <b>provisionales</b> (pueden cambiar).</p>
+    <!-- Guía clara: cuándo se puntúa y por qué suben/bajan los puntos -->
+    <div class="points-guide" x-show="boardLocked">
+      <p class="pg-title">📖 Cómo cambian tus puntos <span class="muted">— léelo, es fácil</span></p>
+      <div class="pg-row">
+        <span class="pg-ic">⏱️</span>
+        <div><b>¿Cuándo se puntúa?</b> En directo, con cada partido — la clasificación se recalcula sola. El orden de un grupo solo cuenta cuando los <b>4 equipos</b> han jugado la jornada (si falta un partido, ese grupo todavía no suma; lo ves avisado justo abajo).</div>
+      </div>
+      <div class="pg-row up">
+        <span class="pg-ic">🟢</span>
+        <div><b>¿Por qué SUBES?</b> Por cada puesto del grupo que <b>clavas</b> (1º +<span x-text="settings.g1"></span>, 2º +<span x-text="settings.g2"></span>, 3º +<span x-text="settings.g3"></span>, 4º/último +<span x-text="settings.g4"></span>), por cada equipo tuyo que <b>clasifica</b> (queda 1º o 2º, +<span x-text="settings.qual"></span>), y más adelante por los mejores <b>terceros</b>, el <b>cuadro</b> de eliminatorias y las <b>especiales</b>.</div>
+      </div>
+      <div class="pg-row down">
+        <span class="pg-ic">🔴</span>
+        <div><b>¿Por qué puedes BAJAR?</b> Hasta que un grupo termina, sus puntos son <b>provisionales</b>: se calculan con la tabla de ese momento. Si un equipo cambia de puesto, <b>lo que ya no aciertas se te quita</b> y quien lo acierta ahora lo gana. <span class="muted">Ejemplo: si pusiste "Chequia 3ª" y Chequia cae a 4ª, pierdes esos puntos. No te los quita nadie a mano: es automático y justo. Cuando el grupo acaba, tus puntos quedan <b>fijos</b>.</span></div>
+      </div>
+    </div>
 
     <!-- Aviso: por qué algunos grupos aún no puntúan (justicia por jornadas completas) -->
     <div class="scoring-status" x-show="boardLocked && scoringStatus && scoringStatus.waiting.length">
@@ -1083,10 +1098,10 @@
   </div>
 
   <!-- ====== Dependencias ====== -->
-  <script src="data.js?v=18"></script>
-  <script src="engine.js?v=18"></script>
+  <script src="data.js?v=19"></script>
+  <script src="engine.js?v=19"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
-  <script src="app.js?v=18"></script>
+  <script src="app.js?v=19"></script>
   <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.1/dist/cdn.min.js"></script>
 </body>
 </html>
