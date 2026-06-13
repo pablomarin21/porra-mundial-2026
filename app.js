@@ -50,7 +50,7 @@ window.porraApp = function () {
     letters: D.GROUP_LETTERS, allTeams: ALL_TEAMS.slice().sort((a, b) => D.es(a).localeCompare(D.es(b))),
     sideBets: D.SIDE_BETS,
     // en vivo (ESPN) + cierre automático
-    espnEvents: [], espnAt: 0, liveBusy: false, nowTs: 0, outcome: null, extrasActual: {}, _espnTimer: null, explain: null,
+    espnEvents: [], espnAt: 0, liveBusy: false, nowTs: 0, outcome: null, extrasActual: {}, _espnTimer: null, explain: null, scoringStatus: null,
     extrasActualEdit: { revelacion: "", decepcion: "", pichichi: "", asistente: "", sidebets: {} },
     // datos
     entries: [], ranked: [], results: {}, rEdit: defaultREdit(), koEdit: defaultKoEdit(), liveBr: { teamsByMatch: {}, winnerOf: {}, complete: false },
@@ -201,9 +201,10 @@ window.porraApp = function () {
       this.recomputeRanking();
       this.refreshLiveBracket();
       this.explain = this.buildExplain();
+      this.scoringStatus = this.computeScoringStatus();
     },
     // ---------- estado de puntuación por jornadas (para el aviso de la clasificación) ----------
-    get scoringStatus() {
+    computeScoringStatus() {
       const oc = this.outcome; if (!oc || !oc.groupScored) return null;
       const gm = oc.groupMap || {};
       const scoring = [], waiting = [];
@@ -802,6 +803,7 @@ window.porraApp = function () {
       if (!ok) { this.usingServerBoard = false; try { await this.refreshBoard(); } catch (e) {} }
       try { await this.fetchEspn(false); } catch (e) {}   // refresca outcome + la explicación de puntos
       this.explain = this.buildExplain();
+      this.scoringStatus = this.computeScoringStatus();
       this.probBusy = false;
     },
     openResults() { this.tab = "results"; this.fetchEspn(false); this.loadEntries({ recompute: false }); },
