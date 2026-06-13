@@ -58,7 +58,8 @@ window.porraApp = function () {
     adminOk: false, adminPin: "", settings: Object.assign({}, D.DEFAULT_SCORING),
     scoreKeys: [
       { key: "g1", label: "Acertar 1º de grupo" }, { key: "g2", label: "Acertar 2º de grupo" },
-      { key: "g3", label: "Acertar 3º de grupo" }, { key: "qual", label: "Equipo que clasifica (top 2)" },
+      { key: "g3", label: "Acertar 3º de grupo" }, { key: "g4", label: "Acertar 4º / último de grupo" },
+      { key: "qual", label: "Equipo que clasifica (top 2)" },
       { key: "thirdQual", label: "Tercero que clasifica" }, { key: "octavos", label: "Llega a octavos" },
       { key: "cuartos", label: "Llega a cuartos" }, { key: "semis", label: "Llega a semifinal" },
       { key: "finalists", label: "Llega a la final" }, { key: "champion", label: "Campeón del mundo" },
@@ -242,6 +243,7 @@ window.porraApp = function () {
         if (pred[0] && pred[0] === act[0] && firm(0)) { g += S.g1; parts.push("1º " + es(pred[0]) + " +" + S.g1); }
         if (pred[1] && pred[1] === act[1] && firm(1)) { g += S.g2; parts.push("2º " + es(pred[1]) + " +" + S.g2); }
         if (pred[2] && pred[2] === act[2] && firm(2)) { g += S.g3; parts.push("3º " + es(pred[2]) + " +" + S.g3); }
+        if (pred[3] && pred[3] === act[3] && firm(3)) { g += (S.g4 || 0); parts.push("4º/último " + es(pred[3]) + " +" + (S.g4 || 0)); }
         if (pred[0] && dT(pred[0])) { g += S.qual; parts.push(es(pred[0]) + " clasifica +" + S.qual); }
         if (pred[1] && dT(pred[1])) { g += S.qual; parts.push(es(pred[1]) + " clasifica +" + S.qual); }
         if (g > 0) bits.push({ icon: "📊", text: "Grupo " + L + ": " + parts.join(", ") + "  = +" + g });

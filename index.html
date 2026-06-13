@@ -13,7 +13,7 @@
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="Porra Mundial" />
-  <link rel="stylesheet" href="styles.css?v=14" />
+  <link rel="stylesheet" href="styles.css?v=15" />
 </head>
 <body x-data="porraApp()" x-init="init()" x-cloak>
 
@@ -243,7 +243,7 @@
           <div class="how-card"><div class="how-n">2</div><h4>🥉 Mejores terceros</h4><p>Novedad 2026: también clasifican los <b>8 mejores terceros</b>. Elige cuáles crees.</p></div>
           <div class="how-card"><div class="how-n">3</div><h4>🏆 El cuadro</h4><p>Con los 32 clasificados eliges quién gana cada cruce hasta el <b>campeón</b>.</p></div>
         </div>
-        <div class="how-points">🎯 <b>Puntos (en vivo):</b> aciertas el <b>orden de cada grupo</b> (1º/2º/3º) y los equipos que <b>clasifican</b> → suma según se van decidiendo los partidos (provisional hasta que el grupo acaba). Luego los <b>mejores terceros</b>, cada equipo que avanza en el <b>cuadro</b> (octavos→campeón) y las <b>especiales</b> (aparte). Detalle completo en la pestaña <b>Clasificación</b>.</div>
+        <div class="how-points">🎯 <b>Puntos (en vivo):</b> aciertas el <b>orden de cada grupo</b> (1º/2º/3º/4º) y los equipos que <b>clasifican</b> → suma según se van decidiendo los partidos (provisional hasta que el grupo acaba). Luego los <b>mejores terceros</b>, cada equipo que avanza en el <b>cuadro</b> (octavos→campeón) y las <b>especiales</b> (aparte). Detalle completo en la pestaña <b>Clasificación</b>.</div>
       </details>
     </div>
 
@@ -464,6 +464,7 @@
               <li>Aciertas el <b>1º</b> del grupo <span class="pp" x-text="'+'+settings.g1"></span></li>
               <li>Aciertas el <b>2º</b> <span class="pp" x-text="'+'+settings.g2"></span></li>
               <li>Aciertas el <b>3º</b> <span class="pp" x-text="'+'+settings.g3"></span></li>
+              <li>Aciertas el <b>4º / último</b> <span class="pp" x-text="'+'+settings.g4"></span></li>
               <li>Cada equipo que <b>clasifica</b> (queda 1º o 2º) <span class="pp" x-text="'+'+settings.qual"></span></li>
             </ul>
             <p class="tiny muted">Solo suma lo que los resultados <b>ya han decidido</b>. Mientras el grupo no termine es <b>provisional</b>: si cambia la tabla, tus puntos suben o bajan.</p>
@@ -536,7 +537,7 @@
     <details class="scoring-explain expl-box" x-show="explain && explain.people && explain.people.length">
       <summary>📊 Explicación de la puntuación — ¿por qué cada uno tiene sus puntos?</summary>
       <div class="se-body">
-        <p class="tiny">En esta porra puntúas por los <b>aciertos del cuadro</b> que predijiste: el <b>orden de cada grupo</b> (1º +<span x-text="settings.g1"></span>, 2º +<span x-text="settings.g2"></span>, 3º +<span x-text="settings.g3"></span>), cada equipo que <b>clasifica</b> (+<span x-text="settings.qual"></span>), los <b>mejores terceros</b>, lo lejos que llegan tus equipos en el <b>cuadro</b> y las <b>especiales</b>. Va <b>EN DIRECTO</b>: solo suma lo que los resultados <b>ya han decidido</b>, así que es <b>provisional</b> y cambia con cada partido. <span class="muted">(El «?» = posición aún sin decidir.)</span></p>
+        <p class="tiny">En esta porra puntúas por los <b>aciertos del cuadro</b> que predijiste: el <b>orden de cada grupo</b> (1º +<span x-text="settings.g1"></span>, 2º +<span x-text="settings.g2"></span>, 3º +<span x-text="settings.g3"></span>, 4º/último +<span x-text="settings.g4"></span>), cada equipo que <b>clasifica</b> (+<span x-text="settings.qual"></span>), los <b>mejores terceros</b>, lo lejos que llegan tus equipos en el <b>cuadro</b> y las <b>especiales</b>. Va <b>EN DIRECTO</b>: solo suma lo que los resultados <b>ya han decidido</b>, así que es <b>provisional</b> y cambia con cada partido. <span class="muted">(El «?» = posición aún sin decidir.)</span></p>
 
         <div class="expl-state">
           <div class="expl-h">📅 Cómo van los grupos</div>
@@ -1070,10 +1071,10 @@
   </div>
 
   <!-- ====== Dependencias ====== -->
-  <script src="data.js?v=14"></script>
-  <script src="engine.js?v=14"></script>
+  <script src="data.js?v=15"></script>
+  <script src="engine.js?v=15"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
-  <script src="app.js?v=14"></script>
+  <script src="app.js?v=15"></script>
   <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.1/dist/cdn.min.js"></script>
 </body>
 </html>

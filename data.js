@@ -166,6 +166,7 @@ window.PORRA_DATA = (function () {
     g1: 5,          // acertar el 1º del grupo (posición exacta)
     g2: 3,          // acertar el 2º del grupo (posición exacta)
     g3: 3,          // acertar el 3º del grupo (posición exacta)
+    g4: 3,          // acertar el 4º / ÚLTIMO del grupo (posición exacta)
     qual: 2,        // acertar que un equipo queda entre los 2 primeros (clasifica directo)
     thirdQual: 4,   // acertar un tercero que entra entre los 8 mejores (clasifica)
     octavos: 4,     // por cada equipo que predices en octavos y llega
