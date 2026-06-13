@@ -50,7 +50,7 @@ window.porraApp = function () {
     letters: D.GROUP_LETTERS, allTeams: ALL_TEAMS.slice().sort((a, b) => D.es(a).localeCompare(D.es(b))),
     sideBets: D.SIDE_BETS,
     // en vivo (ESPN) + cierre automático
-    espnEvents: [], espnAt: 0, liveBusy: false, nowTs: 0, outcome: null, extrasActual: {}, _espnTimer: null,
+    espnEvents: [], espnAt: 0, liveBusy: false, nowTs: 0, outcome: null, extrasActual: {}, _espnTimer: null, explain: null,
     extrasActualEdit: { revelacion: "", decepcion: "", pichichi: "", asistente: "", sidebets: {} },
     // datos
     entries: [], ranked: [], results: {}, rEdit: defaultREdit(), koEdit: defaultKoEdit(), liveBr: { teamsByMatch: {}, winnerOf: {}, complete: false },
@@ -199,6 +199,63 @@ window.porraApp = function () {
       }
       this.recomputeRanking();
       this.refreshLiveBracket();
+      this.explain = this.buildExplain();
+    },
+    // ---------- explicación de la puntuación (por qué cada uno tiene sus puntos) ----------
+    buildExplain() {
+      const oc = this.outcome || Eng.liveOutcome(this.results);
+      const S = this.settings;
+      if (!oc || !this.entries || !this.entries.length) return null;
+      const es = (t) => D.es(t);
+      const groups = D.GROUP_LETTERS.map((L) => {
+        const s = oc.standingsByGroup && oc.standingsByGroup[L];
+        const order = oc.groupOrder && oc.groupOrder[L];
+        const played = s ? Math.round(s.reduce((a, t) => a + (t.pj || 0), 0) / 2) : 0;
+        let estado = "⏳ sin empezar", detalle = "";
+        if (s && s._complete) { estado = "✅ terminado"; detalle = order.map((t, i) => (i + 1) + "º " + es(t)).join(" · "); }
+        else if (order) { estado = "🔴 en juego (" + played + "/6)"; const ri = oc.groupRank[L]; detalle = order.map((t, i) => (i + 1) + "º " + es(t) + (ri && ri[i] && ri[i].firm ? "" : "?")).join(" · "); }
+        return { L, estado, detalle, started: !!order };
+      });
+      const byId = {}; this.entries.forEach((e) => { byId[e.id] = e; });
+      const people = (this.ranked || []).map((r) => {
+        const e = byId[r.id]; if (!e || !e.picks) return null;
+        const dp = Eng.derivePicks(e.picks);
+        const bd = Eng.scoreBreakdown(dp, oc, S);
+        const ex = Eng.scoreExtras(e.picks.extras, this.extrasActual, S);
+        const cuadro = bd.octavos + bd.cuartos + bd.semis + bd.final + bd.campeon;
+        const cats = [];
+        if (bd.grupos) cats.push("Grupos " + bd.grupos);
+        if (bd.terceros) cats.push("Terceros " + bd.terceros);
+        if (cuadro) cats.push("Cuadro " + cuadro);
+        if (ex.total) cats.push("Especiales " + ex.total);
+        return { id: r.id, name: (e.first_name + " " + e.last_name).trim(), total: bd.total + ex.total, summary: cats.join("  ·  ") || "Aún sin puntos", bits: this._explainBits(e.picks, oc, S, bd, ex) };
+      }).filter(Boolean);
+      return { groups, people };
+    },
+    _explainBits(picks, oc, S, bd, ex) {
+      const es = (t) => D.es(t); const bits = [];
+      for (const L of D.GROUP_LETTERS) {
+        const act = oc.groupOrder[L]; const pred = picks.groups && picks.groups[L]; if (!act || !pred) continue;
+        const ri = oc.groupRank && oc.groupRank[L]; const firm = (i) => !ri || (ri[i] && ri[i].firm);
+        const dT = (t) => { const idx = act.indexOf(t); return idx < 0 ? false : (ri ? !!(ri[idx] && ri[idx].worstRank <= 1) : idx <= 1); };
+        let g = 0, parts = [];
+        if (pred[0] && pred[0] === act[0] && firm(0)) { g += S.g1; parts.push("1º " + es(pred[0]) + " +" + S.g1); }
+        if (pred[1] && pred[1] === act[1] && firm(1)) { g += S.g2; parts.push("2º " + es(pred[1]) + " +" + S.g2); }
+        if (pred[2] && pred[2] === act[2] && firm(2)) { g += S.g3; parts.push("3º " + es(pred[2]) + " +" + S.g3); }
+        if (pred[0] && dT(pred[0])) { g += S.qual; parts.push(es(pred[0]) + " clasifica +" + S.qual); }
+        if (pred[1] && dT(pred[1])) { g += S.qual; parts.push(es(pred[1]) + " clasifica +" + S.qual); }
+        if (g > 0) bits.push({ icon: "📊", text: "Grupo " + L + ": " + parts.join(", ") + "  = +" + g });
+      }
+      if (bd.terceros) bits.push({ icon: "🥉", text: "Mejores terceros que clasifican: +" + bd.terceros });
+      [["octavos", "octavos"], ["cuartos", "cuartos"], ["semis", "semifinales"], ["final", "la final"]].forEach(([k, label]) => { if (bd[k]) bits.push({ icon: "🏆", text: "Equipos tuyos en " + label + ": +" + bd[k] }); });
+      if (bd.campeon) bits.push({ icon: "👑", text: "¡Campeón acertado! +" + bd.campeon });
+      if (ex.revelacion) bits.push({ icon: "✨", text: "Revelación acertada +" + ex.revelacion });
+      if (ex.decepcion) bits.push({ icon: "💀", text: "Decepción acertada +" + ex.decepcion });
+      if (ex.pichichi) bits.push({ icon: "⚽", text: "Pichichi acertado +" + ex.pichichi });
+      if (ex.asistente) bits.push({ icon: "🅰️", text: "Asistente acertado +" + ex.asistente });
+      if (ex.hattrick) bits.push({ icon: "🎩", text: "Hat-trick (apostó sí, y lo hubo) +" + ex.hattrick });
+      if (ex.dobleRoja) bits.push({ icon: "🟥", text: "Doble roja (apostó sí, y la hubo) +" + ex.dobleRoja });
+      return bits;
     },
     teamQ(team) { const p = this.teamProbs[team]; return p ? p.qualify : null; },
     computeScorers() {
@@ -713,6 +770,8 @@ window.porraApp = function () {
       // marcadores en vivo + picks (no deben afectar a la tabla del servidor)
       try { await this.loadResults(); if (ok) await this.loadEntries({ recompute: false }); } catch (e) {}
       if (!ok) { this.usingServerBoard = false; try { await this.refreshBoard(); } catch (e) {} }
+      try { await this.fetchEspn(false); } catch (e) {}   // refresca outcome + la explicación de puntos
+      this.explain = this.buildExplain();
       this.probBusy = false;
     },
     openResults() { this.tab = "results"; this.fetchEspn(false); this.loadEntries({ recompute: false }); },
