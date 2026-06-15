@@ -62,7 +62,7 @@ window.porraApp = function () {
   return {
     // navegación
     view: "home", tab: "play", step: 1, rTab: "cal", aTab: "groups", calFilter: "all", brRound: 0, avatarMap: {}, avatarBusy: false, lightbox: null, photoCache: {},
-    teamProbs: {}, teamProbsSims: 0, scorers: [], assisters: [], _assistCache: {}, assistsLoading: false, assistsLoaded: false,
+    teamProbs: {}, teamProbsSims: 0, scorers: [], assisters: [], porteros: [], _matchCache: {}, assistsLoading: false, assistsLoaded: false,
     phase: "welcome", gIdx: 0, chosenNew: false, confirmClaim: null, claimFromName: false,
     wmode: "choose", entriesLoaded: false,
     // estado porra / jugador
@@ -233,7 +233,7 @@ window.porraApp = function () {
     // ---------- init ----------
     async init() {
       try { this.recent = JSON.parse(localStorage.getItem("porra_recent") || "[]"); } catch (e) { this.recent = []; }
-      try { this._assistCache = JSON.parse(localStorage.getItem("porra_assists") || "{}"); } catch (e) { this._assistCache = {}; }
+      try { this._matchCache = JSON.parse(localStorage.getItem("porra_matchdata") || "{}"); } catch (e) { this._matchCache = {}; }
       this.rebuild();
       this.nowTs = Date.now();
       setInterval(() => { this.nowTs = Date.now(); }, 20000);
@@ -241,9 +241,9 @@ window.porraApp = function () {
       window.addEventListener("appinstalled", () => { this.deferredPrompt = null; this.showInstall = false; });
       // Mostrar el tutorial de instalación una sola vez (primera visita, si no es ya una app)
       try { if (!this.isStandalone && !localStorage.getItem("porra_install_seen")) setTimeout(() => { if (!this.isStandalone) this.showInstall = true; }, 1800); } catch (e) {}
-      this._espnTimer = setInterval(() => { if (!this.pool) return; if (this.tab === "leaderboard") this.loadBoard(); else if (this.tab === "results") this.fetchEspn(false); }, 60000);
+      this._espnTimer = setInterval(() => { if (!this.pool) return; if (this.tab === "leaderboard") this.loadBoard(); else if (this.tab === "results" || this.tab === "goals") this.fetchEspn(false); }, 60000);
       // Al volver a la pestaña/app, refresca al instante (clasificación siempre al día con lo que se está jugando).
-      document.addEventListener("visibilitychange", () => { if (!document.hidden && this.pool) { if (this.tab === "leaderboard") this.loadBoard(); else if (this.tab === "results") this.fetchEspn(false); } });
+      document.addEventListener("visibilitychange", () => { if (!document.hidden && this.pool) { if (this.tab === "leaderboard") this.loadBoard(); else if (this.tab === "results" || this.tab === "goals") this.fetchEspn(false); } });
       const code = new URLSearchParams(location.search).get("porra");
       if (code) await this.loadPool(code);
     },
@@ -275,8 +275,8 @@ window.porraApp = function () {
       if (this.tab === "results") {
         const mc = Eng.monteCarloTeams((this.outcome && this.outcome.groupMap) || {}, 3000, Math.random);
         this.teamProbs = mc.byTeam; this.teamProbsSims = mc.sims;
-        if (this.rTab === "scorers") this.loadAssists();
       }
+      if (this.tab === "goals") this.loadMatchData();
       this.recomputeRanking();
       this.refreshLiveBracket();
       this.explain = this.buildExplain();
@@ -388,51 +388,74 @@ window.porraApp = function () {
       }
       this.scorers = Object.values(goals).sort((a, b) => b.n - a.n || a.name.localeCompare(b.name)).slice(0, 30);
     },
-    // Asistencias: ESPN solo las da en el endpoint summary (keyEvents[].participants[1]). Se piden
-    // por partido (jugados/en vivo), con caché en memoria + localStorage para los ya terminados.
-    async loadAssists() {
+    // Asistencias + porteros: ESPN solo los da en el endpoint summary por partido
+    // (keyEvents[].participants[1] = asistente; rosters[].roster con el portero titular).
+    // Goles encajados = marcador del rival (del scoreboard). Caché memoria + localStorage.
+    async loadMatchData() {
       if (this.assistsLoading) return;
       this.assistsLoading = true;
       try {
         const base = "https://site.api.espn.com/apis/site/v2/sports/soccer/fifa.world/summary?event=";
         const events = this.espnEvents || [];
+        const scoreById = {};
+        for (const ev of events) {
+          const comp = ev.competitions && ev.competitions[0]; if (!comp) continue;
+          const cs = comp.competitors || [];
+          const h = cs.find((c) => c.homeAway === "home"), a = cs.find((c) => c.homeAway === "away");
+          scoreById[ev.id] = { home: h && h.score != null ? Number(h.score) : null, away: a && a.score != null ? Number(a.score) : null };
+        }
         const targets = events.filter((ev) => {
           const st = (ev.status && ev.status.type) || {};
-          if (st.state === "pre") return false;                         // sin empezar
-          if (this._assistCache[ev.id] && st.completed) return false;   // ya cacheado y final
-          return true;                                                  // en vivo o sin cachear
+          if (st.state === "pre") return false;                        // sin empezar
+          if (this._matchCache[ev.id] && st.completed) return false;   // ya cacheado y final
+          return true;                                                 // en vivo o sin cachear
         });
         const CONC = 6;
         for (let i = 0; i < targets.length; i += CONC) {
           await Promise.all(targets.slice(i, i + CONC).map(async (ev) => {
             try {
               const s = await (await fetch(base + ev.id)).json();
-              const arr = [];
+              const a = [];
               for (const k of (s.keyEvents || [])) {
                 if (!k.scoringPlay || k.shootout) continue;
                 const tt = ((k.type && (k.type.type || k.type.text)) || "") + "";
-                if (/own/i.test(tt) || /own goal/i.test(k.text || "")) continue;   // sin asistencia en p.p.
+                if (/own/i.test(tt) || /own goal/i.test(k.text || "")) continue;
                 const p = k.participants || [];
-                if (p[1] && p[1].athlete && p[1].athlete.displayName) {
-                  arr.push({ id: p[1].athlete.id, name: p[1].athlete.displayName, team: (k.team && k.team.displayName) || "" });
-                }
+                if (p[1] && p[1].athlete && p[1].athlete.displayName) a.push({ id: p[1].athlete.id, name: p[1].athlete.displayName, team: (k.team && k.team.displayName) || "" });
               }
-              this._assistCache[ev.id] = arr;
+              const gk = [], sc = scoreById[ev.id] || {};
+              for (const r of (s.rosters || [])) {
+                const keeper = (r.roster || []).find((pl) => { const pos = (pl.position && (pl.position.abbreviation || pl.position.name)) || ""; return /^g/i.test(pos) && pl.starter === true; });
+                if (!keeper || !keeper.athlete) continue;
+                const conceded = r.homeAway === "home" ? sc.away : (r.homeAway === "away" ? sc.home : null);
+                if (conceded == null) continue;
+                gk.push({ id: keeper.athlete.id, name: keeper.athlete.displayName, team: (r.team && r.team.displayName) || "", conceded });
+              }
+              this._matchCache[ev.id] = { a, gk };
             } catch (e) { /* salta este partido */ }
           }));
         }
         try {
           const persist = {};
-          for (const ev of events) { const st = (ev.status && ev.status.type) || {}; if (st.completed && this._assistCache[ev.id]) persist[ev.id] = this._assistCache[ev.id]; }
-          localStorage.setItem("porra_assists", JSON.stringify(persist));
+          for (const ev of events) { const st = (ev.status && ev.status.type) || {}; if (st.completed && this._matchCache[ev.id]) persist[ev.id] = this._matchCache[ev.id]; }
+          localStorage.setItem("porra_matchdata", JSON.stringify(persist));
         } catch (e) {}
-        const assists = {};
-        for (const id in this._assistCache) for (const a of (this._assistCache[id] || [])) {
-          const k = a.id || a.name; const canon = D.espnCanon(a.team);
-          if (!assists[k]) assists[k] = { name: a.name, flag: canon ? D.flag(canon) : "🏳️", team: canon ? D.es(canon) : (a.team || ""), n: 0 };
-          assists[k].n++;
+        const assists = {}, gks = {};
+        for (const id in this._matchCache) {
+          const md = this._matchCache[id] || {};
+          for (const a of (md.a || [])) {
+            const k = a.id || a.name; const canon = D.espnCanon(a.team);
+            if (!assists[k]) assists[k] = { name: a.name, flag: canon ? D.flag(canon) : "🏳️", team: canon ? D.es(canon) : (a.team || ""), n: 0 };
+            assists[k].n++;
+          }
+          for (const g of (md.gk || [])) {
+            const k = g.id || g.name; const canon = D.espnCanon(g.team);
+            if (!gks[k]) gks[k] = { name: g.name, flag: canon ? D.flag(canon) : "🏳️", team: canon ? D.es(canon) : (g.team || ""), gc: 0, pj: 0, cs: 0 };
+            gks[k].gc += g.conceded; gks[k].pj++; if (g.conceded === 0) gks[k].cs++;
+          }
         }
         this.assisters = Object.values(assists).sort((x, y) => y.n - x.n || x.name.localeCompare(y.name)).slice(0, 30);
+        this.porteros = Object.values(gks).filter((p) => p.pj >= 1).sort((a, b) => a.gc - b.gc || b.pj - a.pj || b.cs - a.cs || a.name.localeCompare(b.name)).slice(0, 30);
         this.assistsLoaded = true;
       } finally { this.assistsLoading = false; }
     },
@@ -931,6 +954,7 @@ window.porraApp = function () {
       this.probBusy = false;
     },
     openResults() { this.tab = "results"; this.fetchEspn(false).then(() => this.loadForecasts()).catch(() => {}); this.loadEntries({ recompute: false }); },
+    openGoals() { this.tab = "goals"; this.fetchEspn(false).then(() => this.loadMatchData()).catch(() => {}); },
     async refreshBoard() { await this.loadResults(); await this.loadEntries(); },
     recomputeRanking() {
       if (this.usingServerBoard) { if (this.selectedId) this.det = this._computeDetail(this.selectedId); return; }
