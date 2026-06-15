@@ -369,7 +369,7 @@ window.porraApp = function () {
     },
     teamQ(team) { const p = this.teamProbs[team]; return p ? p.qualify : null; },
     // Goleadores: instantáneo desde el scoreboard (con equipo + penaltis). El scoreboard NO trae
-    // asistencias → esas se cargan aparte de los summaries (loadAssists).
+    // asistencias → esas se cargan aparte de los summaries (loadMatchData).
     computeScorers() {
       const goals = {};
       for (const ev of (this.espnEvents || [])) {
