@@ -626,7 +626,7 @@ tr.clickrow.sel td{background:#e7f1ec}
 .cal-teams{display:flex;align-items:center;gap:8px}
 .cal-t{flex:1;display:flex;align-items:center;gap:6px;min-width:0}
 .cal-t.home{justify-content:flex-end;text-align:right}
-.cal-t .tn{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.cal-t .tn{white-space:normal;overflow-wrap:anywhere;line-height:1.15}
 .cal-t .flag{flex:0 0 auto}
 .cal-sc{flex:0 0 auto;min-width:54px;text-align:center;font-weight:800;color:var(--green)}
 .cal-row.live .cal-sc{color:#e0241b}
