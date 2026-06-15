@@ -739,6 +739,7 @@ window.porraApp = function () {
         cuartos: ord(dp.cuartos), octavos: ord(dp.octavos),
         groups: e.picks.groups || {}, thirds: e.picks.thirds || [], bd,
         extras: e.picks.extras || {}, ex, total: bd.total + ex.total,
+        bits: this._explainBits(e.picks, oc, this.settings, bd, ex),   // justificación punto a punto
       };
     },
     refreshLiveBracket() {

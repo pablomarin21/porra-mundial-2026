@@ -13,7 +13,7 @@
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="Porra Mundial" />
-  <link rel="stylesheet" href="styles.css?v=19" />
+  <link rel="stylesheet" href="styles.css?v=20" />
 </head>
 <body x-data="porraApp()" x-init="init()" x-cloak>
 
@@ -619,6 +619,17 @@
           </div>
         </template>
 
+        <!-- Justificación: qué ha acertado, punto a punto -->
+        <template x-if="boardLocked">
+          <div class="det-aciertos">
+            <p class="da-h">✅ Qué ha acertado <span class="muted">— de aquí salen sus <b x-text="det.total"></b> puntos</span></p>
+            <div class="da-bits">
+              <template x-for="(bt,i) in (det.bits||[])" :key="'db'+i"><div class="da-bit"><span class="da-ic" x-text="bt.icon"></span> <span x-text="bt.text"></span></div></template>
+              <div class="da-bit muted" x-show="!det.bits || !det.bits.length">Todavía no ha sumado puntos (sus aciertos aún no están decididos, o los grupos no han completado la jornada).</div>
+            </div>
+          </div>
+        </template>
+
         <div class="qv">
           <div class="qv-champ">
             <small>Su campeón</small>
@@ -707,6 +718,17 @@
             <span x-text="'Final '+det.bd.final"></span>
             <span x-text="'Campeón '+det.bd.campeon"></span>
             <span class="bd-extra" x-show="det.ex.total" x-text="'⭐ Especiales '+det.ex.total"></span>
+          </div>
+        </template>
+
+        <!-- Justificación: qué ha acertado, punto a punto -->
+        <template x-if="boardLocked">
+          <div class="det-aciertos">
+            <p class="da-h">✅ Qué ha acertado <span class="muted">— de aquí salen sus <b x-text="det.total"></b> puntos</span></p>
+            <div class="da-bits">
+              <template x-for="(bt,i) in (det.bits||[])" :key="'db'+i"><div class="da-bit"><span class="da-ic" x-text="bt.icon"></span> <span x-text="bt.text"></span></div></template>
+              <div class="da-bit muted" x-show="!det.bits || !det.bits.length">Todavía no ha sumado puntos (sus aciertos aún no están decididos, o los grupos no han completado la jornada).</div>
+            </div>
           </div>
         </template>
         <div class="qv">
@@ -1098,10 +1120,10 @@
   </div>
 
   <!-- ====== Dependencias ====== -->
-  <script src="data.js?v=19"></script>
-  <script src="engine.js?v=19"></script>
+  <script src="data.js?v=20"></script>
+  <script src="engine.js?v=20"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
-  <script src="app.js?v=19"></script>
+  <script src="app.js?v=20"></script>
   <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.1/dist/cdn.min.js"></script>
 </body>
 </html>
