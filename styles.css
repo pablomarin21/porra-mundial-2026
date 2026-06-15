@@ -660,3 +660,9 @@ tr.clickrow.sel td{background:#e7f1ec}
 .det-aciertos .da-bits{display:flex;flex-direction:column;gap:6px}
 .det-aciertos .da-bit{font-size:.84rem;color:#33403a;line-height:1.4;display:flex;gap:7px;align-items:flex-start}
 .det-aciertos .da-ic{flex:0 0 auto;width:1.2em;text-align:center}
+
+/* ===== Calendario: hora local de la sede + temperatura estimada ===== */
+.cal-mad{display:block;font-size:.62rem;color:var(--muted);opacity:.8;line-height:1}
+.cal-venue{display:block;font-size:.68rem;color:var(--muted);line-height:1.3;margin-top:2px}
+.cal-venue b{color:#3a4a42}
+.cal-temp{white-space:nowrap}
