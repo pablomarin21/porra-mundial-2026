@@ -1078,6 +1078,7 @@ window.porraApp = function () {
       try { await this.fetchEspn(false); } catch (e) {}   // refresca outcome + la explicación de puntos
       this.explain = this.buildExplain();
       this.scoringStatus = this.computeScoringStatus();
+      this.applyTiebreak();   // reordena empates por el sistema de puntuación
       this.probBusy = false;
     },
     openResults() { this.tab = "results"; this.fetchEspn(false).then(() => this.loadForecasts()).catch(() => {}); this.loadEntries({ recompute: false }); },
@@ -1095,9 +1096,32 @@ window.porraApp = function () {
         const pr = this.probData[e.id];
         return Object.assign({}, e, { points: base + extra, basePoints: base, extraPts: extra, win: pr ? pr.win : null, podium: pr ? pr.podium : null, avg: pr ? pr.avg : null });
       });
-      arr.sort((a, b) => (b.points - a.points) || ((b.win || 0) - (a.win || 0)) || a.last_name.localeCompare(b.last_name));
       this.ranked = arr;
+      this.applyTiebreak();
       if (this.selectedId) this.det = this._computeDetail(this.selectedId);
+    },
+    // Desempate basado en el SISTEMA DE PUNTUACIÓN: empate a puntos -> más en eliminatorias
+    // (el cuadro), luego más en especiales, luego más en grupos (y al final, alfabético).
+    _tbKeys(r) {
+      const e = (this.entries || []).find((x) => x.id === r.id);
+      if (!e || !e.picks) return { cuadro: 0, especiales: 0, grupos: 0 };
+      const oc = this.outcome || Eng.liveOutcome(this.results); const S = this.settings;
+      try {
+        const bd = Eng.scoreBreakdown(Eng.derivePicks(e.picks), oc, S);
+        const ex = Eng.scoreExtras(e.picks.extras, this.extrasActual, S);
+        return { cuadro: bd.octavos + bd.cuartos + bd.semis + bd.final + bd.campeon, especiales: ex.total, grupos: bd.grupos };
+      } catch (x) { return { cuadro: 0, especiales: 0, grupos: 0 }; }
+    },
+    applyTiebreak() {
+      if (!this.ranked || !this.ranked.length) return;
+      this.ranked.forEach((r) => { r._tb = this._tbKeys(r); });
+      this.ranked.sort((a, b) => (b.points - a.points) || (b._tb.cuadro - a._tb.cuadro) || (b._tb.especiales - a._tb.especiales) || (b._tb.grupos - a._tb.grupos) || ((b.win || 0) - (a.win || 0)) || String(a.last_name || "").localeCompare(String(b.last_name || "")));
+      const reason = (u, m) => (u.cuadro !== m.cuadro ? "eliminatorias" : u.especiales !== m.especiales ? "especiales" : u.grupos !== m.grupos ? "grupos" : "orden alfabético");
+      for (let i = 0; i < this.ranked.length; i++) {
+        const r = this.ranked[i], up = this.ranked[i - 1], dn = this.ranked[i + 1];
+        r._tied = !!((up && up.points === r.points) || (dn && dn.points === r.points));
+        r._tieReason = (up && up.points === r.points) ? reason(up._tb, r._tb) : (dn && dn.points === r.points ? reason(r._tb, dn._tb) : "");
+      }
     },
     runProbabilities() {
       const S = this.settings;
