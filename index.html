@@ -13,7 +13,7 @@
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="Porra Mundial" />
-  <link rel="stylesheet" href="styles.css?v=29" />
+  <link rel="stylesheet" href="styles.css?v=30" />
 </head>
 <body x-data="porraApp()" x-init="init()" x-cloak>
 
@@ -524,10 +524,10 @@
       <p class="ss-ok" x-show="scoringStatus && scoringStatus.scoring.length">✅ Ya puntúan: <b>grupo<span x-show="scoringStatus && scoringStatus.scoring.length>1">s</span> <span x-text="scoringStatus ? scoringStatus.scoring.join(', ') : ''"></span></b>.</p>
     </div>
 
-    <!-- Podio -->
-    <template x-if="ranked.length>=2">
+    <!-- Podio (solo familiares; los invitados no ocupan podio) -->
+    <template x-if="podium3.length>=2">
       <div class="podium">
-        <template x-for="(e,i) in ranked.slice(0,3)" :key="'pod'+e.id">
+        <template x-for="(e,i) in podium3" :key="'pod'+e.id">
           <div class="pod" :class="['p'+(i+1), {bot:(e.first_name||'').startsWith('🤖')}]">
             <div class="pod-medal" x-text="['🥇','🥈','🥉'][i]"></div>
             <span class="av md pod-av podclick" @click="toggleDetail(e.id)" x-html="avatarHtml(e.id, e.first_name+' '+e.last_name)"></span>
@@ -548,9 +548,9 @@
         <span class="lr-win"><span class="lr-winval">🏆 Ganar</span></span>
       </div>
       <template x-for="(e,i) in ranked" :key="e.id">
-        <div class="league-row clickrow" :class="{me:e.id===me.id, bot:(e.first_name||'').startsWith('🤖'), sel:selectedId===e.id, pos1:i===0, pos2:i===1, pos3:i===2}" @click="toggleDetail(e.id)">
-          <span class="lr-pos" x-text="i+1"></span>
-          <span class="lr-name"><span class="av sm" x-html="avatarHtml(e.id, e.first_name+' '+e.last_name)"></span><span x-text="e.first_name+' '+e.last_name"></span><span class="incompleto" x-show="e.complete===false">⚠️ sin terminar</span><span class="youtag" x-show="e.id===me.id">tú</span><span class="seehint" x-show="canViewPicks">👁️</span></span>
+        <div class="league-row clickrow" :class="{me:e.id===me.id, bot:(e.first_name||'').startsWith('🤖'), guest:isGuest(e), sel:selectedId===e.id, pos1:famPos(i)===1, pos2:famPos(i)===2, pos3:famPos(i)===3}" @click="toggleDetail(e.id)">
+          <span class="lr-pos" :class="{inv: famPos(i)===null}" :title="famPos(i)===null ? 'Invitado, fuera de concurso' : ''" x-text="famPos(i)!==null ? famPos(i) : '·'"></span>
+          <span class="lr-name"><span class="av sm" x-html="avatarHtml(e.id, e.first_name+' '+e.last_name)"></span><span x-text="e.first_name+' '+e.last_name"></span><span class="invtag" x-show="isGuest(e)">invitado</span><span class="incompleto" x-show="e.complete===false && !isGuest(e)">⚠️ sin terminar</span><span class="youtag" x-show="e.id===me.id">tú</span><span class="seehint" x-show="canViewPicks">👁️</span></span>
           <span class="lr-num" x-show="boardLocked"><b x-text="e.points"></b></span>
           <span class="lr-win"><span class="lr-winbar" :style="'width:'+Math.min(100,(e.win||0)*100)+'%'"></span><span class="lr-winval" x-text="pct(e.win)"></span></span>
         </div>
@@ -1208,10 +1208,10 @@
   </div>
 
   <!-- ====== Dependencias ====== -->
-  <script src="data.js?v=29"></script>
-  <script src="engine.js?v=29"></script>
+  <script src="data.js?v=30"></script>
+  <script src="engine.js?v=30"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
-  <script src="app.js?v=29"></script>
+  <script src="app.js?v=30"></script>
   <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.1/dist/cdn.min.js"></script>
 </body>
 </html>
