@@ -62,7 +62,7 @@ window.porraApp = function () {
   return {
     // navegación
     view: "home", tab: "play", step: 1, rTab: "cal", aTab: "groups", calFilter: "all", brRound: 0, avatarMap: {}, avatarBusy: false, lightbox: null, photoCache: {},
-    teamProbs: {}, teamProbsSims: 0, scorers: [], assisters: [], porteros: [], _matchCache: {}, assistsLoading: false, assistsLoaded: false,
+    teamProbs: {}, teamProbsSims: 0, scorers: [], assisters: [], porteros: [], _matchCache: {}, assistsLoading: false, assistsLoaded: false, porteroDraft: "", porteroSaving: false,
     phase: "welcome", gIdx: 0, chosenNew: false, confirmClaim: null, claimFromName: false,
     wmode: "choose", entriesLoaded: false,
     // estado porra / jugador
@@ -73,12 +73,12 @@ window.porraApp = function () {
     showInstall: false, deferredPrompt: null,
     // pronósticos
     groups: emptyGroups(), thirds: [], bracket: {}, _cols: [], _champion: null,
-    extras: { revelacion: "", decepcion: "", pichichi: "", asistente: "", sidebets: {} },
+    extras: { revelacion: "", decepcion: "", pichichi: "", asistente: "", portero: "", sidebets: {} },
     letters: D.GROUP_LETTERS, allTeams: ALL_TEAMS.slice().sort((a, b) => D.es(a).localeCompare(D.es(b))),
     sideBets: D.SIDE_BETS,
     // en vivo (ESPN) + cierre automático
     espnEvents: [], espnAt: 0, liveBusy: false, nowTs: 0, outcome: null, extrasActual: {}, _espnTimer: null, explain: null, scoringStatus: null, forecasts: {}, forecastsAt: 0, pathAnalysis: null, pathLoading: false,
-    extrasActualEdit: { revelacion: "", decepcion: "", pichichi: "", asistente: "", sidebets: {} },
+    extrasActualEdit: { revelacion: "", decepcion: "", pichichi: "", asistente: "", portero: "", sidebets: {} },
     // datos
     entries: [], ranked: [], results: {}, rEdit: defaultREdit(), koEdit: defaultKoEdit(), liveBr: { teamsByMatch: {}, winnerOf: {}, complete: false },
     // admin
@@ -132,6 +132,23 @@ window.porraApp = function () {
     },
     get goleadorBets() { return this._betSummary("pichichi", this.scorers); },
     get asistenteBets() { return this._betSummary("asistente", this.assisters); },
+    get porteroBets() { return this._betSummary("portero", this.porteros); },
+    // ---------- predicción "mejor portero" (campo nuevo): aviso en pantalla principal + guardar ----------
+    get myEntry() { const id = this.me && this.me.id; return id ? (this.entries || []).find((e) => e.id === id) : null; },
+    get myPortero() { const e = this.myEntry; const v = (e && e.picks && e.picks.extras && e.picks.extras.portero) || (this.extras && this.extras.portero) || ""; return (v || "").trim(); },
+    async savePortero() {
+      const v = (this.porteroDraft || "").trim();
+      if (!v || !this.me.id || !this.pool || this.porteroSaving) return;
+      this.porteroSaving = true;
+      try {
+        await this.rpc("porra_set_portero", { p_code: this.pool.code, p_participant_id: this.me.id, p_portero: v });
+        if (this.extras) this.extras.portero = v;
+        const e = this.myEntry; if (e) { e.picks = e.picks || {}; e.picks.extras = Object.assign({}, e.picks.extras || {}, { portero: v }); }
+        this.porteroDraft = "";
+        this.toast("🧤 ¡Guardado! Tu mejor portero: " + v);
+      } catch (err) { this.toast(this.errMsg ? this.errMsg(err) : "No se pudo guardar", "err"); }
+      finally { this.porteroSaving = false; }
+    },
     groupFixtures(L) { return D.GROUP_FIXTURES.filter((f) => f.group === L); },
     scoreTxt(code) {
       const g = this.outcome && this.outcome.groupMap && this.outcome.groupMap[code];
@@ -394,6 +411,7 @@ window.porraApp = function () {
       if (ex.decepcion) bits.push({ icon: "💀", text: "Decepción acertada +" + ex.decepcion });
       if (ex.pichichi) bits.push({ icon: "⚽", text: "Pichichi acertado +" + ex.pichichi });
       if (ex.asistente) bits.push({ icon: "🅰️", text: "Asistente acertado +" + ex.asistente });
+      if (ex.portero) bits.push({ icon: "🧤", text: "Mejor portero acertado +" + ex.portero });
       if (ex.hattrick) bits.push({ icon: "🎩", text: "Hat-trick (apostó sí, y lo hubo) +" + ex.hattrick });
       if (ex.dobleRoja) bits.push({ icon: "🟥", text: "Doble roja (apostó sí, y la hubo) +" + ex.dobleRoja });
       return bits;
@@ -696,7 +714,7 @@ window.porraApp = function () {
     },
     async loadExtrasActual() {
       try { this.extrasActual = (await this.rpc("porra_get_extras", {})) || {}; } catch (e) { this.extrasActual = {}; }
-      this.extrasActualEdit = Object.assign({ revelacion: "", decepcion: "", pichichi: "", asistente: "", sidebets: {} }, this.extrasActual, { sidebets: Object.assign({}, this.extrasActual.sidebets || {}) });
+      this.extrasActualEdit = Object.assign({ revelacion: "", decepcion: "", pichichi: "", asistente: "", portero: "", sidebets: {} }, this.extrasActual, { sidebets: Object.assign({}, this.extrasActual.sidebets || {}) });
     },
     async saveExtrasActual() {
       this.busy = true;
@@ -725,7 +743,7 @@ window.porraApp = function () {
       try { draft = JSON.parse(localStorage.getItem("porra_draft_" + code) || "null"); } catch (e) {}
       const src = mine || draft;
       this.groups = emptyGroups(); this.thirds = []; this.bracket = {};
-      this.extras = { revelacion: "", decepcion: "", pichichi: "", asistente: "", sidebets: {} };
+      this.extras = { revelacion: "", decepcion: "", pichichi: "", asistente: "", portero: "", sidebets: {} };
       this.me = { first: "", last: "", id: null, saved: false };
       if (mine) { this.me = { first: mine.first || "", last: mine.last || "", id: mine.id || null, saved: !!mine.id }; }
       else if (draft) { this.me.first = draft.first || ""; this.me.last = draft.last || ""; }
@@ -734,7 +752,7 @@ window.porraApp = function () {
         if (p.groups && Object.keys(p.groups).length) for (const L of D.GROUP_LETTERS) if (p.groups[L]) this.groups[L] = p.groups[L].slice();
         this.thirds = (p.thirds || []).slice();
         this.bracket = Object.assign({}, p.bracket || {});
-        if (p.extras) this.extras = Object.assign({ revelacion: "", decepcion: "", pichichi: "", asistente: "", sidebets: {} }, p.extras, { sidebets: Object.assign({}, p.extras.sidebets || {}) });
+        if (p.extras) this.extras = Object.assign({ revelacion: "", decepcion: "", pichichi: "", asistente: "", portero: "", sidebets: {} }, p.extras, { sidebets: Object.assign({}, p.extras.sidebets || {}) });
       }
       this.reconcileThirds(); this.rebuild();
     },
@@ -894,7 +912,7 @@ window.porraApp = function () {
       if (p.groups && Object.keys(p.groups).length) for (const L of D.GROUP_LETTERS) if (p.groups[L]) this.groups[L] = p.groups[L].slice();
       this.thirds = (p.thirds || []).slice();
       this.bracket = Object.assign({}, p.bracket || {});
-      this.extras = Object.assign({ revelacion: "", decepcion: "", pichichi: "", asistente: "", sidebets: {} }, p.extras || {}, { sidebets: Object.assign({}, (p.extras && p.extras.sidebets) || {}) });
+      this.extras = Object.assign({ revelacion: "", decepcion: "", pichichi: "", asistente: "", portero: "", sidebets: {} }, p.extras || {}, { sidebets: Object.assign({}, (p.extras && p.extras.sidebets) || {}) });
       this.reconcileThirds(); this.rebuild();
     },
     _persistMe() {
