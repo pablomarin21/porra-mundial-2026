@@ -391,19 +391,18 @@ window.porraApp = function () {
         if (!me || entries.length < 2) { this.pathAnalysis = { none: true }; return; }
         const N = 3000;
         let meFirst = 0, mePod = 0;
-        const cN = {}, cF = {}, cP = {}, rivalAbove = {};
+        const cN = {}, cF = {}, cP = {};
         for (let s = 0; s < N; s++) {
           const oc = Eng.simulateOutcome(simMap, Math.random);
           const champ = oc.reached.champion;
           let myP = 0; const ps = [];
           for (const e of entries) { const p = Eng.scoreEntry(e.dp, oc, S) + e.extra; ps.push({ id: e.id, p }); if (e.id === meId) myP = p; }
-          let above = 0, jaP = -Infinity, jaId = null;
-          for (const x of ps) { if (x.p > myP) { above++; if (jaId === null || x.p < jaP) { jaP = x.p; jaId = x.id; } } }
+          let above = 0;
+          for (const x of ps) { if (x.p > myP) above++; }
           const rank = above + 1;
           if (rank === 1) meFirst++;
           if (rank <= 3) mePod++;
           if (champ) { cN[champ] = (cN[champ] || 0) + 1; if (rank === 1) cF[champ] = (cF[champ] || 0) + 1; if (rank <= 3) cP[champ] = (cP[champ] || 0) + 1; }
-          if (jaId) rivalAbove[jaId] = (rivalAbove[jaId] || 0) + 1;
         }
         const byId = {}; entries.forEach((e) => (byId[e.id] = e));
         const rankedList = (this.ranked && this.ranked.length) ? this.ranked : [];
@@ -414,11 +413,11 @@ window.porraApp = function () {
         const scenarios = champs.filter((c) => c.freq >= 0.02 && c.pPod >= 0.05).sort((a, b) => b.pFirst - a.pFirst || b.pPod - a.pPod).slice(0, 4);
         const myChampC = me.champ ? champs.find((c) => c.team === me.champ) : null;
         const myChampAlive = !!(myChampC && myChampC.n > 0);
+        // rival a batir = el que vas justo por detrás en la clasificación actual (al que hay que adelantar para subir)
         let rival = null;
-        const rivId = Object.keys(rivalAbove).sort((a, b) => rivalAbove[b] - rivalAbove[a])[0];
-        if (rivId && byId[rivId]) {
-          const rRow = rankedList.find((r) => r.id === rivId);
-          rival = { name: byId[rivId].name, champ: byId[rivId].champ ? D.es(byId[rivId].champ) : null, points: rRow ? rRow.points : null, gap: (rRow && myPoints != null) ? (rRow.points - myPoints) : null };
+        if (myRank && myRank > 1 && rankedList[myRank - 2]) {
+          const rRow = rankedList[myRank - 2]; const rEnt = byId[rRow.id];
+          rival = { name: rEnt ? rEnt.name : ((rRow.first_name || "") + " " + (rRow.last_name || "")).trim(), champ: rEnt && rEnt.champ ? D.es(rEnt.champ) : null, points: rRow.points, gap: myPoints != null ? (rRow.points - myPoints) : null };
         }
         const win = (myRow && typeof myRow.win === "number") ? myRow.win : meFirst / N;       // % oficial (servidor) si está
         const podium = (myRow && typeof myRow.podium === "number") ? myRow.podium : mePod / N;
