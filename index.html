@@ -13,7 +13,7 @@
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="Porra Mundial" />
-  <link rel="stylesheet" href="styles.css?v=34" />
+  <link rel="stylesheet" href="styles.css?v=35" />
 </head>
 <body x-data="porraApp()" x-init="init()" x-cloak>
 
@@ -466,6 +466,15 @@
       <p class="muted">La liga de la familia. <span x-show="probBusy">⏳ calculando probabilidades…</span></p>
     </div>
 
+    <!-- Resumen de la jornada (auto) -->
+    <div class="md-summary" x-show="matchdaySummary">
+      <p class="mds-h">📋 Jornada <span x-text="matchdaySummary ? matchdaySummary.jornada : ''"></span> completada — cómo va la cosa</p>
+      <p class="mds-line">🏆 Va líder <b x-text="matchdaySummary ? matchdaySummary.leader : ''"></b> con <b x-text="(matchdaySummary ? matchdaySummary.leaderPts : 0)+' pts'"></b><span x-show="matchdaySummary && matchdaySummary.gap>0" x-text="', '+(matchdaySummary?matchdaySummary.gap:0)+' por delante de '+(matchdaySummary?matchdaySummary.second:'')"></span><span x-show="matchdaySummary && matchdaySummary.gap===0" x-text="', empatado con '+(matchdaySummary?matchdaySummary.second:'')"></span>.</p>
+      <p class="mds-line">🥇🥈🥉 Podio: <b x-text="matchdaySummary ? matchdaySummary.podio.join(' · ') : ''"></b>.</p>
+      <p class="mds-line" x-show="matchdaySummary && matchdaySummary.esp.length">✅ Especiales ya resueltas: <b x-text="matchdaySummary ? matchdaySummary.esp.join(', ') : ''"></b>.</p>
+      <p class="mds-note">⚠️ Los puntos de grupo son <b>provisionales</b> hasta que cada grupo termina — pueden subir o bajar cada jornada.</p>
+    </div>
+
     <!-- Cómo se puntúa (siempre visible) -->
     <details class="scoring-explain">
       <summary>📋 ¿Cómo se puntúa? — el modelo de la porra</summary>
@@ -521,7 +530,7 @@
       </div>
       <div class="pg-row down">
         <span class="pg-ic">🔴</span>
-        <div><b>¿Por qué puedes BAJAR?</b> Hasta que un grupo termina, sus puntos son <b>provisionales</b>: se calculan con la tabla de ese momento. Si un equipo cambia de puesto, <b>lo que ya no aciertas se te quita</b> y quien lo acierta ahora lo gana. <span class="muted">Ejemplo: si pusiste "Chequia 3ª" y Chequia cae a 4ª, pierdes esos puntos. No te los quita nadie a mano: es automático y justo. Cuando el grupo acaba, tus puntos quedan <b>fijos</b>.</span></div>
+        <div><b>¿Por qué puedes BAJAR?</b> Los puntos de un grupo son <b>provisionales</b> hasta que ese grupo termina (sus 3 jornadas). Suben y bajan según la tabla real de cada momento. <span class="muted"><b>Ejemplo fácil:</b> en la <b>jornada 1</b> clavas el Grupo A tal cual lo predijiste → sumas <b>todo</b> (los 4 puestos + los que clasifican). Pero en la <b>jornada 2</b>, Chequia adelanta a Corea: tu "Corea 2ª" ya no es correcto → <b>te quitan esos puntos</b> (y se los lleva quien puso a Chequia 2ª). No te los quita nadie a mano: es automático y justo. <b>Solo se congelan cuando el grupo acaba.</b></span></div>
       </div>
     </div>
 
@@ -1256,10 +1265,10 @@
   </div>
 
   <!-- ====== Dependencias ====== -->
-  <script src="data.js?v=34"></script>
-  <script src="engine.js?v=34"></script>
+  <script src="data.js?v=35"></script>
+  <script src="engine.js?v=35"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
-  <script src="app.js?v=34"></script>
+  <script src="app.js?v=35"></script>
   <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.1/dist/cdn.min.js"></script>
 </body>
 </html>
