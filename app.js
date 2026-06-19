@@ -77,7 +77,7 @@ window.porraApp = function () {
     letters: D.GROUP_LETTERS, allTeams: ALL_TEAMS.slice().sort((a, b) => D.es(a).localeCompare(D.es(b))),
     sideBets: D.SIDE_BETS,
     // en vivo (ESPN) + cierre automático
-    espnEvents: [], espnAt: 0, liveBusy: false, nowTs: 0, outcome: null, extrasActual: {}, _espnTimer: null, explain: null, scoringStatus: null, forecasts: {}, forecastsAt: 0, pathAnalysis: null, pathLoading: false,
+    espnEvents: [], espnAt: 0, liveBusy: false, nowTs: 0, outcome: null, extrasActual: {}, _espnTimer: null, explain: null, scoringStatus: null, forecasts: {}, forecastsAt: 0, pathAnalysis: null, pathLoading: false, cmpA: "", cmpB: "",
     extrasActualEdit: { revelacion: "", decepcion: "", pichichi: "", asistente: "", portero: "", sidebets: {} },
     // datos
     entries: [], ranked: [], results: {}, rEdit: defaultREdit(), koEdit: defaultKoEdit(), liveBr: { teamsByMatch: {}, winnerOf: {}, complete: false },
@@ -132,6 +132,51 @@ window.porraApp = function () {
     },
     get goleadorBets() { return this._betSummary("pichichi", this.scorers); },
     get asistenteBets() { return this._betSummary("asistente", this.assisters); },
+    // ---------- comparar dos porras ----------
+    get compareOptions() {
+      const order = {}; (this.ranked || []).forEach((r, i) => (order[r.id] = i));
+      return (this.entries || []).filter((e) => e.picks).map((e) => ({ id: e.id, name: (e.first_name + " " + e.last_name).trim() })).sort((a, b) => (order[a.id] != null ? order[a.id] : 99) - (order[b.id] != null ? order[b.id] : 99));
+    },
+    ensureCompareDefaults() {
+      const opts = this.compareOptions; if (!opts.length) return;
+      if (!this.cmpA || !opts.some((o) => o.id === this.cmpA)) this.cmpA = (this.me && this.me.id && opts.some((o) => o.id === this.me.id)) ? this.me.id : opts[0].id;
+      if (!this.cmpB || this.cmpB === this.cmpA || !opts.some((o) => o.id === this.cmpB)) { const o = opts.find((x) => x.id !== this.cmpA); this.cmpB = o ? o.id : ""; }
+    },
+    _groupPts(picks, L, oc, S) {
+      const act = oc.groupOrder[L]; const pred = picks.groups && picks.groups[L];
+      if (!act || !pred || pred.length !== 4) return 0;
+      const ri = oc.groupRank[L]; const firm = (i) => !ri || (ri[i] && ri[i].firm);
+      const dT = (t) => { const idx = act.indexOf(t); return idx < 0 ? false : (ri ? !!(ri[idx] && ri[idx].worstRank <= 1) : idx <= 1); };
+      const gk = [S.g1, S.g2, S.g3, (S.g4 || 0)]; let pts = 0;
+      for (let i = 0; i < 4; i++) if (pred[i] && pred[i] === act[i] && firm(i)) pts += gk[i];
+      if (pred[0] && dT(pred[0])) pts += S.qual;
+      if (pred[1] && dT(pred[1])) pts += S.qual;
+      return pts;
+    },
+    _cmpOne(id, oc, S) {
+      const e = (this.entries || []).find((x) => x.id === id); if (!e || !e.picks) return null;
+      const dp = Eng.derivePicks(e.picks);
+      const bd = Eng.scoreBreakdown(dp, oc, S);
+      const ex = Eng.scoreExtras(e.picks.extras, this.extrasActual, S);
+      const champTeam = e.picks.bracket && (e.picks.bracket[D.FINAL.match] || e.picks.bracket[String(D.FINAL.match)]);
+      return { id, name: (e.first_name + " " + e.last_name).trim(), picks: e.picks, bd, ex, cuadro: bd.octavos + bd.cuartos + bd.semis + bd.final + bd.campeon, total: bd.total + ex.total, champ: champTeam ? D.es(champTeam) : null, champFlag: champTeam ? D.flag(champTeam) : "" };
+    },
+    get compareResult() {
+      if (!this.cmpA || !this.cmpB || this.cmpA === this.cmpB) return null;
+      const oc = this.outcome || Eng.liveOutcome(this.results); const S = this.settings;
+      const A = this._cmpOne(this.cmpA, oc, S), B = this._cmpOne(this.cmpB, oc, S);
+      if (!A || !B) return null;
+      const cats = [
+        { key: "Grupos", a: A.bd.grupos, b: B.bd.grupos },
+        { key: "Terceros", a: A.bd.terceros, b: B.bd.terceros },
+        { key: "Cuadro (eliminatorias)", a: A.cuadro, b: B.cuadro },
+        { key: "Especiales", a: A.ex.total, b: B.ex.total },
+      ].filter((c) => c.a || c.b);
+      const groups = [];
+      for (const L of D.GROUP_LETTERS) { const pa = this._groupPts(A.picks, L, oc, S), pb = this._groupPts(B.picks, L, oc, S); if (pa > 0 || pb > 0) groups.push({ L, a: pa, b: pb }); }
+      const leaderName = A.total === B.total ? "" : this._shortName({ first_name: (A.total > B.total ? A : B).name });
+      return { A, B, gap: A.total - B.total, leaderName, cats, groups };
+    },
     // ---------- resumen de la jornada (auto, se actualiza cada ronda completa) ----------
     tournamentMatchday() {   // nº de jornadas completas en TODOS los grupos (jornada del torneo)
       const gm = (this.outcome && this.outcome.groupMap) || this.results || {};
