@@ -77,7 +77,7 @@ window.porraApp = function () {
     letters: D.GROUP_LETTERS, allTeams: ALL_TEAMS.slice().sort((a, b) => D.es(a).localeCompare(D.es(b))),
     sideBets: D.SIDE_BETS,
     // en vivo (ESPN) + cierre automático
-    espnEvents: [], espnAt: 0, liveBusy: false, nowTs: 0, outcome: null, extrasActual: {}, _espnTimer: null, explain: null, scoringStatus: null, forecasts: {}, forecastsAt: 0, pathAnalysis: null, pathLoading: false, cmpA: "", cmpB: "",
+    espnEvents: [], espnAt: 0, liveBusy: false, nowTs: 0, outcome: null, extrasActual: {}, _espnTimer: null, explain: null, scoringStatus: null, forecasts: {}, forecastsAt: 0, pathAnalysis: null, pathLoading: false, cmpA: "", cmpB: "", cmpGroup: "",
     extrasActualEdit: { revelacion: "", decepcion: "", pichichi: "", asistente: "", portero: "", sidebets: {} },
     // datos
     entries: [], ranked: [], results: {}, rEdit: defaultREdit(), koEdit: defaultKoEdit(), liveBr: { teamsByMatch: {}, winnerOf: {}, complete: false },
@@ -153,6 +153,22 @@ window.porraApp = function () {
       if (pred[1] && dT(pred[1])) pts += S.qual;
       return pts;
     },
+    _groupRows(picks, L, oc, S) {   // pronóstico de un jugador en un grupo (con aciertos y +pts)
+      const act = oc.groupOrder[L]; const pred = picks.groups && picks.groups[L];
+      if (!act || !pred || pred.length !== 4) return null;
+      const ri = oc.groupRank[L]; const firm = (i) => !ri || (ri[i] && ri[i].firm);
+      const dT = (t) => { const idx = act.indexOf(t); return idx < 0 ? false : (ri ? !!(ri[idx] && ri[idx].worstRank <= 1) : idx <= 1); };
+      const gk = [S.g1, S.g2, S.g3, (S.g4 || 0)];
+      const rows = pred.map((t, i) => { const hit = (t === act[i] && firm(i)); return { es: D.es(t), flag: D.flag(t), hit, pts: hit ? gk[i] : 0 }; });
+      const qualNames = []; if (pred[0] && dT(pred[0])) qualNames.push(D.es(pred[0])); if (pred[1] && dT(pred[1])) qualNames.push(D.es(pred[1]));
+      return { rows, qualNames };
+    },
+    _groupActual(L, oc) {
+      const act = oc.groupOrder[L]; if (!act) return null;
+      const ri = oc.groupRank[L]; const firm = (i) => !ri || (ri[i] && ri[i].firm);
+      return act.map((t, i) => ({ es: D.es(t), flag: D.flag(t), firm: firm(i) }));
+    },
+    get cmpGroupData() { const cr = this.compareResult; if (!cr || !this.cmpGroup) return null; return cr.groups.find((g) => g.L === this.cmpGroup) || null; },
     _cmpOne(id, oc, S) {
       const e = (this.entries || []).find((x) => x.id === id); if (!e || !e.picks) return null;
       const dp = Eng.derivePicks(e.picks);
@@ -173,7 +189,12 @@ window.porraApp = function () {
         { key: "Especiales", a: A.ex.total, b: B.ex.total },
       ].filter((c) => c.a || c.b);
       const groups = [];
-      for (const L of D.GROUP_LETTERS) { const pa = this._groupPts(A.picks, L, oc, S), pb = this._groupPts(B.picks, L, oc, S); if (pa > 0 || pb > 0) groups.push({ L, a: pa, b: pb }); }
+      for (const L of D.GROUP_LETTERS) {
+        const pa = this._groupPts(A.picks, L, oc, S), pb = this._groupPts(B.picks, L, oc, S);
+        if (pa <= 0 && pb <= 0) continue;
+        const dA = this._groupRows(A.picks, L, oc, S), dB = this._groupRows(B.picks, L, oc, S);
+        groups.push({ L, a: pa, b: pb, rowsA: dA ? dA.rows : [], qualA: dA ? dA.qualNames : [], rowsB: dB ? dB.rows : [], qualB: dB ? dB.qualNames : [], actual: this._groupActual(L, oc) });
+      }
       const leaderName = A.total === B.total ? "" : this._shortName({ first_name: (A.total > B.total ? A : B).name });
       return { A, B, gap: A.total - B.total, leaderName, cats, groups };
     },

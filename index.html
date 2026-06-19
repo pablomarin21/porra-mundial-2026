@@ -13,7 +13,7 @@
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="Porra Mundial" />
-  <link rel="stylesheet" href="styles.css?v=37" />
+  <link rel="stylesheet" href="styles.css?v=38" />
 </head>
 <body x-data="porraApp()" x-init="init()" x-cloak>
 
@@ -632,18 +632,35 @@
             <!-- Campeón -->
             <div class="cmp-champ">👑 Campeón: <b><span x-text="compareResult.A.champFlag"></span> <span x-text="compareResult.A.champ||'—'"></span></b> <span class="muted">vs</span> <b><span x-text="compareResult.B.champFlag"></span> <span x-text="compareResult.B.champ||'—'"></span></b> <span class="cmp-same" x-show="compareResult.A.champ && compareResult.A.champ===compareResult.B.champ">(mismo)</span></div>
 
-            <!-- Grupo a grupo -->
-            <div class="cmp-h" x-show="compareResult.groups.length">⚽ Grupo a grupo (lo que lleva cada uno)</div>
+            <!-- Grupo a grupo (toca un grupo para ver el detalle) -->
+            <div class="cmp-h" x-show="compareResult.groups.length">⚽ Grupo a grupo <span class="muted" style="font-weight:500;font-size:.72rem">— toca un grupo para ver el detalle</span></div>
             <div class="cmp-groups" x-show="compareResult.groups.length">
               <template x-for="g in compareResult.groups" :key="'cg'+g.L">
-                <div class="cmp-grow" :class="{awin:g.a>g.b, bwin:g.b>g.a}">
+                <div class="cmp-grow clickrow" :class="{awin:g.a>g.b, bwin:g.b>g.a, open:cmpGroup===g.L}" @click="cmpGroup = (cmpGroup===g.L ? '' : g.L)">
                   <span class="cmp-ga" x-text="'+'+g.a"></span>
                   <span class="cmp-gl" x-text="'Grupo '+g.L"></span>
                   <span class="cmp-gb" x-text="'+'+g.b"></span>
                 </div>
               </template>
             </div>
-            <p class="tiny muted" style="margin-top:6px">El verde marca quién va por delante en cada cosa. Los puntos de grupo son provisionales (pueden cambiar).</p>
+
+            <!-- Detalle del grupo seleccionado: lo que puso cada uno + lo que pasa de verdad -->
+            <div class="cmp-gdetail" x-show="cmpGroup && cmpGroupData">
+              <div class="cgd-h">⚽ Grupo <b x-text="cmpGroup"></b> — al detalle</div>
+              <div class="cgd-real"><span class="cgd-lab">Va de verdad</span><div class="cgd-cells"><template x-for="(r,i) in (cmpGroupData?cmpGroupData.actual:[])" :key="'cgr'+i"><span class="cgd-cell real"><span class="cgd-pos" x-text="(i+1)+'º'"></span><span class="flag" x-text="r.flag"></span><span x-text="r.es"></span><span class="cgd-q" x-show="!r.firm" title="posición sin decidir">?</span></span></template></div></div>
+              <div class="cgd-player">
+                <div class="cgd-name"><b x-text="compareResult.A.name"></b> <span class="cgd-pts a" x-text="'+'+(cmpGroupData?cmpGroupData.a:0)"></span></div>
+                <div class="cgd-cells"><template x-for="(r,i) in (cmpGroupData?cmpGroupData.rowsA:[])" :key="'cga'+i"><span class="cgd-cell" :class="{hit:r.hit}"><span class="cgd-pos" x-text="(i+1)+'º'"></span><span class="flag" x-text="r.flag"></span><span x-text="r.es"></span><span class="cgd-p" x-show="r.hit" x-text="'+'+r.pts"></span></span></template></div>
+                <div class="cgd-qual" x-show="cmpGroupData && cmpGroupData.qualA.length" x-text="'✓ Clasifican (+'+(cmpGroupData?(cmpGroupData.qualA.length*settings.qual):0)+'): '+(cmpGroupData?cmpGroupData.qualA.join(', '):'')"></div>
+              </div>
+              <div class="cgd-player">
+                <div class="cgd-name"><b x-text="compareResult.B.name"></b> <span class="cgd-pts b" x-text="'+'+(cmpGroupData?cmpGroupData.b:0)"></span></div>
+                <div class="cgd-cells"><template x-for="(r,i) in (cmpGroupData?cmpGroupData.rowsB:[])" :key="'cgb'+i"><span class="cgd-cell" :class="{hit:r.hit}"><span class="cgd-pos" x-text="(i+1)+'º'"></span><span class="flag" x-text="r.flag"></span><span x-text="r.es"></span><span class="cgd-p" x-show="r.hit" x-text="'+'+r.pts"></span></span></template></div>
+                <div class="cgd-qual" x-show="cmpGroupData && cmpGroupData.qualB.length" x-text="'✓ Clasifican (+'+(cmpGroupData?(cmpGroupData.qualB.length*settings.qual):0)+'): '+(cmpGroupData?cmpGroupData.qualB.join(', '):'')"></div>
+              </div>
+            </div>
+
+            <p class="tiny muted" style="margin-top:6px">El verde marca quién va por delante (y los aciertos). Los puntos de grupo son provisionales (pueden cambiar).</p>
           </div>
         </template>
       </div>
@@ -1379,10 +1396,10 @@
   </div>
 
   <!-- ====== Dependencias ====== -->
-  <script src="data.js?v=37"></script>
-  <script src="engine.js?v=37"></script>
+  <script src="data.js?v=38"></script>
+  <script src="engine.js?v=38"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
-  <script src="app.js?v=37"></script>
+  <script src="app.js?v=38"></script>
   <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.1/dist/cdn.min.js"></script>
 </body>
 </html>

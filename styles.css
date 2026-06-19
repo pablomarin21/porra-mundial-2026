@@ -840,3 +840,26 @@ tr.clickrow.sel td{background:#e7f1ec}
 .cmp-grow .cmp-gl{font-size:.68rem;color:var(--muted);white-space:nowrap}
 .cmp-grow.awin .cmp-ga{color:#1f8f4e}.cmp-grow.awin{border-color:#bfe3cc}
 .cmp-grow.bwin .cmp-gb{color:#1f8f4e}.cmp-grow.bwin{border-color:#cdd9f0}
+
+/* ===== Comparar: detalle de un grupo (lo que puso cada uno + lo real) ===== */
+.cmp-grow.clickrow{cursor:pointer}
+.cmp-grow.open{outline:2px solid var(--green);outline-offset:-1px}
+.cmp-gdetail{margin-top:8px;background:#f4f9f6;border:1px solid var(--line);border-radius:11px;padding:10px 12px}
+.cgd-h{font-weight:800;color:var(--green);font-size:.84rem;margin:0 0 7px}
+.cgd-real{display:flex;gap:7px;align-items:flex-start;margin-bottom:8px;padding-bottom:8px;border-bottom:1px dashed var(--line)}
+.cgd-lab{flex:0 0 auto;font-size:.66rem;font-weight:800;color:var(--muted);padding-top:3px}
+.cgd-player{margin:7px 0}
+.cgd-name{font-size:.8rem;margin-bottom:3px}
+.cgd-name b{color:#26342e}
+.cgd-pts{font-weight:800;border-radius:999px;padding:1px 8px;font-size:.76rem;margin-left:4px}
+.cgd-pts.a,.cgd-pts.b{color:var(--green);background:#eaf4ee}
+.cgd-cells{display:flex;flex-wrap:wrap;gap:4px}
+.cgd-cell{display:inline-flex;align-items:center;gap:2px;background:#fff;border:1px solid var(--line);border-radius:7px;padding:2px 6px;font-size:.72rem;white-space:nowrap}
+.cgd-cell.real{background:#eef3ff;border-color:#cdd9f0}
+.cgd-cell.hit{background:#e3f7ea;border-color:#9fdcb4;color:#15622f;font-weight:600}
+.cgd-pos{font-weight:800;color:var(--muted);font-size:.64rem}
+.cgd-cell.hit .cgd-pos{color:#1f8f4e}
+.cgd-cell .flag{font-size:.92rem}
+.cgd-p{font-weight:800;color:#1f8f4e}
+.cgd-q{color:#c0392b;font-weight:800}
+.cgd-qual{font-size:.7rem;color:#37463f;margin-top:4px}
