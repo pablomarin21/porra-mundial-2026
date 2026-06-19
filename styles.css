@@ -770,3 +770,35 @@ tr.clickrow.sel td{background:#e7f1ec}
 .md-summary .mds-line{font-size:.88rem;line-height:1.5;margin:3px 0;color:#e7f3ed}
 .md-summary .mds-line b{color:#fff}
 .md-summary .mds-note{font-size:.76rem;color:#9cc6b6;margin:8px 0 0;line-height:1.4}
+
+/* ===== Grupos en directo (detalle de un jugador) ===== */
+.det-groups{margin:12px 0 4px;background:#f4f9f6;border:1px solid var(--line);border-radius:12px;padding:11px 13px}
+.dg-head{display:flex;justify-content:space-between;align-items:baseline;gap:8px;flex-wrap:wrap;margin-bottom:8px}
+.dg-h{font-weight:800;color:var(--green);font-size:.9rem}
+.dg-sum{display:flex;gap:8px;font-size:.74rem}
+.dg-seg{color:#1f8f4e;font-weight:700}.dg-prov{color:#c98a1e;font-weight:700}
+.dg-grid{display:grid;grid-template-columns:1fr;gap:8px}
+@media(min-width:560px){.dg-grid{grid-template-columns:1fr 1fr}}
+.dg-card{background:#fff;border:1px solid var(--line);border-radius:10px;padding:8px 10px}
+.dg-card.done{border-color:#bfe3cc}
+.dg-card.live{border-color:#f0dcae;background:#fffdf7}
+.dg-card.waiting{opacity:.7}
+.dg-top{display:flex;align-items:center;gap:7px;margin-bottom:5px;font-size:.86rem}
+.dg-top>b{color:#26342e}
+.dg-state{font-size:.68rem;color:var(--muted);font-weight:600}
+.dg-pts{margin-left:auto;font-weight:800;color:var(--green);background:#eaf4ee;border-radius:999px;padding:1px 9px;font-size:.82rem}
+.dg-row{display:flex;align-items:flex-start;gap:6px;margin:3px 0}
+.dg-lab{flex:0 0 22px;font-size:.66rem;font-weight:800;color:var(--muted);padding-top:3px}
+.dg-cells{display:flex;flex-wrap:wrap;gap:4px}
+.dg-cell{display:inline-flex;align-items:center;gap:2px;background:#f1f5f3;border:1px solid var(--line);border-radius:7px;padding:2px 6px;font-size:.72rem;white-space:nowrap}
+.dg-cell.hit{background:#e3f7ea;border-color:#9fdcb4;color:#15622f;font-weight:600}
+.dg-cell.real{background:#eef3ff;border-color:#cdd9f0}
+.dg-cell .dg-pos{font-weight:800;color:var(--muted);font-size:.64rem}
+.dg-cell.hit .dg-pos{color:#1f8f4e}
+.dg-cell .flag{font-size:.95rem}
+.dg-cell .dg-p{font-weight:800;color:#1f8f4e}
+.dg-cell .dg-q{color:#c0392b;font-weight:800}
+.dg-qual{font-size:.72rem;color:#37463f;margin-top:4px}
+.dg-risk{font-size:.72rem;color:#8a6d1f;background:#fff8ec;border-radius:7px;padding:4px 7px;margin-top:5px;line-height:1.35}
+.dg-wait{font-size:.74rem;color:var(--muted);display:flex;flex-wrap:wrap;gap:4px;align-items:center}
+.dg-cell.sm{font-size:.7rem;padding:1px 5px}

@@ -1043,7 +1043,33 @@ window.porraApp = function () {
         groups: e.picks.groups || {}, thirds: e.picks.thirds || [], bd,
         extras: e.picks.extras || {}, ex, total: bd.total + ex.total,
         bits: this._explainBits(e.picks, oc, this.settings, bd, ex),   // justificación punto a punto
+        groupDetail: this._groupDetail(e.picks, oc, this.settings),    // grupos en directo (pred vs real + pts + riesgo)
       };
+    },
+    // Grupos en directo para el detalle: por grupo, su pronóstico vs la tabla real, puntos y riesgo.
+    _groupDetail(picks, oc, S) {
+      const es = (t) => D.es(t), flag = (t) => D.flag(t);
+      const out = []; let seguro = 0, provisional = 0;
+      for (const L of D.GROUP_LETTERS) {
+        const act = oc.groupOrder[L]; const pred = picks.groups && picks.groups[L];
+        const s = oc.standingsByGroup && oc.standingsByGroup[L];
+        const played = s ? Math.round(s.reduce((a, t) => a + (t.pj || 0), 0) / 2) : 0;
+        if (!act) { if (played > 0 && pred && pred.length === 4) out.push({ L, state: "waiting", played, pred: pred.map((t) => ({ es: es(t), flag: flag(t) })) }); continue; }
+        if (!pred || pred.length !== 4) continue;
+        const ri = oc.groupRank[L]; const firm = (i) => !ri || (ri[i] && ri[i].firm);
+        const dT = (t) => { const idx = act.indexOf(t); return idx < 0 ? false : (ri ? !!(ri[idx] && ri[idx].worstRank <= 1) : idx <= 1); };
+        const complete = !!(s && s._complete);
+        const gk = [S.g1, S.g2, S.g3, (S.g4 || 0)]; let pts = 0;
+        const rows = pred.map((t, i) => { const hit = (t === act[i] && firm(i)); if (hit) pts += gk[i]; return { es: es(t), flag: flag(t), hit, pts: hit ? gk[i] : 0 }; });
+        let qual = 0; const qualNames = [];
+        if (pred[0] && dT(pred[0])) { qual += S.qual; qualNames.push(es(pred[0])); }
+        if (pred[1] && dT(pred[1])) { qual += S.qual; qualNames.push(es(pred[1])); }
+        pts += qual;
+        const actual = act.map((t, i) => ({ es: es(t), flag: flag(t), firm: firm(i) }));
+        if (complete) seguro += pts; else provisional += pts;
+        out.push({ L, state: complete ? "done" : "live", played, pts, qual, qualNames, rows, actual, complete });
+      }
+      return { groups: out, seguro, provisional };
     },
     refreshLiveBracket() {
       const standings = {}; let complete = true;

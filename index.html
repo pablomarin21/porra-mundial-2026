@@ -13,7 +13,7 @@
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="Porra Mundial" />
-  <link rel="stylesheet" href="styles.css?v=35" />
+  <link rel="stylesheet" href="styles.css?v=36" />
 </head>
 <body x-data="porraApp()" x-init="init()" x-cloak>
 
@@ -707,6 +707,32 @@
           </div>
         </template>
 
+        <!-- Grupos en directo: su pronóstico vs la tabla real + puntos + riesgo -->
+        <template x-if="boardLocked && det.groupDetail && det.groupDetail.groups.length">
+          <div class="det-groups">
+            <div class="dg-head">
+              <span class="dg-h">📊 Grupos en directo</span>
+              <span class="dg-sum"><span class="dg-seg" title="puntos de grupos ya terminados (no cambian)">✅ <b x-text="det.groupDetail.seguro"></b> fijos</span><span class="dg-prov" x-show="det.groupDetail.provisional" title="puntos de grupos sin terminar (pueden cambiar)">⏳ <b x-text="det.groupDetail.provisional"></b> en juego</span></span>
+            </div>
+            <div class="dg-grid">
+              <template x-for="g in det.groupDetail.groups" :key="'dg'+g.L">
+                <div class="dg-card" :class="g.state">
+                  <div class="dg-top"><b x-text="'Grupo '+g.L"></b><span class="dg-state" x-text="g.state==='done'?'✅ terminado':(g.state==='live'?('🔴 '+g.played+'/6'):'⏳ jornada incompleta')"></span><span class="dg-pts" x-show="g.state!=='waiting'" x-text="'+'+g.pts"></span></div>
+                  <template x-if="g.state!=='waiting'">
+                    <div class="dg-body">
+                      <div class="dg-row"><span class="dg-lab">Tú</span><div class="dg-cells"><template x-for="(r,i) in g.rows" :key="'tu'+g.L+i"><span class="dg-cell" :class="{hit:r.hit}"><span class="dg-pos" x-text="(i+1)+'º'"></span><span class="flag" x-text="r.flag"></span><span class="dg-nm" x-text="r.es"></span><span class="dg-p" x-show="r.hit" x-text="'+'+r.pts"></span></span></template></div></div>
+                      <div class="dg-row"><span class="dg-lab">Va</span><div class="dg-cells"><template x-for="(r,i) in g.actual" :key="'va'+g.L+i"><span class="dg-cell real"><span class="dg-pos" x-text="(i+1)+'º'"></span><span class="flag" x-text="r.flag"></span><span class="dg-nm" x-text="r.es"></span><span class="dg-q" x-show="!r.firm" title="posición sin decidir (en riesgo)">?</span></span></template></div></div>
+                      <div class="dg-qual" x-show="g.qual" x-text="'➕ Clasifican (top-2): '+g.qualNames.join(', ')+' (+'+g.qual+')'"></div>
+                      <div class="dg-risk" x-show="!g.complete && g.pts>0">⏳ <b>Riesgo:</b> estos <b x-text="'+'+g.pts"></b> son provisionales — pueden bajar si la tabla se mueve.</div>
+                    </div>
+                  </template>
+                  <div class="dg-wait" x-show="g.state==='waiting'">Aún no puntúa (falta completar la jornada). Puso: <template x-for="(t,i) in g.pred" :key="'w'+g.L+i"><span class="dg-cell sm"><span class="flag" x-text="t.flag"></span><span class="dg-nm" x-text="t.es"></span></span></template></div>
+                </div>
+              </template>
+            </div>
+          </div>
+        </template>
+
         <div class="qv">
           <div class="qv-champ">
             <small>Su campeón</small>
@@ -805,6 +831,32 @@
             <div class="da-bits">
               <template x-for="(bt,i) in (det.bits||[])" :key="'db'+i"><div class="da-bit"><span class="da-ic" x-text="bt.icon"></span> <span x-text="bt.text"></span></div></template>
               <div class="da-bit muted" x-show="!det.bits || !det.bits.length">Todavía no ha sumado puntos (sus aciertos aún no están decididos, o los grupos no han completado la jornada).</div>
+            </div>
+          </div>
+        </template>
+
+        <!-- Grupos en directo: su pronóstico vs la tabla real + puntos + riesgo -->
+        <template x-if="boardLocked && det.groupDetail && det.groupDetail.groups.length">
+          <div class="det-groups">
+            <div class="dg-head">
+              <span class="dg-h">📊 Grupos en directo</span>
+              <span class="dg-sum"><span class="dg-seg" title="puntos de grupos ya terminados (no cambian)">✅ <b x-text="det.groupDetail.seguro"></b> fijos</span><span class="dg-prov" x-show="det.groupDetail.provisional" title="puntos de grupos sin terminar (pueden cambiar)">⏳ <b x-text="det.groupDetail.provisional"></b> en juego</span></span>
+            </div>
+            <div class="dg-grid">
+              <template x-for="g in det.groupDetail.groups" :key="'dg'+g.L">
+                <div class="dg-card" :class="g.state">
+                  <div class="dg-top"><b x-text="'Grupo '+g.L"></b><span class="dg-state" x-text="g.state==='done'?'✅ terminado':(g.state==='live'?('🔴 '+g.played+'/6'):'⏳ jornada incompleta')"></span><span class="dg-pts" x-show="g.state!=='waiting'" x-text="'+'+g.pts"></span></div>
+                  <template x-if="g.state!=='waiting'">
+                    <div class="dg-body">
+                      <div class="dg-row"><span class="dg-lab">Tú</span><div class="dg-cells"><template x-for="(r,i) in g.rows" :key="'tu'+g.L+i"><span class="dg-cell" :class="{hit:r.hit}"><span class="dg-pos" x-text="(i+1)+'º'"></span><span class="flag" x-text="r.flag"></span><span class="dg-nm" x-text="r.es"></span><span class="dg-p" x-show="r.hit" x-text="'+'+r.pts"></span></span></template></div></div>
+                      <div class="dg-row"><span class="dg-lab">Va</span><div class="dg-cells"><template x-for="(r,i) in g.actual" :key="'va'+g.L+i"><span class="dg-cell real"><span class="dg-pos" x-text="(i+1)+'º'"></span><span class="flag" x-text="r.flag"></span><span class="dg-nm" x-text="r.es"></span><span class="dg-q" x-show="!r.firm" title="posición sin decidir (en riesgo)">?</span></span></template></div></div>
+                      <div class="dg-qual" x-show="g.qual" x-text="'➕ Clasifican (top-2): '+g.qualNames.join(', ')+' (+'+g.qual+')'"></div>
+                      <div class="dg-risk" x-show="!g.complete && g.pts>0">⏳ <b>Riesgo:</b> estos <b x-text="'+'+g.pts"></b> son provisionales — pueden bajar si la tabla se mueve.</div>
+                    </div>
+                  </template>
+                  <div class="dg-wait" x-show="g.state==='waiting'">Aún no puntúa (falta completar la jornada). Puso: <template x-for="(t,i) in g.pred" :key="'w'+g.L+i"><span class="dg-cell sm"><span class="flag" x-text="t.flag"></span><span class="dg-nm" x-text="t.es"></span></span></template></div>
+                </div>
+              </template>
             </div>
           </div>
         </template>
@@ -1265,10 +1317,10 @@
   </div>
 
   <!-- ====== Dependencias ====== -->
-  <script src="data.js?v=35"></script>
-  <script src="engine.js?v=35"></script>
+  <script src="data.js?v=36"></script>
+  <script src="engine.js?v=36"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
-  <script src="app.js?v=35"></script>
+  <script src="app.js?v=36"></script>
   <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.1/dist/cdn.min.js"></script>
 </body>
 </html>
