@@ -883,3 +883,14 @@ tr.clickrow.sel td{background:#e7f1ec}
 .ko-ex-run b{color:#1f8f4e}
 .ko-notes{list-style:none;padding:0;margin:0;display:grid;gap:7px}
 .ko-notes li{background:#f6f9f7;border-radius:8px;padding:8px 11px;font-size:.86rem;line-height:1.45}
+
+/* ===== Dos cuadros (inicial / bonus post-grupos) ===== */
+.ko-phase{border:1px solid var(--line);border-radius:12px;padding:10px 12px;margin-bottom:11px;background:#fbfdfc}
+.ko-phase.bonus{background:#fffaf0;border-color:#f0deb0}
+.ko-phase-h{font-weight:800;color:#26323b;font-size:.92rem;display:flex;align-items:center;gap:7px;flex-wrap:wrap}
+.ko-phase-h small{font-weight:600;color:var(--muted);font-size:.72rem}
+.ko-badge{display:inline-flex;align-items:center;justify-content:center;width:21px;height:21px;border-radius:50%;background:var(--green);color:#fff;font-size:.78rem;font-weight:800;flex:none}
+.ko-badge.b2{background:#e0a106}
+.ko-phase-d{margin:6px 0 8px;line-height:1.5}
+.ko-phase.bonus .ko-pt .pp{background:#e0a106}
+.ko-phase.bonus .ko-pt.win .pp{background:#c98a00}

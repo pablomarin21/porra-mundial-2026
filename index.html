@@ -13,7 +13,7 @@
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="Porra Mundial" />
-  <link rel="stylesheet" href="styles.css?v=39" />
+  <link rel="stylesheet" href="styles.css?v=40" />
 </head>
 <body x-data="porraApp()" x-init="init()" x-cloak>
 
@@ -510,17 +510,35 @@
 
     <!-- Cómo se puntúa el CUADRO cuando acaban los grupos -->
     <details class="se-explain ko-explain">
-      <summary>🏆 ¿Cómo se puntúa el cuadro cuando acaben los grupos?</summary>
+      <summary>🏆 El cuadro eliminatorio: dos momentos para puntuar</summary>
       <div class="se-body">
-        <p class="ko-key">Cada uno montó un cuadro distinto y los cruces reales serán otros (dependen de cómo queden <b>todos</b> los grupos). Por eso <b>NO se puntúan los emparejamientos</b> (quién juega contra quién). <b>Se puntúa lo lejos que llega cada equipo que TÚ pusiste</b>, sin importar el rival ni por qué lado del cuadro pase.</p>
+        <p class="ko-key">En las eliminatorias <b>NO se puntúan los emparejamientos</b> (quién juega contra quién): cada uno montó un cuadro distinto y los cruces reales serán otros. <b>Se puntúa lo lejos que llega cada equipo que TÚ pusiste</b>, sin importar el rival ni por dónde pase. Y hay <b>dos cuadros</b> que puntúan por separado:</p>
 
-        <div class="ko-pts">
-          <div class="ko-pt"><span class="ko-r">🥉 Tus mejores terceros que clasifican</span><span class="pp" x-text="'+'+settings.thirdQual"></span></div>
-          <div class="ko-pt"><span class="ko-r">Tu equipo llega a <b>octavos</b></span><span class="pp" x-text="'+'+settings.octavos"></span></div>
-          <div class="ko-pt"><span class="ko-r">…llega a <b>cuartos</b></span><span class="pp" x-text="'+'+settings.cuartos"></span></div>
-          <div class="ko-pt"><span class="ko-r">…llega a <b>semis</b></span><span class="pp" x-text="'+'+settings.semis"></span></div>
-          <div class="ko-pt"><span class="ko-r">…llega a la <b>final</b></span><span class="pp" x-text="'+'+settings.finalists"></span></div>
-          <div class="ko-pt win"><span class="ko-r">…es <b>campeón</b></span><span class="pp" x-text="'+'+settings.champion"></span></div>
+        <div class="ko-phase">
+          <div class="ko-phase-h"><span class="ko-badge">1</span> Cuadro inicial <small>· lo rellenaste al empezar el Mundial</small></div>
+          <p class="tiny ko-phase-d">Premia la <b>visión</b>: lo predijiste sin saber nada. Vale los <b>puntos grandes</b>.</p>
+          <div class="ko-pts">
+            <div class="ko-pt"><span class="ko-r">🥉 Tus mejores terceros que clasifican</span><span class="pp" x-text="'+'+settings.thirdQual"></span></div>
+            <div class="ko-pt"><span class="ko-r">Tu equipo llega a <b>octavos</b></span><span class="pp" x-text="'+'+settings.octavos"></span></div>
+            <div class="ko-pt"><span class="ko-r">…<b>cuartos</b></span><span class="pp" x-text="'+'+settings.cuartos"></span></div>
+            <div class="ko-pt"><span class="ko-r">…<b>semis</b></span><span class="pp" x-text="'+'+settings.semis"></span></div>
+            <div class="ko-pt"><span class="ko-r">…<b>final</b></span><span class="pp" x-text="'+'+settings.finalists"></span></div>
+            <div class="ko-pt win"><span class="ko-r">…<b>campeón</b></span><span class="pp" x-text="'+'+settings.champion"></span></div>
+          </div>
+        </div>
+
+        <div class="ko-phase bonus">
+          <div class="ko-phase-h"><span class="ko-badge b2">2</span> Cuadro post-grupos · <b>BONUS</b> <small>· se abre al acabar los grupos 🔜</small></div>
+          <p class="tiny ko-phase-d">Cuando terminen los grupos ya estarán los <b>32 equipos y los cruces reales</b>. Vuelves a montar el camino a la final, ahora <b>sabiendo ya los emparejamientos</b> → <b>segunda oportunidad</b> para quien se le torció el inicial, y <b>emoción hasta el final</b>. Se rellena en la ventana entre el final de grupos y el <b>primer 1/16</b>, y se <b>bloquea</b> al empezar. Suma en una <b>columna aparte</b>.</p>
+          <p class="tiny ko-phase-d">Como es más fácil (ya conoces el cuadro), vale <b>la mitad</b>:</p>
+          <div class="ko-pts">
+            <div class="ko-pt"><span class="ko-r">Tu equipo llega a <b>octavos</b></span><span class="pp">+2</span></div>
+            <div class="ko-pt"><span class="ko-r">…<b>cuartos</b></span><span class="pp">+4</span></div>
+            <div class="ko-pt"><span class="ko-r">…<b>semis</b></span><span class="pp">+5</span></div>
+            <div class="ko-pt"><span class="ko-r">…<b>final</b></span><span class="pp">+8</span></div>
+            <div class="ko-pt win"><span class="ko-r">…<b>campeón</b></span><span class="pp">+13</span></div>
+          </div>
+          <p class="tiny muted">💬 Así <b>cada ronda hay algo que comentar</b>: ¿quién acertó que tu equipo seguía vivo? Aunque caiga tu campeón, te quedan otros equipos dando puntos hasta la final.</p>
         </div>
 
         <div class="ko-ex">
@@ -1427,10 +1445,10 @@
   </div>
 
   <!-- ====== Dependencias ====== -->
-  <script src="data.js?v=39"></script>
-  <script src="engine.js?v=39"></script>
+  <script src="data.js?v=40"></script>
+  <script src="engine.js?v=40"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
-  <script src="app.js?v=39"></script>
+  <script src="app.js?v=40"></script>
   <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.1/dist/cdn.min.js"></script>
 </body>
 </html>
