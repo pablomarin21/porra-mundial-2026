@@ -81,6 +81,7 @@ window.porraApp = function () {
     extrasActualEdit: { revelacion: "", decepcion: "", pichichi: "", asistente: "", portero: "", sidebets: {} },
     // datos
     entries: [], ranked: [], results: {}, rEdit: defaultREdit(), koEdit: defaultKoEdit(), liveBr: { teamsByMatch: {}, winnerOf: {}, complete: false },
+    koPreview: null, koPreviewShow: false,
     // admin
     adminOk: false, adminPin: "", settings: Object.assign({}, D.DEFAULT_SCORING),
     scoreKeys: [
@@ -1163,6 +1164,34 @@ window.porraApp = function () {
     get koAdminList() { return KO_META; },
 
     liveTable(L) { return (this.outcome && this.outcome.standingsByGroup && this.outcome.standingsByGroup[L]) || Eng.groupStandings(L, this.results, false, null); },
+
+    // ---------- Vista previa del cuadro post-grupos (BONUS) — SOLO admin, SOLO lectura ----------
+    buildKoPreview() {
+      const standings = {};
+      for (const L of D.GROUP_LETTERS) standings[L] = Eng.groupStandings(L, this.results, false, null);
+      const complete = D.GROUP_LETTERS.filter((L) => standings[L]._complete).length;
+      let teams = null;
+      try { teams = Eng.buildR32Teams(Eng.computeQualifiers(standings)).teams; } catch (e) { teams = null; }
+      let chances = {};
+      try { chances = Eng.monteCarloTeams(this.results, 3000).byTeam; } catch (e) { chances = {}; }
+      const statusOf = (t) => {
+        if (!t) return null;
+        const c = chances[t]; if (!c) return { k: "maybe", q: null };
+        if (c.qualify >= 0.9999) return { k: "in", q: c.qualify };
+        if (c.qualify <= 0.0001) return { k: "out", q: c.qualify };
+        return { k: "maybe", q: c.qualify };
+      };
+      const cell = (t) => ({ team: t, es: t ? D.es(t) : "?", flag: t ? D.flag(t) : "", st: statusOf(t) });
+      const cruces = D.R32.map((m, i) => { const tm = teams ? teams[m.match] : { a: null, b: null }; return { n: i + 1, a: cell(tm.a), b: cell(tm.b) }; });
+      let nIn = 0, nOut = 0, nMaybe = 0;
+      for (const t of [].concat(...D.GROUP_LETTERS.map((L) => D.GROUPS[L]))) { const s = statusOf(t); if (s.k === "in") nIn++; else if (s.k === "out") nOut++; else nMaybe++; }
+      this.koPreview = { cruces, complete, total: D.GROUP_LETTERS.length, nIn, nOut, nMaybe, ready: complete === D.GROUP_LETTERS.length };
+    },
+    openKoPreview() {
+      if (!this.adminOk) return;
+      this.buildKoPreview();
+      this.koPreviewShow = !this.koPreviewShow;
+    },
 
     // ---------- clasificación + probabilidades ----------
     openLeaderboard() { this.tab = "leaderboard"; this.selectedId = null; this.det = null; this.loadBoard(); },

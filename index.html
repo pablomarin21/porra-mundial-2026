@@ -13,7 +13,7 @@
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="Porra Mundial" />
-  <link rel="stylesheet" href="styles.css?v=40" />
+  <link rel="stylesheet" href="styles.css?v=41" />
 </head>
 <body x-data="porraApp()" x-init="init()" x-cloak>
 
@@ -556,6 +556,43 @@
         </ul>
       </div>
     </details>
+
+    <!-- Cuadro post-grupos: aviso para todos + vista previa SOLO admin -->
+    <div class="ko-teaser" x-show="boardLocked">
+      <div class="ko-teaser-head">
+        <span class="ko-teaser-ic">🔒</span>
+        <div><b>Cuadro post-grupos · BONUS</b><small>Disponible cuando acabe la fase de grupos</small></div>
+      </div>
+      <p class="tiny muted" style="margin:0">Cuando terminen los grupos podrás montar el <b>camino real a la final</b> y sumar puntos extra (vale la mitad, columna aparte). Aún <b>no se puede tocar nada</b>.</p>
+
+      <template x-if="adminOk">
+        <div class="ko-prev-admin">
+          <button class="btn mini" @click="openKoPreview()"><span x-text="koPreviewShow ? '▴ ocultar vista previa' : '👁️ Ver vista previa (solo tú)'"></span></button>
+          <div class="ko-prev" x-show="koPreviewShow && koPreview">
+            <p class="ko-prev-note">👁️ <b>Borrador solo para ti.</b> Nadie más lo ve ni puede tocar nada. Es el cuadro <b>provisional</b> según cómo van los grupos ahora mismo; irá cambiando hasta que terminen.</p>
+            <div class="ko-prev-sum">
+              <span class="kps in" x-text="'✅ '+(koPreview?koPreview.nIn:0)+' clasificados'"></span>
+              <span class="kps out" x-text="'❌ '+(koPreview?koPreview.nOut:0)+' eliminados'"></span>
+              <span class="kps maybe" x-text="'⏳ '+(koPreview?koPreview.nMaybe:0)+' en juego'"></span>
+              <span class="kps grp" x-text="'grupos cerrados: '+(koPreview?koPreview.complete:0)+'/'+(koPreview?koPreview.total:12)"></span>
+            </div>
+            <p class="tiny" :class="(koPreview&&koPreview.ready)?'ok':'muted'" x-text="(koPreview&&koPreview.ready) ? '✅ Grupos terminados: este es el cuadro real.' : '⏳ Cuadro provisional — algunos cruces cambiarán al acabar los grupos.'"></p>
+            <div class="ko-prev-h">🔪 Cruces de 1/16 (provisional)</div>
+            <div class="ko-prev-list">
+              <template x-for="c in (koPreview?koPreview.cruces:[])" :key="c.n">
+                <div class="kpx">
+                  <span class="kpx-n" x-text="c.n"></span>
+                  <span class="kpx-t" :class="c.a.st?('s-'+c.a.st.k):''"><span x-text="c.a.flag"></span> <span x-text="c.a.es"></span><span class="kpx-b" x-show="c.a.st" x-text="c.a.st?({in:'✅',out:'❌',maybe:'⏳'}[c.a.st.k]):''"></span></span>
+                  <span class="kpx-vs">vs</span>
+                  <span class="kpx-t" :class="c.b.st?('s-'+c.b.st.k):''"><span x-text="c.b.flag"></span> <span x-text="c.b.es"></span><span class="kpx-b" x-show="c.b.st" x-text="c.b.st?({in:'✅',out:'❌',maybe:'⏳'}[c.b.st.k]):''"></span></span>
+                </div>
+              </template>
+            </div>
+            <p class="tiny muted">Octavos → final se irán dibujando según se jueguen las eliminatorias.</p>
+          </div>
+        </div>
+      </template>
+    </div>
 
     <!-- Barra de estado -->
     <div class="live-bar">
@@ -1445,10 +1482,10 @@
   </div>
 
   <!-- ====== Dependencias ====== -->
-  <script src="data.js?v=40"></script>
-  <script src="engine.js?v=40"></script>
+  <script src="data.js?v=41"></script>
+  <script src="engine.js?v=41"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
-  <script src="app.js?v=40"></script>
+  <script src="app.js?v=41"></script>
   <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.1/dist/cdn.min.js"></script>
 </body>
 </html>
