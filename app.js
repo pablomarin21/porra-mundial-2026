@@ -81,7 +81,7 @@ window.porraApp = function () {
     extrasActualEdit: { revelacion: "", decepcion: "", pichichi: "", asistente: "", portero: "", sidebets: {} },
     // datos
     entries: [], ranked: [], results: {}, rEdit: defaultREdit(), koEdit: defaultKoEdit(), liveBr: { teamsByMatch: {}, winnerOf: {}, complete: false },
-    koPreview: null, koPreviewShow: false,
+    koPreview: null, koPreviewShow: false, ko27: null, ko27Round: "r32",
     // admin
     adminOk: false, adminPin: "", settings: Object.assign({}, D.DEFAULT_SCORING),
     scoreKeys: [
@@ -1192,6 +1192,31 @@ window.porraApp = function () {
       this.buildKoPreview();
       this.koPreviewShow = !this.koPreviewShow;
     },
+
+    // ---------- Pestaña "27 de junio": camino a la final (1/16 → campeón) ----------
+    get ko27DaysLeft() {
+      try { const now = new Date(); const t = new Date("2026-06-27T00:00:00"); return Math.ceil((t - now) / 86400000); } catch (e) { return 0; }
+    },
+    buildKo27() {
+      this.buildKoPreview();
+      const kp = this.koPreview || { cruces: [], ready: false, complete: 0, total: 12, nIn: 0, nOut: 0, nMaybe: 48 };
+      const pos = (list) => { const o = {}; list.forEach((m, i) => (o[m.match] = i + 1)); return o; };
+      const i32 = pos(D.R32), i16 = pos(D.R16), iQF = pos(D.QF), iSF = pos(D.SF);
+      const rounds = [
+        { key: "r32", title: "1/16", sub: "dieciseisavos", seeded: true,
+          matches: kp.cruces.map((c) => ({ n: c.n, a: c.a, b: c.b })) },
+        { key: "r16", title: "Octavos", sub: "16 → 8", seeded: false,
+          matches: D.R16.map((m, i) => ({ n: i + 1, fa: "Gd. 1/16 #" + i32[m.a], fb: "Gd. 1/16 #" + i32[m.b] })) },
+        { key: "qf", title: "Cuartos", sub: "8 → 4", seeded: false,
+          matches: D.QF.map((m, i) => ({ n: i + 1, fa: "Gd. Octavos #" + i16[m.a], fb: "Gd. Octavos #" + i16[m.b] })) },
+        { key: "sf", title: "Semis", sub: "4 → 2", seeded: false,
+          matches: D.SF.map((m, i) => ({ n: i + 1, fa: "Gd. Cuartos #" + iQF[m.a], fb: "Gd. Cuartos #" + iQF[m.b] })) },
+        { key: "final", title: "Final", sub: "2 → 🏆", seeded: false,
+          matches: [{ n: 1, fa: "Gd. Semis #" + iSF[D.FINAL.a], fb: "Gd. Semis #" + iSF[D.FINAL.b] }] },
+      ];
+      this.ko27 = { rounds, ready: kp.ready, complete: kp.complete, total: kp.total, nIn: kp.nIn, nOut: kp.nOut, nMaybe: kp.nMaybe };
+    },
+    openKo27() { this.tab = "ko27"; this.selectedId = null; this.det = null; this.buildKo27(); },
 
     // ---------- clasificación + probabilidades ----------
     openLeaderboard() { this.tab = "leaderboard"; this.selectedId = null; this.det = null; this.loadBoard(); },

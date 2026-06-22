@@ -13,7 +13,7 @@
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="Porra Mundial" />
-  <link rel="stylesheet" href="styles.css?v=41" />
+  <link rel="stylesheet" href="styles.css?v=42" />
 </head>
 <body x-data="porraApp()" x-init="init()" x-cloak>
 
@@ -28,7 +28,7 @@
       <template x-if="pool">
         <nav class="tabs">
           <button :class="{active: tab==='leaderboard'}" @click="openLeaderboard()">Clasificación</button>
-          <button :class="{active: tab==='quinielas'}" @click="openQuinielas()">Quinielas</button>
+          <button :class="{active: tab==='ko27'}" @click="openKo27()">🗓️ 27 jun</button>
           <button :class="{active: tab==='play'}" @click="tab='play'">Mi Porra</button>
           <button :class="{active: tab==='results'}" @click="openResults()">Resultados</button>
           <button :class="{active: tab==='goals'}" @click="openGoals()">⚽ Goleadores</button>
@@ -557,43 +557,6 @@
       </div>
     </details>
 
-    <!-- Cuadro post-grupos: aviso para todos + vista previa SOLO admin -->
-    <div class="ko-teaser" x-show="boardLocked">
-      <div class="ko-teaser-head">
-        <span class="ko-teaser-ic">🔒</span>
-        <div><b>Cuadro post-grupos · BONUS</b><small>Disponible cuando acabe la fase de grupos</small></div>
-      </div>
-      <p class="tiny muted" style="margin:0">Cuando terminen los grupos podrás montar el <b>camino real a la final</b> y sumar puntos extra (vale la mitad, columna aparte). Aún <b>no se puede tocar nada</b>.</p>
-
-      <template x-if="adminOk">
-        <div class="ko-prev-admin">
-          <button class="btn mini" @click="openKoPreview()"><span x-text="koPreviewShow ? '▴ ocultar vista previa' : '👁️ Ver vista previa (solo tú)'"></span></button>
-          <div class="ko-prev" x-show="koPreviewShow && koPreview">
-            <p class="ko-prev-note">👁️ <b>Borrador solo para ti.</b> Nadie más lo ve ni puede tocar nada. Es el cuadro <b>provisional</b> según cómo van los grupos ahora mismo; irá cambiando hasta que terminen.</p>
-            <div class="ko-prev-sum">
-              <span class="kps in" x-text="'✅ '+(koPreview?koPreview.nIn:0)+' clasificados'"></span>
-              <span class="kps out" x-text="'❌ '+(koPreview?koPreview.nOut:0)+' eliminados'"></span>
-              <span class="kps maybe" x-text="'⏳ '+(koPreview?koPreview.nMaybe:0)+' en juego'"></span>
-              <span class="kps grp" x-text="'grupos cerrados: '+(koPreview?koPreview.complete:0)+'/'+(koPreview?koPreview.total:12)"></span>
-            </div>
-            <p class="tiny" :class="(koPreview&&koPreview.ready)?'ok':'muted'" x-text="(koPreview&&koPreview.ready) ? '✅ Grupos terminados: este es el cuadro real.' : '⏳ Cuadro provisional — algunos cruces cambiarán al acabar los grupos.'"></p>
-            <div class="ko-prev-h">🔪 Cruces de 1/16 (provisional)</div>
-            <div class="ko-prev-list">
-              <template x-for="c in (koPreview?koPreview.cruces:[])" :key="c.n">
-                <div class="kpx">
-                  <span class="kpx-n" x-text="c.n"></span>
-                  <span class="kpx-t" :class="c.a.st?('s-'+c.a.st.k):''"><span x-text="c.a.flag"></span> <span x-text="c.a.es"></span><span class="kpx-b" x-show="c.a.st" x-text="c.a.st?({in:'✅',out:'❌',maybe:'⏳'}[c.a.st.k]):''"></span></span>
-                  <span class="kpx-vs">vs</span>
-                  <span class="kpx-t" :class="c.b.st?('s-'+c.b.st.k):''"><span x-text="c.b.flag"></span> <span x-text="c.b.es"></span><span class="kpx-b" x-show="c.b.st" x-text="c.b.st?({in:'✅',out:'❌',maybe:'⏳'}[c.b.st.k]):''"></span></span>
-                </div>
-              </template>
-            </div>
-            <p class="tiny muted">Octavos → final se irán dibujando según se jueguen las eliminatorias.</p>
-          </div>
-        </div>
-      </template>
-    </div>
-
     <!-- Barra de estado -->
     <div class="live-bar">
       <span class="live-dot" :class="{on: liveMatches.some(m=>m.live)}"></span>
@@ -666,7 +629,7 @@
     </div>
     <p class="incomplete-note" x-show="boardIncomplete>0"><span>⚠️</span> <b x-text="boardIncomplete"></b> <span x-text="boardIncomplete===1?'jugador no ha terminado':'jugadores no han terminado'"></span> su porra<span x-show="!boardLocked"> — aún están a tiempo hasta el cierre</span>.</p>
     <p class="muted" x-show="!ranked.length && !probBusy" style="text-align:center;padding:16px">Aún no hay quinielas para calcular la clasificación.</p>
-    <p class="tiny muted" x-show="!boardLocked && ranked.length">👁️ Toca a un jugador para ver su <b>quiniela completa</b> (o entra en la pestaña <b>Quinielas</b>). «🏆 Ganar» = probabilidad de acabar 1º según miles de simulaciones del Mundial con la fuerza de cada selección. <span x-show="lockCountdown">⏳ Cierra en <b x-text="lockCountdown"></b>.</span></p>
+    <p class="tiny muted" x-show="!boardLocked && ranked.length">👁️ Toca a un jugador para ver su <b>quiniela completa</b>. «🏆 Ganar» = probabilidad de acabar 1º según miles de simulaciones del Mundial con la fuerza de cada selección. <span x-show="lockCountdown">⏳ Cierra en <b x-text="lockCountdown"></b>.</span></p>
     <p class="tiny muted" x-show="boardLocked && ranked.length">👁️ Toca a un jugador para ver su quiniela y el desglose. «🏆 Ganar» = probabilidad de acabar 1º según miles de simulaciones del resto del Mundial.</p>
 
     <div class="tie-rule" x-show="boardLocked && ranked.length">
@@ -934,131 +897,80 @@
     </template>
   </section>
 
-  <!-- ===================== QUINIELAS (ver la de todos) ===================== -->
-  <section x-show="view==='pool' && tab==='quinielas'" class="quinielas">
+  <!-- ===================== 27 DE JUNIO · CAMINO A LA FINAL (BONUS) ===================== -->
+  <section x-show="view==='pool' && tab==='ko27'" class="ko27">
     <div class="step-head">
-      <h2>👀 Quinielas</h2>
-      <p class="muted">La porra completa de cada participante. Toca a alguien para verla entera.</p>
+      <h2>🗓️ 27 de junio · El camino a la final</h2>
+      <p class="muted">Cuando acabe la fase de grupos montarás tu <b>cuadro de eliminatorias</b> desde los <b>dieciseisavos (1/16)</b> hasta el campeón, para sumar <b>puntos extra</b>.</p>
     </div>
-    <div class="qgrid" x-show="quinielaCards.length">
-      <template x-for="c in quinielaCards" :key="'qc'+c.id">
-        <button class="qcard" :class="{me:c.isMe, sel:selectedId===c.id, bot:(c.first_name||'').startsWith('🤖')}" @click="toggleDetail(c.id)">
-          <div class="qcard-l">
-            <span class="av sm" x-html="avatarHtml(c.id, c.name)"></span>
-            <span class="qcard-name" x-text="c.name"></span>
-            <span class="youtag" x-show="c.isMe">tú</span>
-            <span class="incompleto" x-show="!c.complete">⚠️ sin terminar</span>
-          </div>
-          <div class="qcard-r">
-            <template x-if="c.champion">
-              <span class="qcard-champ" title="Su campeón"><span class="flag" x-text="flag(c.champion)"></span><span x-text="es(c.champion)"></span> 🏆</span>
-            </template>
-            <span class="qcard-arrow" x-text="selectedId===c.id?'▲':'▼'"></span>
-          </div>
+
+    <!-- candado / cuenta atrás -->
+    <div class="k27-lock">
+      <div class="k27-lock-l">
+        <span class="k27-lock-ic">🔒</span>
+        <div>
+          <b>Se abre el 27 de junio</b>
+          <small x-show="ko27DaysLeft>0" x-text="'Faltan '+ko27DaysLeft+' día'+(ko27DaysLeft===1?'':'s')+' · al acabar la fase de grupos'"></small>
+          <small x-show="ko27DaysLeft<=0">en cuanto terminen todos los grupos</small>
+        </div>
+      </div>
+      <span class="k27-prog" x-text="(ko27?ko27.complete:0)+'/'+(ko27?ko27.total:12)+' grupos cerrados'"></span>
+    </div>
+
+    <!-- cómo puntúa el bonus -->
+    <div class="k27-scoring">
+      <span class="k27-sc-h">⭐ Puntos BONUS <small>· la mitad, columna aparte</small></span>
+      <div class="k27-sc-row">
+        <span>octavos <b>+2</b></span><span>cuartos <b>+4</b></span><span>semis <b>+5</b></span><span>final <b>+8</b></span><span>campeón <b>+13</b></span>
+      </div>
+      <p class="tiny muted">Igual que el cuadro inicial: puntúas por <b>lo lejos que llega cada equipo que pongas</b>, da igual el rival. Aquí ya conocerás los <b>cruces reales</b> → segunda oportunidad y emoción hasta el final.</p>
+    </div>
+
+    <!-- selector de ronda -->
+    <div class="k27-rounds">
+      <template x-for="r in (ko27?ko27.rounds:[])" :key="r.key">
+        <button class="k27-rbtn" :class="{active: ko27Round===r.key}" @click="ko27Round=r.key">
+          <b x-text="r.title"></b><small x-text="r.sub"></small>
         </button>
       </template>
+      <span class="k27-rbtn champ" :class="{done: ko27 && ko27.ready}">🏆<small>campeón</small></span>
     </div>
-    <p class="muted" x-show="!quinielaCards.length" style="text-align:center;padding:16px">Aún no hay quinielas guardadas.</p>
 
-    <!-- DETALLE: quiniela completa (mismo bloque que en Clasificación) -->
-    <template x-if="det">
-      <div class="detail card">
-        <div class="detail-head">
-          <h3 x-text="'🔎 Quiniela de '+det.name"></h3>
-          <button class="btn mini ghost" @click="selectedId=null">✕ cerrar</button>
-        </div>
-        <div class="det-photo-wrap" x-show="detPhoto">
-          <img class="det-photo clickav" :src="detPhoto" @click="openPhoto(selectedId, det.name)" alt="">
-        </div>
-        <div class="det-live" x-show="detRank">
-          <span class="dl-win">🏆 <b x-text="pct(detRank?detRank.win:0)"></b> ganar</span>
-          <span class="dl-pod" x-show="detRank && detRank.podium!=null">🥉 <b x-text="pct(detRank?detRank.podium:0)"></b> podio</span>
-          <span class="dl-pts" x-show="boardLocked && detRank"><b x-text="detRank?detRank.points:0"></b> pts ahora</span>
-        </div>
-        <template x-if="boardLocked">
-          <div class="bd-chips">
-            <span class="bd-total" x-text="det.total+' pts'"></span>
-            <span x-text="'Grupos '+det.bd.grupos"></span>
-            <span x-text="'Terceros '+det.bd.terceros"></span>
-            <span x-text="'Octavos '+det.bd.octavos"></span>
-            <span x-text="'Cuartos '+det.bd.cuartos"></span>
-            <span x-text="'Semis '+det.bd.semis"></span>
-            <span x-text="'Final '+det.bd.final"></span>
-            <span x-text="'Campeón '+det.bd.campeon"></span>
-            <span class="bd-extra" x-show="det.ex.total" x-text="'⭐ Especiales '+det.ex.total"></span>
-          </div>
-        </template>
+    <!-- leyenda de estados (solo en 1/16) -->
+    <div class="k27-legend" x-show="ko27Round==='r32'">
+      <span class="kps in">✅ clasificado</span><span class="kps out">❌ eliminado</span><span class="kps maybe">⏳ en juego</span>
+    </div>
 
-        <!-- Justificación: qué ha acertado, punto a punto -->
-        <template x-if="boardLocked">
-          <div class="det-aciertos">
-            <p class="da-h">✅ Qué ha acertado <span class="muted">— de aquí salen sus <b x-text="det.total"></b> puntos</span></p>
-            <div class="da-bits">
-              <template x-for="(bt,i) in (det.bits||[])" :key="'db'+i"><div class="da-bit"><span class="da-ic" x-text="bt.icon"></span> <span x-text="bt.text"></span></div></template>
-              <div class="da-bit muted" x-show="!det.bits || !det.bits.length">Todavía no ha sumado puntos (sus aciertos aún no están decididos, o los grupos no han completado la jornada).</div>
-            </div>
-          </div>
-        </template>
-
-        <!-- Grupos en directo: su pronóstico vs la tabla real + puntos + riesgo -->
-        <template x-if="boardLocked && det.groupDetail && det.groupDetail.groups.length">
-          <div class="det-groups">
-            <div class="dg-head">
-              <span class="dg-h">📊 Grupos en directo</span>
-              <span class="dg-sum"><span class="dg-seg" title="puntos de grupos ya terminados (no cambian)">✅ <b x-text="det.groupDetail.seguro"></b> fijos</span><span class="dg-prov" x-show="det.groupDetail.provisional" title="puntos de grupos sin terminar (pueden cambiar)">⏳ <b x-text="det.groupDetail.provisional"></b> en juego</span></span>
-            </div>
-            <div class="dg-grid">
-              <template x-for="g in det.groupDetail.groups" :key="'dg'+g.L">
-                <div class="dg-card" :class="g.state">
-                  <div class="dg-top"><b x-text="'Grupo '+g.L"></b><span class="dg-state" x-text="g.state==='done'?'✅ terminado':(g.state==='live'?('🔴 '+g.played+'/6'):'⏳ jornada incompleta')"></span><span class="dg-pts" x-show="g.state!=='waiting'" x-text="'+'+g.pts"></span></div>
-                  <template x-if="g.state!=='waiting'">
-                    <div class="dg-body">
-                      <div class="dg-row"><span class="dg-lab">Tú</span><div class="dg-cells"><template x-for="(r,i) in g.rows" :key="'tu'+g.L+i"><span class="dg-cell" :class="{hit:r.hit}"><span class="dg-pos" x-text="(i+1)+'º'"></span><span class="flag" x-text="r.flag"></span><span class="dg-nm" x-text="r.es"></span><span class="dg-p" x-show="r.hit" x-text="'+'+r.pts"></span></span></template></div></div>
-                      <div class="dg-row"><span class="dg-lab">Va</span><div class="dg-cells"><template x-for="(r,i) in g.actual" :key="'va'+g.L+i"><span class="dg-cell real"><span class="dg-pos" x-text="(i+1)+'º'"></span><span class="flag" x-text="r.flag"></span><span class="dg-nm" x-text="r.es"></span><span class="dg-q" x-show="!r.firm" title="posición sin decidir (en riesgo)">?</span></span></template></div></div>
-                      <div class="dg-qual" x-show="g.qual" x-text="'➕ Clasifican (top-2): '+g.qualNames.join(', ')+' (+'+g.qual+')'"></div>
-                      <div class="dg-risk" x-show="!g.complete && g.pts>0">⏳ <b>Riesgo:</b> estos <b x-text="'+'+g.pts"></b> son provisionales — pueden bajar si la tabla se mueve.</div>
-                    </div>
-                  </template>
-                  <div class="dg-wait" x-show="g.state==='waiting'">Aún no puntúa (falta completar la jornada). Puso: <template x-for="(t,i) in g.pred" :key="'w'+g.L+i"><span class="dg-cell sm"><span class="flag" x-text="t.flag"></span><span class="dg-nm" x-text="t.es"></span></span></template></div>
+    <!-- partidos de la ronda activa -->
+    <template x-for="r in (ko27?ko27.rounds:[]).filter(x=>x.key===ko27Round)" :key="'rd'+r.key">
+      <div>
+        <p class="k27-note" x-show="r.seeded">Cruces <b>provisionales</b> según cómo van los grupos ahora mismo. <span x-show="!(ko27&&ko27.ready)">Irán cambiando hasta el 27.</span> <span class="ok" x-show="ko27&&ko27.ready">✅ ya son los reales.</span></p>
+        <p class="k27-note" x-show="!r.seeded">Esta ronda se irá dibujando con <b>los ganadores que elijas</b> a partir del 27 de junio.</p>
+        <div class="k27-list">
+          <template x-for="m in r.matches" :key="r.key+'m'+m.n">
+            <div class="k27-m" :class="{seeded:r.seeded}">
+              <span class="k27-mn" x-text="'#'+m.n"></span>
+              <template x-if="r.seeded">
+                <div class="k27-teams">
+                  <span class="k27-t" :class="m.a.st?('s-'+m.a.st.k):''"><span class="k27-fl" x-text="m.a.flag"></span> <span class="k27-nm" x-text="m.a.es"></span><span class="k27-b" x-show="m.a.st" x-text="m.a.st?({in:'✅',out:'❌',maybe:'⏳'}[m.a.st.k]):''"></span></span>
+                  <span class="k27-vs">vs</span>
+                  <span class="k27-t" :class="m.b.st?('s-'+m.b.st.k):''"><span class="k27-fl" x-text="m.b.flag"></span> <span class="k27-nm" x-text="m.b.es"></span><span class="k27-b" x-show="m.b.st" x-text="m.b.st?({in:'✅',out:'❌',maybe:'⏳'}[m.b.st.k]):''"></span></span>
+                </div>
+              </template>
+              <template x-if="!r.seeded">
+                <div class="k27-teams ph">
+                  <span class="k27-t ph" x-text="m.fa"></span>
+                  <span class="k27-vs">vs</span>
+                  <span class="k27-t ph" x-text="m.fb"></span>
                 </div>
               </template>
             </div>
-          </div>
-        </template>
-        <div class="qv">
-          <div class="qv-champ">
-            <small>Su campeón</small>
-            <div class="qv-champ-team"><span class="flag big" x-text="det.champion?flag(det.champion):'🏆'"></span><b x-text="det.champion?es(det.champion):'—'"></b></div>
-          </div>
-          <div class="qv-row"><b>Finalistas:</b> <template x-for="t in det.finalists" :key="'qf'+t"><span class="qchip"><span class="flag" x-text="flag(t)"></span><span x-text="es(t)"></span></span></template><span class="muted tiny" x-show="!det.finalists.length">(sin completar)</span></div>
-          <div class="qv-row"><b>Semifinalistas:</b> <template x-for="t in det.semis" :key="'qs'+t"><span class="qchip"><span class="flag" x-text="flag(t)"></span><span x-text="es(t)"></span></span></template></div>
-          <div class="qv-row"><b>Cuartos:</b> <template x-for="t in det.cuartos" :key="'qc2'+t"><span class="qchip sm"><span class="flag" x-text="flag(t)"></span><span x-text="es(t)"></span></span></template></div>
-          <div class="qv-row" x-show="det.extras && (det.extras.revelacion||det.extras.decepcion||det.extras.pichichi||det.extras.asistente||(det.extras.sidebets&&(det.extras.sidebets.hattrick||det.extras.sidebets.dobleRoja)))">
-            <b>⭐ Especiales:</b>
-            <span class="qchip sm" x-show="det.extras.revelacion">✨ <span x-text="es(det.extras.revelacion)"></span></span>
-            <span class="qchip sm" x-show="det.extras.decepcion">💀 <span x-text="es(det.extras.decepcion)"></span></span>
-            <span class="qchip sm" x-show="det.extras.pichichi">⚽ <span x-text="det.extras.pichichi"></span></span>
-            <span class="qchip sm" x-show="det.extras.asistente">🅰️ <span x-text="det.extras.asistente"></span></span><span class="qchip sm" x-show="det.extras.portero">🧤 <span x-text="det.extras.portero"></span></span>
-            <span class="qchip sm" x-show="det.extras.sidebets&&det.extras.sidebets.hattrick" x-text="'Hat-trick: '+(det.extras.sidebets?det.extras.sidebets.hattrick:'')"></span>
-            <span class="qchip sm" x-show="det.extras.sidebets&&det.extras.sidebets.dobleRoja" x-text="'Doble roja: '+(det.extras.sidebets?det.extras.sidebets.dobleRoja:'')"></span>
-          </div>
-          <details class="qv-more">
-            <summary>Ver octavos, terceros y grupos</summary>
-            <div class="qv-row"><b>Octavos:</b> <template x-for="t in det.octavos" :key="'qo'+t"><span class="qchip sm"><span class="flag" x-text="flag(t)"></span><span x-text="es(t)"></span></span></template></div>
-            <div class="qv-row"><b>8 mejores terceros:</b> <template x-for="t in det.thirds" :key="'qth'+t"><span class="qchip sm third"><span class="flag" x-text="flag(t)"></span><span x-text="es(t)"></span></span></template></div>
-            <div class="qv-groups">
-              <template x-for="L in letters" :key="'qqg'+L">
-                <div class="qv-group"><b x-text="'Grupo '+L+':'"></b>
-                  <template x-for="(t,idx) in (det.groups[L]||[])" :key="'qqg'+L+t">
-                    <span class="qv-gteam" :class="rankClass(idx)" x-text="(idx+1)+'. '+es(t)"></span>
-                  </template>
-                </div>
-              </template>
-            </div>
-          </details>
+          </template>
         </div>
       </div>
     </template>
+
+    <p class="tiny muted" style="text-align:center;margin-top:14px">Cuando se abra, elegirás el ganador de cada cruce y se irá construyendo tu camino hasta levantar la copa 🏆.</p>
   </section>
 
   <!-- ===================== RESULTADOS / CALENDARIO ===================== -->
@@ -1482,10 +1394,10 @@
   </div>
 
   <!-- ====== Dependencias ====== -->
-  <script src="data.js?v=41"></script>
-  <script src="engine.js?v=41"></script>
+  <script src="data.js?v=42"></script>
+  <script src="engine.js?v=42"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
-  <script src="app.js?v=41"></script>
+  <script src="app.js?v=42"></script>
   <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.1/dist/cdn.min.js"></script>
 </body>
 </html>
