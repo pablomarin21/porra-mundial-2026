@@ -13,7 +13,7 @@
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="Porra Mundial" />
-  <link rel="stylesheet" href="styles.css?v=56" />
+  <link rel="stylesheet" href="styles.css?v=57" />
 </head>
 <body x-data="porraApp()" x-init="init()" x-cloak>
 
@@ -516,34 +516,47 @@
       <div class="parte-sec">🎯 Ficha de cada jugador <span class="muted tiny">— personalizada según lo que puso</span></div>
       <div class="parte-players">
         <template x-for="p in (parte?parte.players:[])" :key="'pp'+p.pos">
-          <div class="parte-pl" :class="{me:p.isMe}">
-            <div class="ppl-top">
+          <div class="parte-pl" :class="{me:p.isMe}" x-data="{open:false}">
+            <div class="ppl-top" @click="open=!open">
               <span class="ppl-pos" x-text="p.pos+'º'"></span>
               <b class="ppl-name" x-text="p.name"></b>
               <span class="ppl-pts"><b x-text="p.pts"></b> pts<span class="ppl-prov" x-show="p.prov" x-text="' · '+p.prov+' en juego'"></span></span>
+              <span class="ppl-chev" x-text="open?'▴':'▾'"></span>
             </div>
             <div class="ppl-gap">
               <span x-text="p.gapTxt"></span>
               <span class="ppl-trend" :class="p.trend" x-show="p.trajTxt" x-text="p.trend==='up'?'▲':(p.trend==='down'?'▼':'=')"></span>
             </div>
-            <div class="ppl-evo" x-show="p.trajTxt">📈 <span x-text="p.trajTxt"></span></div>
-            <div class="ppl-dossier">
-              <div class="ppl-d" x-show="p.champ">🏅 Campeón: <b x-text="p.champ"></b><span class="muted" x-show="p.champQ!=null" x-text="' · '+pct(p.champQ)+' de clasificar'"></span></div>
-              <div class="ppl-d" x-show="p.bestGroup">🎯 Su mejor grupo: <b x-text="p.bestGroup?('Grupo '+p.bestGroup.L+' (+'+p.bestGroup.pts+')'):''"></b> <span class="muted" x-text="p.bestGroup?(p.bestGroup.complete?'fijo':'provisional'):''"></span></div>
-              <div class="ppl-d" x-show="p.finalists && p.finalists.length===2">🥇 Sus finalistas: <span x-text="p.finalists.join(' y ')"></span></div>
-              <div class="ppl-d ppl-bets" x-show="p.bets.length">⭐ Apuestas:
-                <template x-for="(bt,bi) in p.bets" :key="'bt'+p.pos+bi"><span class="ppl-bet" :class="{ok:bt.ok}"><span x-text="bt.t"></span><span x-show="bt.ok"> ✓</span></span></template>
-              </div>
-              <div class="ppl-d ok" x-show="p.exTotal">✅ Especiales ya logradas: <b x-text="'+'+p.exTotal"></b></div>
+
+            <!-- resumen compacto (plegado) -->
+            <div class="ppl-quick" x-show="!open" @click="open=true">
+              <span class="ppl-q champ" x-show="p.champ" x-text="'🏅 '+p.champ"></span>
+              <span class="ppl-q good" x-show="p.bien.length" x-text="'✅ '+p.bien.length+' a favor'"></span>
+              <span class="ppl-q bad" x-show="p.mal.length" x-text="'❌ '+p.mal.length+' en contra'"></span>
+              <span class="ppl-more">ver detalle ▾</span>
             </div>
-            <div class="ppl-vb">
-              <div class="ppl-col good" x-show="p.bien.length">
-                <div class="ppl-col-h">✅ Va por buen camino</div>
-                <template x-for="(f,i) in p.bien" :key="'b'+p.pos+i"><div class="ppl-li" x-text="f"></div></template>
+
+            <!-- detalle desplegable -->
+            <div class="ppl-detail" x-show="open" x-cloak>
+              <div class="ppl-evo" x-show="p.trajTxt">📈 <span x-text="p.trajTxt"></span></div>
+              <div class="ppl-dossier">
+                <div class="ppl-d" x-show="p.champ">🏅 Campeón: <b x-text="p.champ"></b><span class="muted" x-show="p.champQ!=null" x-text="' · '+pct(p.champQ)+' de clasificar'"></span></div>
+                <div class="ppl-d" x-show="p.bestGroup">🎯 Su mejor grupo: <b x-text="p.bestGroup?('Grupo '+p.bestGroup.L+' (+'+p.bestGroup.pts+')'):''"></b> <span class="muted" x-text="p.bestGroup?(p.bestGroup.complete?'fijo':'provisional'):''"></span></div>
+                <div class="ppl-d" x-show="p.finalists && p.finalists.length===2">🥇 Sus finalistas: <span x-text="p.finalists.join(' y ')"></span></div>
+                <div class="ppl-d ppl-bets" x-show="p.bets.length">⭐ Apuestas:
+                  <template x-for="(bt,bi) in p.bets" :key="'bt'+p.pos+bi"><span class="ppl-bet" :class="{ok:bt.ok}"><span x-text="bt.t"></span><span x-show="bt.ok"> ✓</span></span></template>
+                </div>
+                <div class="ppl-d ok" x-show="p.exTotal">✅ Especiales ya logradas: <b x-text="'+'+p.exTotal"></b></div>
               </div>
-              <div class="ppl-col bad" x-show="p.mal.length">
-                <div class="ppl-col-h">❌ Va mal / ojo</div>
-                <template x-for="(m,i) in p.mal" :key="'m'+p.pos+i"><div class="ppl-li" x-text="m"></div></template>
+              <div class="ppl-vb">
+                <div class="ppl-col good" x-show="p.bien.length">
+                  <div class="ppl-col-h">✅ Va por buen camino</div>
+                  <template x-for="(f,i) in p.bien" :key="'b'+p.pos+i"><div class="ppl-li" x-text="f"></div></template>
+                </div>
+                <div class="ppl-col bad" x-show="p.mal.length">
+                  <div class="ppl-col-h">❌ Va mal / ojo</div>
+                  <template x-for="(m,i) in p.mal" :key="'m'+p.pos+i"><div class="ppl-li" x-text="m"></div></template>
+                </div>
               </div>
             </div>
           </div>
@@ -1706,10 +1719,10 @@
   </div>
 
   <!-- ====== Dependencias ====== -->
-  <script src="data.js?v=56"></script>
-  <script src="engine.js?v=56"></script>
+  <script src="data.js?v=57"></script>
+  <script src="engine.js?v=57"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
-  <script src="app.js?v=56"></script>
+  <script src="app.js?v=57"></script>
   <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.1/dist/cdn.min.js"></script>
 </body>
 </html>

@@ -1248,3 +1248,15 @@ tr.clickrow.sel td{background:#e7f1ec}
 .ppl-li{font-size:.82rem;line-height:1.4;padding:2px 0 2px 14px;position:relative}
 .ppl-li::before{content:"•";position:absolute;left:3px;color:var(--muted)}
 @media(min-width:560px){.ppl-vb{grid-template-columns:1fr 1fr}}
+
+/* ficha desplegable (parte) */
+[x-cloak]{display:none!important}
+.ppl-top{cursor:pointer}
+.ppl-chev{margin-left:6px;color:var(--muted);font-weight:800;flex:none}
+.ppl-quick{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin-top:8px;cursor:pointer}
+.ppl-q{font-size:.76rem;font-weight:700;border-radius:7px;padding:3px 8px;white-space:nowrap;max-width:100%;overflow:hidden;text-overflow:ellipsis}
+.ppl-q.champ{background:#f1f4f2;color:#3a4650}
+.ppl-q.good{background:#e9f7ee;color:#1f8f4e}
+.ppl-q.bad{background:#fdeeee;color:#c0392b}
+.ppl-more{font-size:.76rem;color:#2f6fd0;font-weight:700;margin-left:auto}
+.ppl-detail{margin-top:8px}

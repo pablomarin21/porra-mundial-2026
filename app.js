@@ -1386,26 +1386,61 @@ window.porraApp = function () {
         if (ext.portero) bets.push({ t: "🧤 " + ext.portero, ok: ex.portero > 0 });
         if (ext.revelacion) bets.push({ t: "✨ " + D.es(ext.revelacion), ok: ex.revelacion > 0 });
         if (ext.decepcion) bets.push({ t: "💀 " + D.es(ext.decepcion), ok: ex.decepcion > 0 });
-        // ===== VA BIEN / VA MAL (según sus predicciones) =====
+        // ===== VA BIEN / VA MAL — análisis amplio según sus predicciones =====
         const bien = [], mal = [];
-        const posOf = (L, tm) => { const s = (oc.standingsByGroup || {})[L]; if (!s) return null; const ix = s.findIndex((x) => x.team === tm); return ix < 0 ? null : ix; };
+        const P = this.pct.bind(this);
+        const sbg = oc.standingsByGroup || {};
+        const posOf = (L, tm) => { const s = sbg[L]; if (!s) return null; const ix = s.findIndex((x) => x.team === tm); return ix < 0 ? null : ix; };
+        const ord = (n) => (n + 1) + "º";
+        // campeón
         if (champ && champQ != null) {
-          if (champQ >= 0.7) bien.push("Su campeón " + D.es(champ) + " va camino (" + this.pct(champQ) + ")");
-          else if (champQ <= 0.02) mal.push("Su campeón " + D.es(champ) + " ya está fuera (pierde su mayor baza)");
-          else if (champQ <= 0.45) mal.push("Su campeón " + D.es(champ) + " peligra (" + this.pct(champQ) + " de clasificar)");
+          if (champQ >= 0.85) bien.push("Su campeón " + D.es(champ) + " va lanzado (" + P(champQ) + " de clasificar)");
+          else if (champQ >= 0.6) bien.push("Su campeón " + D.es(champ) + " va bien (" + P(champQ) + ")");
+          else if (champQ <= 0.02) mal.push("Su campeón " + D.es(champ) + " ya está ELIMINADO — pierde su mayor baza");
+          else if (champQ <= 0.45) mal.push("Su campeón " + D.es(champ) + " en apuros (" + P(champQ) + " de clasificar)");
         }
-        if (bestGroup && bestGroup.complete) bien.push("Clavó el grupo " + bestGroup.L + " (+" + bestGroup.pts + ", ya fijo)");
+        // grupos posición a posición
         if (picks && picks.groups) for (const L of D.GROUP_LETTERS) {
           const pr = picks.groups[L]; if (!pr || pr.length !== 4) continue;
-          const p1 = pr[0], po = posOf(L, p1), q1 = qp(p1);
-          if (po === 0 && q1 != null && q1 >= 0.75) bien.push(D.es(p1) + " va 1º del grupo " + L + " (lo puso primero)");
-          else if (po === 3) mal.push(D.es(p1) + ", que puso 1º, va ÚLTIMO del grupo " + L);
-          for (const idx of [0, 1]) { const tm = pr[idx], q = qp(tm); if (q != null && q <= 0.25) mal.push(D.es(tm) + " (su " + (idx + 1) + "º) camino de quedar fuera (" + this.pct(q) + ")"); }
+          const row = (gd.groups || []).find((g) => g.L === L);
+          const cmpl = !!(row && row.complete), gp = row ? row.pts : 0;
+          if (cmpl && gp >= (S.g1 + S.g2)) bien.push("Bordó el grupo " + L + " (+" + gp + ", fijo)");
+          else if (cmpl && gp === 0) mal.push("El grupo " + L + " no le dio nada (0, ya cerrado)");
+          const p1 = pr[0], o1 = posOf(L, p1);
+          if (o1 === 0) bien.push(D.es(p1) + " va 1º del grupo " + L + " (lo clavó)");
+          else if (o1 === 3) mal.push(D.es(p1) + ", su 1º, va ÚLTIMO del grupo " + L);
+          const p2 = pr[1], o2 = posOf(L, p2);
+          if (o2 === 1) bien.push(D.es(p2) + " va 2º del grupo " + L + " (como dijo)");
+          for (const idx of [0, 1]) { const tm = pr[idx], q = qp(tm); if (q != null && q <= 0.2) mal.push(D.es(tm) + " (su " + ord(idx) + ") se queda fuera casi seguro (" + P(q) + ")"); }
         }
-        const finOk = finalists.filter((nm) => { const team = (dp ? [...dp.final] : []).find((t) => D.es(t) === nm); const q = team ? qp(team) : null; return q != null && q >= 0.85; });
-        if (finOk.length === 2) bien.push("Sus 2 finalistas (" + finOk.join(", ") + ") van fuertes");
-        if (ex.total > 0) bien.push("Ya suma +" + ex.total + " de especiales");
-        if (gd.provisional > 0) mal.push(gd.provisional + " pts en juego que pueden bajar");
+        // terceros
+        if (picks && picks.thirds && picks.thirds.length) {
+          const alive = picks.thirds.filter((t) => { const q = qp(t); return q != null && q >= 0.5; }).length;
+          if (alive >= 6) bien.push(alive + "/8 de sus terceros siguen con opciones");
+          else if (alive <= 3) mal.push("Solo " + alive + "/8 de sus terceros siguen vivos");
+        }
+        // bracket: semifinalistas / finalistas
+        if (dp) {
+          const semis = [...dp.semis], fin = [...dp.final];
+          const semDead = semis.filter((t) => { const q = qp(t); return q != null && q <= 0.05; }).length;
+          if (semDead >= 1) mal.push(semDead + " de sus semifinalistas ya están fuera");
+          const finAlive = fin.filter((t) => { const q = qp(t); return q != null && q >= 0.6; }).length;
+          if (finAlive === 2) bien.push("Sus 2 finalistas siguen fuertes");
+          else if (finAlive === 0 && fin.length) mal.push("Sus 2 finalistas pintan mal");
+        }
+        // especiales ya resueltas
+        if (ex.hattrick > 0) bien.push("Acertó el hat-trick (+" + ex.hattrick + ")");
+        if (ex.dobleRoja > 0) bien.push("Acertó la doble roja (+" + ex.dobleRoja + ")");
+        // tendencia + colchón/amenaza
+        const tt = (H.traj && H.traj[r.id]) || [];
+        const cl = tt.length >= 2 ? (tt[0].pos - tt[tt.length - 1].pos) : 0;
+        if (cl > 0) bien.push("En racha: ha subido " + cl + " puesto" + (cl > 1 ? "s" : "") + " desde la J1");
+        else if (cl < 0) mal.push("De capa caída: ha bajado " + (-cl) + " puesto" + (-cl > 1 ? "s" : "") + " desde la J1");
+        if (i < real.length - 1) { const cush = r.points - real[i + 1].points; if (cush > 0 && cush <= 2) mal.push(this._shortName(real[i + 1]) + " le respira en el cuello (a " + cush + ")"); else if (cush >= 8) bien.push("Colchón de " + cush + " sobre el de detrás"); }
+        if (i > 0) { const ahead = real[i - 1].points - r.points; if (ahead > 0 && ahead <= 3) bien.push("El " + i + "º a tiro: solo " + ahead + " pts"); }
+        // puntos
+        if (gd.seguro > 0) bien.push(gd.seguro + " pts ya fijos en el bote");
+        if (gd.provisional > 0) mal.push(gd.provisional + " pts provisionales que pueden bajar");
         const uniq = (arr) => arr.filter((v, ix) => arr.indexOf(v) === ix);
         let gapTxt = "";
         if (i === 0) gapTxt = real.length > 1 ? ("👑 Líder · +" + (r.points - real[1].points) + " sobre el 2º") : "👑 Líder";
@@ -1420,7 +1455,7 @@ window.porraApp = function () {
           isMe: !!(this.me && r.id === this.me.id), champ: champ ? D.es(champ) : null, champQ,
           gapTxt, bestGroup, finalists, bets, exTotal: ex.total, trajTxt, trend, climb: best24,
           _hat: ex.hattrick > 0, _doble: ex.dobleRoja > 0,
-          bien: uniq(bien).slice(0, 3), mal: uniq(mal).slice(0, 3) };
+          bien: uniq(bien).slice(0, 8), mal: uniq(mal).slice(0, 8) };
       });
       const leader = real[0], second = real[1], last = real[real.length - 1];
       const totalProv = players.reduce((a, p) => a + (p.prov || 0), 0);
