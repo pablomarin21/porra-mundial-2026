@@ -1140,13 +1140,14 @@ window.porraApp = function () {
       return { groups: out, seguro, provisional };
     },
     refreshLiveBracket() {
+      const RES = this._resMap;
       const standings = {}; let complete = true;
-      for (const L of D.GROUP_LETTERS) { const s = Eng.groupStandings(L, this.results, false, null); standings[L] = s; if (!s._complete) complete = false; }
-      const wOf = (n) => { const r = this.results[n] || this.results[String(n)]; return r && r.played && r.winner ? r.winner : null; };
+      for (const L of D.GROUP_LETTERS) { const s = Eng.groupStandings(L, RES, false, null); standings[L] = s; if (!s._complete) complete = false; }
+      const wOf = (n) => { const r = RES[n] || RES[String(n)]; return r && r.played && r.winner ? r.winner : null; };
       const tbm = {};
       let built = null;
       if (complete) { try { built = Eng.buildR32Teams(Eng.computeQualifiers(standings)); } catch (e) {} }
-      const stored = (n) => this.results[String(n)];
+      const stored = (n) => RES[String(n)];
       for (const m of D.R32) { const r = stored(m.match); tbm[m.match] = r && r.home_team ? { a: r.home_team, b: r.away_team } : (built ? built.teams[m.match] : { a: null, b: null }); }
       const winnerOf = {}; for (const m of D.R32) winnerOf[m.match] = wOf(m.match);
       for (const list of [D.R16, D.QF, D.SF, [D.FINAL]]) for (const m of list) {
@@ -1166,15 +1167,20 @@ window.porraApp = function () {
 
     liveTable(L) { return (this.outcome && this.outcome.standingsByGroup && this.outcome.standingsByGroup[L]) || Eng.groupStandings(L, this.results, false, null); },
 
+    // Resultados REALES para los cálculos: grupos vienen de oc.groupMap (ESPN); KO de this.results.
+    // OJO: this.results (DB) suele venir VACÍO con el board del servidor — usar SIEMPRE esto.
+    get _resMap() { const gm = (this.outcome && this.outcome.groupMap) || {}; return Object.assign({}, this.results || {}, gm); },
+
     // ---------- Vista previa del cuadro post-grupos (BONUS) — SOLO admin, SOLO lectura ----------
     buildKoPreview() {
+      const RES = this._resMap;
       const standings = {};
-      for (const L of D.GROUP_LETTERS) standings[L] = Eng.groupStandings(L, this.results, false, null);
+      for (const L of D.GROUP_LETTERS) standings[L] = Eng.groupStandings(L, RES, false, null);
       const complete = D.GROUP_LETTERS.filter((L) => standings[L]._complete).length;
       let teams = null;
       try { teams = Eng.buildR32Teams(Eng.computeQualifiers(standings)).teams; } catch (e) { teams = null; }
       let chances = {};
-      try { chances = Eng.monteCarloTeams(this.results, 3000).byTeam; } catch (e) { chances = {}; }
+      try { chances = Eng.monteCarloTeams(RES, 3000).byTeam; } catch (e) { chances = {}; }
       const statusOf = (t) => {
         if (!t) return null;
         const c = chances[t]; if (!c) return { k: "maybe", q: null };
@@ -1232,8 +1238,9 @@ window.porraApp = function () {
     },
     // Reconstruye el 2º cuadro SEMBRADO desde los clasificados REALES (no desde tu predicción de grupos).
     rebuild2() {
+      const RES = this._resMap;
       const standings = {};
-      for (const L of D.GROUP_LETTERS) standings[L] = Eng.groupStandings(L, this.results, false, null);
+      for (const L of D.GROUP_LETTERS) standings[L] = Eng.groupStandings(L, RES, false, null);
       let teams = null;
       try { teams = Eng.buildR32Teams(Eng.computeQualifiers(standings)).teams; } catch (e) { teams = null; }
       const tbm = {}; for (const m of D.R32) tbm[m.match] = teams ? teams[m.match] : { a: null, b: null };
@@ -1360,7 +1367,7 @@ window.porraApp = function () {
       if (!real.length) { this.parte = null; return; }
       const oc = this.outcome || Eng.liveOutcome(this.results); const S = this.settings;
       let chances = {};
-      try { chances = Eng.monteCarloTeams(this.results, 1500).byTeam; } catch (e) {}
+      try { chances = Eng.monteCarloTeams(oc.groupMap || this.results, 1500).byTeam; } catch (e) {}
       const qp = (t) => { const c = chances[t]; return c ? c.qualify : null; };
       const byId = {}; (this.entries || []).forEach((e) => (byId[e.id] = e));
       const H = this.buildParteHistory(oc, S);
