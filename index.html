@@ -13,7 +13,7 @@
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="Porra Mundial" />
-  <link rel="stylesheet" href="styles.css?v=55" />
+  <link rel="stylesheet" href="styles.css?v=56" />
 </head>
 <body x-data="porraApp()" x-init="init()" x-cloak>
 
@@ -536,9 +536,15 @@
               </div>
               <div class="ppl-d ok" x-show="p.exTotal">✅ Especiales ya logradas: <b x-text="'+'+p.exTotal"></b></div>
             </div>
-            <div class="ppl-bits">
-              <template x-for="(f,i) in p.fav" :key="'f'+p.pos+i"><div class="ppl-bit fav">🟢 <span x-text="f"></span></div></template>
-              <template x-for="(r,i) in p.risk" :key="'r'+p.pos+i"><div class="ppl-bit risk">🔴 <span x-text="r"></span></div></template>
+            <div class="ppl-vb">
+              <div class="ppl-col good" x-show="p.bien.length">
+                <div class="ppl-col-h">✅ Va por buen camino</div>
+                <template x-for="(f,i) in p.bien" :key="'b'+p.pos+i"><div class="ppl-li" x-text="f"></div></template>
+              </div>
+              <div class="ppl-col bad" x-show="p.mal.length">
+                <div class="ppl-col-h">❌ Va mal / ojo</div>
+                <template x-for="(m,i) in p.mal" :key="'m'+p.pos+i"><div class="ppl-li" x-text="m"></div></template>
+              </div>
             </div>
           </div>
         </template>
@@ -1700,10 +1706,10 @@
   </div>
 
   <!-- ====== Dependencias ====== -->
-  <script src="data.js?v=55"></script>
-  <script src="engine.js?v=55"></script>
+  <script src="data.js?v=56"></script>
+  <script src="engine.js?v=56"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
-  <script src="app.js?v=55"></script>
+  <script src="app.js?v=56"></script>
   <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.1/dist/cdn.min.js"></script>
 </body>
 </html>

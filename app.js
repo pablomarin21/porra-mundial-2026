@@ -1386,21 +1386,27 @@ window.porraApp = function () {
         if (ext.portero) bets.push({ t: "🧤 " + ext.portero, ok: ex.portero > 0 });
         if (ext.revelacion) bets.push({ t: "✨ " + D.es(ext.revelacion), ok: ex.revelacion > 0 });
         if (ext.decepcion) bets.push({ t: "💀 " + D.es(ext.decepcion), ok: ex.decepcion > 0 });
-        // equipos flojos que puso arriba
-        const risky = [];
-        if (picks && picks.groups) for (const L of D.GROUP_LETTERS) {
-          const g = picks.groups[L]; if (!g) continue;
-          for (const t of [g[0], g[1]]) { const q = qp(t); if (q != null && q < 0.4) risky.push({ es: D.es(t), q }); }
-        }
-        risky.sort((a, b) => a.q - b.q);
-        const fav = [], risk = [];
+        // ===== VA BIEN / VA MAL (según sus predicciones) =====
+        const bien = [], mal = [];
+        const posOf = (L, tm) => { const s = (oc.standingsByGroup || {})[L]; if (!s) return null; const ix = s.findIndex((x) => x.team === tm); return ix < 0 ? null : ix; };
         if (champ && champQ != null) {
-          if (champQ >= 0.7) fav.push("su campeón " + D.es(champ) + " va camino (" + this.pct(champQ) + " de clasificar)");
-          else if (champQ <= 0.02) risk.push("su campeón " + D.es(champ) + " ya está fuera — pierde su mayor baza");
-          else if (champQ <= 0.4) risk.push("su campeón " + D.es(champ) + " flojea: solo " + this.pct(champQ) + " de clasificar");
+          if (champQ >= 0.7) bien.push("Su campeón " + D.es(champ) + " va camino (" + this.pct(champQ) + ")");
+          else if (champQ <= 0.02) mal.push("Su campeón " + D.es(champ) + " ya está fuera (pierde su mayor baza)");
+          else if (champQ <= 0.45) mal.push("Su campeón " + D.es(champ) + " peligra (" + this.pct(champQ) + " de clasificar)");
         }
-        if (gd.provisional > 0) risk.push(gd.provisional + " pts en juego que pueden bajar si cambian los grupos");
-        if (risky.length) risk.push("ojo con " + risky.slice(0, 2).map((x) => x.es).join(" y ") + " (los puso arriba y van flojos)");
+        if (bestGroup && bestGroup.complete) bien.push("Clavó el grupo " + bestGroup.L + " (+" + bestGroup.pts + ", ya fijo)");
+        if (picks && picks.groups) for (const L of D.GROUP_LETTERS) {
+          const pr = picks.groups[L]; if (!pr || pr.length !== 4) continue;
+          const p1 = pr[0], po = posOf(L, p1), q1 = qp(p1);
+          if (po === 0 && q1 != null && q1 >= 0.75) bien.push(D.es(p1) + " va 1º del grupo " + L + " (lo puso primero)");
+          else if (po === 3) mal.push(D.es(p1) + ", que puso 1º, va ÚLTIMO del grupo " + L);
+          for (const idx of [0, 1]) { const tm = pr[idx], q = qp(tm); if (q != null && q <= 0.25) mal.push(D.es(tm) + " (su " + (idx + 1) + "º) camino de quedar fuera (" + this.pct(q) + ")"); }
+        }
+        const finOk = finalists.filter((nm) => { const team = (dp ? [...dp.final] : []).find((t) => D.es(t) === nm); const q = team ? qp(team) : null; return q != null && q >= 0.85; });
+        if (finOk.length === 2) bien.push("Sus 2 finalistas (" + finOk.join(", ") + ") van fuertes");
+        if (ex.total > 0) bien.push("Ya suma +" + ex.total + " de especiales");
+        if (gd.provisional > 0) mal.push(gd.provisional + " pts en juego que pueden bajar");
+        const uniq = (arr) => arr.filter((v, ix) => arr.indexOf(v) === ix);
         let gapTxt = "";
         if (i === 0) gapTxt = real.length > 1 ? ("👑 Líder · +" + (r.points - real[1].points) + " sobre el 2º") : "👑 Líder";
         else gapTxt = "a " + (real[i - 1].points - r.points) + " pts de " + this._shortName(real[i - 1]);
@@ -1414,7 +1420,7 @@ window.porraApp = function () {
           isMe: !!(this.me && r.id === this.me.id), champ: champ ? D.es(champ) : null, champQ,
           gapTxt, bestGroup, finalists, bets, exTotal: ex.total, trajTxt, trend, climb: best24,
           _hat: ex.hattrick > 0, _doble: ex.dobleRoja > 0,
-          fav: fav.slice(0, 1), risk: risk.slice(0, 2) };
+          bien: uniq(bien).slice(0, 3), mal: uniq(mal).slice(0, 3) };
       });
       const leader = real[0], second = real[1], last = real[real.length - 1];
       const totalProv = players.reduce((a, p) => a + (p.prov || 0), 0);

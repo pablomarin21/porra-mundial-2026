@@ -1236,3 +1236,15 @@ tr.clickrow.sel td{background:#e7f1ec}
 .pf{display:flex;gap:8px;align-items:flex-start;background:#f6f9f7;border-radius:9px;padding:7px 11px;font-size:.85rem;line-height:1.45}
 .pf-ic{flex:none;width:20px}
 .pf b{color:#26323b}
+
+/* va bien / va mal por jugador */
+.ppl-vb{display:grid;gap:7px;margin-top:8px}
+.ppl-col{border-radius:9px;padding:7px 10px}
+.ppl-col.good{background:#e9f7ee;border:1px solid #bfe6cd}
+.ppl-col.bad{background:#fdeeee;border:1px solid #f3cccc}
+.ppl-col-h{font-weight:800;font-size:.78rem;margin-bottom:4px}
+.ppl-col.good .ppl-col-h{color:#1f8f4e}
+.ppl-col.bad .ppl-col-h{color:#c0392b}
+.ppl-li{font-size:.82rem;line-height:1.4;padding:2px 0 2px 14px;position:relative}
+.ppl-li::before{content:"•";position:absolute;left:3px;color:var(--muted)}
+@media(min-width:560px){.ppl-vb{grid-template-columns:1fr 1fr}}
