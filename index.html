@@ -13,7 +13,7 @@
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="Porra Mundial" />
-  <link rel="stylesheet" href="styles.css?v=44" />
+  <link rel="stylesheet" href="styles.css?v=45" />
 </head>
 <body x-data="porraApp()" x-init="init()" x-cloak>
 
@@ -977,7 +977,14 @@
     <details class="k27-cmp" open>
       <summary>📊 Cómo puntúa cada cosa — comparado con tu predicción inicial</summary>
       <div class="k27-cmp-body">
-        <p class="tiny">Hay <b>dos predicciones distintas</b> que suman puntos por separado. La de <b>antes del Mundial</b> la hiciste a ciegas (vale más); la del <b>27 de junio</b> la harás con los cruces ya conocidos (vale la mitad y va en columna aparte). En las dos puntúas igual: <b>por lo lejos que llega cada equipo que pones</b>, no por acertar el rival.</p>
+        <p class="tiny">Hay <b>dos predicciones distintas</b> que suman puntos por separado. La de <b>antes del Mundial</b> la hiciste a ciegas (vale más); la del <b>27 de junio</b> la harás con los cruces ya conocidos (vale la mitad y va en columna aparte). En las dos puntúas igual: <b>por cada equipo tuyo que llega a cada ronda</b>, no por acertar el rival.</p>
+
+        <div class="k27-keybox">
+          <p class="k27-key-h">👥 Cuenta <u>CADA</u> equipo, no uno solo</p>
+          <p>En cada ronda pones <b>varios</b> equipos (8 en octavos, <b>4 en semis</b>, 2 en la final…). <b>Cada uno que llegue suma por su cuenta</b> — clasificar, llegar a esa ronda o ganar.</p>
+          <p class="k27-key-ex">📌 Tu ejemplo: pones <b>Argentina, Francia, Inglaterra y España</b> en semis y llegan <b>2</b> → sumas <b>2 veces</b> (no una). Inicial = 2×<span x-text="settings.semis"></span> = <b x-text="(2*settings.semis)"></b> · 27-jun = 2×5 = <b>10</b>. Si llegaran los 4, ×4.</p>
+        </div>
+
         <div class="k27-table-wrap">
           <table class="k27-table">
             <thead>
@@ -991,11 +998,11 @@
               <tr><td>Aciertas el <b>4º/último</b></td><td><span class="pp" x-text="'+'+settings.g4"></span></td><td class="na">—</td></tr>
               <tr><td>Equipo que <b>clasifica</b> (1º o 2º)</td><td><span class="pp" x-text="'+'+settings.qual"></span></td><td class="na">—</td></tr>
               <tr><td>Cada <b>mejor tercero</b> que clasifica</td><td><span class="pp" x-text="'+'+settings.thirdQual"></span></td><td class="na">—</td></tr>
-              <tr class="grp"><td colspan="3">Eliminatorias (lo lejos que llega tu equipo)</td></tr>
-              <tr><td>Llega a <b>octavos</b></td><td><span class="pp" x-text="'+'+settings.octavos"></span></td><td><span class="pp b" x-text="'+2'"></span></td></tr>
-              <tr><td>Llega a <b>cuartos</b></td><td><span class="pp" x-text="'+'+settings.cuartos"></span></td><td><span class="pp b">+4</span></td></tr>
-              <tr><td>Llega a <b>semis</b></td><td><span class="pp" x-text="'+'+settings.semis"></span></td><td><span class="pp b">+5</span></td></tr>
-              <tr><td>Llega a la <b>final</b></td><td><span class="pp" x-text="'+'+settings.finalists"></span></td><td><span class="pp b">+8</span></td></tr>
+              <tr class="grp"><td colspan="3">Eliminatorias · cada equipo tuyo que llega suma (varios por ronda)</td></tr>
+              <tr><td>Por <b>cada</b> equipo que llega a <b>octavos</b></td><td><span class="pp" x-text="'+'+settings.octavos"></span></td><td><span class="pp b" x-text="'+2'"></span></td></tr>
+              <tr><td>…a <b>cuartos</b> <span class="muted">(hasta 8 equipos)</span></td><td><span class="pp" x-text="'+'+settings.cuartos"></span></td><td><span class="pp b">+4</span></td></tr>
+              <tr><td>…a <b>semis</b> <span class="muted">(hasta 4)</span></td><td><span class="pp" x-text="'+'+settings.semis"></span></td><td><span class="pp b">+5</span></td></tr>
+              <tr><td>…a la <b>final</b> <span class="muted">(hasta 2)</span></td><td><span class="pp" x-text="'+'+settings.finalists"></span></td><td><span class="pp b">+8</span></td></tr>
               <tr class="win"><td>Es <b>campeón</b></td><td><span class="pp" x-text="'+'+settings.champion"></span></td><td><span class="pp b">+13</span></td></tr>
               <tr class="grp"><td colspan="3">Especiales</td></tr>
               <tr><td>Revelación, decepción, pichichi, asistente…</td><td class="yes">Sí ⭐</td><td class="na">—</td></tr>
@@ -1003,8 +1010,9 @@
           </table>
         </div>
         <ul class="k27-cmp-notes">
+          <li>👥 <b>Cada equipo cuenta por separado:</b> si clavas 2 de tus 4 semifinalistas, sumas 2; si clavas los 4, sumas 4. No es "uno", son todos los que aciertes.</li>
           <li>🔑 <b>No se acierta el cruce</b> (quién juega contra quién): se puntúa <b>a qué ronda llega</b> cada equipo que pones, da igual el rival y por dónde pase.</li>
-          <li>➕ <b>Se acumula:</b> un equipo que pones de campeón y gana te da octavos+cuartos+semis+final+campeón en cada ronda que supera.</li>
+          <li>➕ <b>Se acumula por equipo:</b> un equipo que pones de campeón y va ganando te da octavos+cuartos+semis+final+campeón en cada ronda que supera. Y eso, por cada equipo tuyo a la vez.</li>
           <li>📊 <b>Por separado:</b> el 27-jun suma en su <b>propia columna</b>, pero cuenta para el total de la clasificación. Lo difícil (la inicial) sigue pesando el doble.</li>
           <li>⚖️ <b>Ejemplo:</b> si pones a un equipo de semifinalista y llega, en la inicial son <b x-text="'+'+settings.semis"></b> (acumulando octavos y cuartos antes) y en el 27-jun <b>+5</b> (acumulando +2 y +4). La misma idea, la mitad de puntos.</li>
         </ul>
@@ -1518,10 +1526,10 @@
   </div>
 
   <!-- ====== Dependencias ====== -->
-  <script src="data.js?v=44"></script>
-  <script src="engine.js?v=44"></script>
+  <script src="data.js?v=45"></script>
+  <script src="engine.js?v=45"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
-  <script src="app.js?v=44"></script>
+  <script src="app.js?v=45"></script>
   <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.1/dist/cdn.min.js"></script>
 </body>
 </html>

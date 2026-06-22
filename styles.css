@@ -1028,3 +1028,10 @@ tr.clickrow.sel td{background:#e7f1ec}
 .brief-pts{font-weight:800;flex:none;min-width:34px;text-align:center}
 .brief-row .brief-pts{background:#fff;border-radius:6px;padding:1px 7px}
 .brief-new{margin:0;font-size:.82rem;color:var(--muted)}
+
+/* recuadro "cada equipo cuenta" en la tabla comparativa */
+.k27-keybox{background:#eef6ff;border:1px solid #cfe3f7;border-left:4px solid #2f6fd0;border-radius:11px;padding:10px 12px;margin:10px 0}
+.k27-keybox p{margin:4px 0;font-size:.86rem;line-height:1.5}
+.k27-key-h{font-weight:800;color:#2f6fd0;font-size:.92rem!important}
+.k27-key-ex{background:#fff;border-radius:8px;padding:7px 10px;font-size:.83rem!important}
+.k27-table td .muted{font-weight:600;font-size:.72rem}
