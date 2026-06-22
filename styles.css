@@ -1005,3 +1005,26 @@ tr.clickrow.sel td{background:#e7f1ec}
 
 /* chip bonus 27-jun en el desglose */
 .bd-chips .bd-bonus{background:#fff3d6;color:#a9741a;font-weight:800;border:1px solid #f0d79a}
+
+/* ===== Briefing: cambios desde la última visita ===== */
+.brief{background:#fff;border:1px solid var(--line);border-radius:14px;padding:12px 14px;margin-bottom:14px;box-shadow:0 1px 3px rgba(0,0,0,.04)}
+.brief-h{display:flex;align-items:center;justify-content:space-between;gap:8px;font-weight:800;color:var(--green);font-size:.92rem;margin-bottom:8px}
+.brief-h small{font-weight:600;font-size:.72rem}
+.brief-none{margin:0;color:var(--muted);font-size:.86rem}
+.brief-body{display:grid;gap:9px}
+.brief-leader{margin:0;background:#fff8e9;border:1px solid #f0d79a;border-radius:9px;padding:7px 10px;font-size:.88rem;color:#a9741a}
+.brief-mine{margin:0;background:#eef6ff;border:1px solid #cfe3f7;border-radius:9px;padding:7px 10px;font-size:.88rem;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.brief-mine .up{color:#1f8f4e;font-weight:700}
+.brief-mine .down{color:#c0392b;font-weight:700}
+.brief-list{display:grid;gap:4px}
+.brief-lab{font-size:.72rem;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.02em}
+.brief-row{display:flex;align-items:center;gap:8px;background:#f8faf9;border-radius:8px;padding:6px 10px;font-size:.85rem}
+.brief-row.me{background:#eef6ff;font-weight:700}
+.brief-arrow{font-weight:800;flex:none;width:16px;text-align:center}
+.brief-arrow.up,.brief-pts.up{color:#1f8f4e}
+.brief-arrow.down,.brief-pts.down{color:#c0392b}
+.brief-name{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.brief-detail{color:var(--muted);font-size:.78rem;white-space:nowrap}
+.brief-pts{font-weight:800;flex:none;min-width:34px;text-align:center}
+.brief-row .brief-pts{background:#fff;border-radius:6px;padding:1px 7px}
+.brief-new{margin:0;font-size:.82rem;color:var(--muted)}

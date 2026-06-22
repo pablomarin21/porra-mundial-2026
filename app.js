@@ -94,7 +94,7 @@ window.porraApp = function () {
       { key: "finalists", label: "Llega a la final" }, { key: "champion", label: "Campeón del mundo" },
     ],
     // probabilidades
-    lastProb: false, simN: 0, probData: {},
+    lastProb: false, simN: 0, probData: {}, briefing: null, _briefBaseline: undefined,
     boardLocked: false, usingServerBoard: false, boardIncomplete: 0,
     selectedId: null, det: null,
     koMeta: KO_META,
@@ -1351,6 +1351,42 @@ window.porraApp = function () {
         r._tied = !!((up && up.points === r.points) || (dn && dn.points === r.points));
         r._tieReason = (up && up.points === r.points) ? reason(up._tb, r._tb) : (dn && dn.points === r.points ? reason(r._tb, dn._tb) : "");
       }
+      this.computeBriefing();
+    },
+    // Briefing "qué ha cambiado desde tu última visita": posiciones y puntos (sobre participantes reales).
+    computeBriefing() {
+      const code = this.pool && this.pool.code; if (!code) return;
+      const real = (this.ranked || []).filter((r) => !this.isGuest(r));
+      if (!real.length) return;
+      if (this._briefBaseline === undefined) {
+        try { this._briefBaseline = JSON.parse(localStorage.getItem("porra_brief_" + code) || "null"); } catch (e) { this._briefBaseline = null; }
+      }
+      const base = this._briefBaseline;
+      const nm = (r) => ((r.first_name || "") + " " + (r.last_name || "")).trim();
+      const curById = {}; real.forEach((r, i) => { curById[r.id] = { pos: i + 1, points: r.points, name: nm(r) }; });
+      try { localStorage.setItem("porra_brief_" + code, JSON.stringify({ ts: Date.now(), byId: curById })); } catch (e) {}
+      if (!base || !base.byId) { this.briefing = null; return; }   // primera vez: sin referencia
+      const moves = [], gains = [];
+      real.forEach((r, i) => {
+        const o = base.byId[r.id]; if (!o) return;
+        const np = i + 1, posDelta = o.pos - np, ptsDelta = r.points - o.points;
+        const isMe = !!(this.me && r.id === this.me.id);
+        if (posDelta !== 0) moves.push({ id: r.id, name: nm(r), isMe, from: o.pos, to: np, up: posDelta > 0, n: Math.abs(posDelta) });
+        if (ptsDelta !== 0) gains.push({ id: r.id, name: nm(r), isMe, d: ptsDelta });
+      });
+      let leader = null;
+      const oldLeaderId = Object.keys(base.byId).find((k) => base.byId[k].pos === 1);
+      if (oldLeaderId && real[0] && oldLeaderId !== real[0].id && base.byId[real[0].id]) leader = { name: nm(real[0]) };
+      const newcomers = real.filter((r) => !base.byId[r.id]).map((r) => nm(r));
+      moves.sort((a, b) => b.n - a.n);
+      gains.sort((a, b) => Math.abs(b.d) - Math.abs(a.d));
+      let mine = null;
+      const meRow = real.find((r) => this.me && r.id === this.me.id);
+      if (meRow && base.byId[meRow.id]) { const o = base.byId[meRow.id]; const np = real.indexOf(meRow) + 1; mine = { posDelta: o.pos - np, ptsDelta: meRow.points - o.points, from: o.pos, to: np, name: nm(meRow) }; }
+      const ms = Date.now() - (base.ts || Date.now()); const mins = Math.round(ms / 60000);
+      const ago = mins < 1 ? "hace un momento" : mins < 60 ? ("hace " + mins + " min") : mins < 1440 ? ("hace " + Math.round(mins / 60) + " h") : ("hace " + Math.round(mins / 1440) + " día" + (Math.round(mins / 1440) === 1 ? "" : "s"));
+      const changed = !!(moves.length || gains.length || leader || newcomers.length);
+      this.briefing = { ago, changed, leader, moves: moves.slice(0, 6), gains: gains.slice(0, 6), mine, newcomers: newcomers.slice(0, 4), nMoves: moves.length, nGains: gains.length };
     },
     runProbabilities() {
       const S = this.settings;

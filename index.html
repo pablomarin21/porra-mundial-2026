@@ -13,7 +13,7 @@
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="Porra Mundial" />
-  <link rel="stylesheet" href="styles.css?v=43" />
+  <link rel="stylesheet" href="styles.css?v=44" />
 </head>
 <body x-data="porraApp()" x-init="init()" x-cloak>
 
@@ -464,6 +464,51 @@
     <div class="step-head">
       <h2>🏆 Clasificación</h2>
       <p class="muted">La liga de la familia. <span x-show="probBusy">⏳ calculando probabilidades…</span></p>
+    </div>
+
+    <!-- Briefing: qué ha cambiado desde tu última visita -->
+    <div class="brief" x-show="briefing">
+      <div class="brief-h">
+        <span>📋 Cambios desde tu última visita</span>
+        <small class="muted" x-text="briefing?briefing.ago:''"></small>
+      </div>
+      <template x-if="briefing && !briefing.changed">
+        <p class="brief-none">Sin cambios desde la última vez. 😴</p>
+      </template>
+      <template x-if="briefing && briefing.changed">
+        <div class="brief-body">
+          <p class="brief-leader" x-show="briefing.leader">👑 <b>Nuevo líder:</b> <span x-text="briefing.leader?briefing.leader.name:''"></span></p>
+          <template x-if="briefing.mine && (briefing.mine.posDelta!==0 || briefing.mine.ptsDelta!==0)">
+            <p class="brief-mine">
+              <b>Tú:</b>
+              <span class="up" x-show="briefing.mine.posDelta>0" x-text="'▲ subiste '+briefing.mine.posDelta+' ('+briefing.mine.from+'º→'+briefing.mine.to+'º)'"></span>
+              <span class="down" x-show="briefing.mine.posDelta<0" x-text="'▼ bajaste '+(-briefing.mine.posDelta)+' ('+briefing.mine.from+'º→'+briefing.mine.to+'º)'"></span>
+              <span x-show="briefing.mine.posDelta===0 && briefing.mine.ptsDelta!==0" x-text="'sigues '+briefing.mine.to+'º'"></span>
+              <span class="brief-pts" :class="briefing.mine.ptsDelta>=0?'up':'down'" x-show="briefing.mine.ptsDelta!==0" x-text="(briefing.mine.ptsDelta>0?'+':'')+briefing.mine.ptsDelta+' pts'"></span>
+            </p>
+          </template>
+          <div class="brief-list" x-show="briefing.moves.length">
+            <span class="brief-lab">📈 Posiciones</span>
+            <template x-for="m in briefing.moves" :key="'bm'+m.id">
+              <div class="brief-row" :class="{me:m.isMe}">
+                <span class="brief-arrow" :class="m.up?'up':'down'" x-text="m.up?'▲':'▼'"></span>
+                <span class="brief-name" x-text="m.name"></span>
+                <span class="brief-detail" x-text="m.from+'º → '+m.to+'º'"></span>
+              </div>
+            </template>
+          </div>
+          <div class="brief-list" x-show="briefing.gains.length">
+            <span class="brief-lab">⚽ Puntos</span>
+            <template x-for="g in briefing.gains" :key="'bg'+g.id">
+              <div class="brief-row" :class="{me:g.isMe}">
+                <span class="brief-pts" :class="g.d>0?'up':'down'" x-text="(g.d>0?'+':'')+g.d"></span>
+                <span class="brief-name" x-text="g.name"></span>
+              </div>
+            </template>
+          </div>
+          <p class="brief-new" x-show="briefing.newcomers.length" x-text="'🆕 Se han unido: '+(briefing?briefing.newcomers.join(', '):'')"></p>
+        </div>
+      </template>
     </div>
 
     <!-- Resumen de la jornada (auto) -->
@@ -1473,10 +1518,10 @@
   </div>
 
   <!-- ====== Dependencias ====== -->
-  <script src="data.js?v=43"></script>
-  <script src="engine.js?v=43"></script>
+  <script src="data.js?v=44"></script>
+  <script src="engine.js?v=44"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
-  <script src="app.js?v=43"></script>
+  <script src="app.js?v=44"></script>
   <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.1/dist/cdn.min.js"></script>
 </body>
 </html>
