@@ -13,7 +13,7 @@
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="Porra Mundial" />
-  <link rel="stylesheet" href="styles.css?v=60" />
+  <link rel="stylesheet" href="styles.css?v=61" />
 </head>
 <body x-data="porraApp()" x-init="init()" x-cloak>
 
@@ -48,6 +48,19 @@
       </div>
     </template>
   </header>
+
+  <!-- Banner para activar avisos (un toque) -->
+  <div class="notif-banner" x-show="view==='pool' && showNotifBanner" x-cloak>
+    <div class="nb-ic">🔔</div>
+    <div class="nb-body">
+      <b>Activa los avisos del Mundial</b>
+      <small>Te llegan solos: <b>final de partido</b>, <b>grupo cerrado</b> y cuando <b>te adelanten</b>. Un toque y ya — solo hay que dar permiso una vez.</small>
+    </div>
+    <div class="nb-actions">
+      <button class="btn primary" @click="activateFromBanner()" :disabled="pushBusy" x-text="pushBusy ? '…' : '🔔 Activar'"></button>
+      <button class="nb-x" @click="dismissNotifBanner()">Ahora no</button>
+    </div>
+  </div>
 
   <!-- ===================== TOASTS ===================== -->
   <div class="toasts">
@@ -1736,10 +1749,10 @@
   </div>
 
   <!-- ====== Dependencias ====== -->
-  <script src="data.js?v=60"></script>
-  <script src="engine.js?v=60"></script>
+  <script src="data.js?v=61"></script>
+  <script src="engine.js?v=61"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
-  <script src="app.js?v=60"></script>
+  <script src="app.js?v=61"></script>
   <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.1/dist/cdn.min.js"></script>
 </body>
 </html>

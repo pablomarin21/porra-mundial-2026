@@ -1265,3 +1265,14 @@ tr.clickrow.sel td{background:#e7f1ec}
 .notif-chip{background:rgba(255,255,255,.12);border:0;color:#fff;padding:5px 11px;border-radius:999px;font-weight:700;font-size:.78rem;cursor:pointer}
 .notif-chip.on{background:rgba(245,197,66,.25);color:var(--gold)}
 .notif-chip:disabled{opacity:.6}
+
+/* banner de activar avisos (un toque) */
+.notif-banner{max-width:1080px;margin:10px auto 0;padding:11px 14px;display:flex;align-items:center;gap:12px;background:linear-gradient(135deg,#fff7e6,#fdecd0);border:1px solid #f0d79a;border-radius:14px;box-shadow:0 2px 8px rgba(0,0,0,.06)}
+.nb-ic{font-size:1.6rem;flex:none}
+.nb-body{flex:1;min-width:0}
+.nb-body b{display:block;color:#26323b;font-size:.95rem}
+.nb-body small{display:block;color:#7a5a16;font-size:.8rem;line-height:1.4;margin-top:2px}
+.nb-actions{display:flex;flex-direction:column;gap:5px;flex:none;align-items:stretch}
+.nb-actions .btn{padding:8px 14px;font-size:.85rem;white-space:nowrap}
+.nb-x{background:none;border:0;color:var(--muted);font-size:.74rem;cursor:pointer;text-decoration:underline}
+@media(max-width:520px){.notif-banner{align-items:flex-start}.nb-actions{flex-direction:row;align-items:center}}

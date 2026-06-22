@@ -81,7 +81,7 @@ window.porraApp = function () {
     // ui
     toasts: [], busy: false, probBusy: false, syncBusy: false, syncMsg: "",
     showInstall: false, deferredPrompt: null,
-    pushSupported: false, pushOn: false, pushBusy: false, notifBusy: false, notifTitle: "", notifBody: "",
+    pushSupported: false, pushOn: false, pushBusy: false, notifBusy: false, notifTitle: "", notifBody: "", showNotifBanner: false,
     // pronósticos
     groups: emptyGroups(), thirds: [], bracket: {}, _cols: [], _champion: null,
     extras: { revelacion: "", decepcion: "", pichichi: "", asistente: "", portero: "", sidebets: {} },
@@ -266,8 +266,13 @@ window.porraApp = function () {
         const reg = await navigator.serviceWorker.register("sw.js");
         const sub = await reg.pushManager.getSubscription();
         this.pushOn = !!sub;
+        if (!this.pushOn && !localStorage.getItem("porra_notif_dismissed")) {
+          setTimeout(() => { if (!this.pushOn) this.showNotifBanner = true; }, 3000);
+        }
       } catch (e) { this.pushSupported = false; }
     },
+    dismissNotifBanner() { this.showNotifBanner = false; try { localStorage.setItem("porra_notif_dismissed", "1"); } catch (e) {} },
+    async activateFromBanner() { await this.togglePush(); if (this.pushOn) this.showNotifBanner = false; },
     async togglePush() {
       if (!this.pushSupported || this.pushBusy) return;
       this.pushBusy = true;
