@@ -1069,3 +1069,58 @@ tr.clickrow.sel td{background:#e7f1ec}
 .bfaq-ex-calc{background:#fff;border-radius:8px;padding:7px 10px;font-size:.83rem;line-height:1.7}
 .bfaq-ex-calc b{color:#1f8f4e}
 @media(min-width:560px){.bfaq-two{grid-template-columns:1fr 1fr}}
+
+/* ===== Acceso al apartado de puntuación (desde Clasificación) ===== */
+.score-link{display:flex;align-items:center;gap:11px;width:100%;text-align:left;background:#fff;border:1px solid var(--line);border-radius:13px;padding:12px 14px;margin-bottom:14px;cursor:pointer;box-shadow:0 1px 3px rgba(0,0,0,.04);transition:.12s}
+.score-link:active{transform:scale(.99)}
+.score-link .sl-ic{font-size:1.5rem;flex:none}
+.sl-body{flex:1;min-width:0}
+.sl-body b{display:block;color:var(--green);font-size:.96rem}
+.sl-body small{display:block;color:var(--muted);font-size:.78rem}
+.sl-arrow{color:var(--green);font-weight:800;font-size:1.2rem;flex:none}
+
+/* ===== Apartado ¿Cómo se puntúa? ===== */
+.scoring-page{padding-bottom:34px}
+.sp-over{background:linear-gradient(135deg,#eef8f1,#e2f3e9);border:1px solid #bfe6cd;border-radius:14px;padding:13px 15px;margin-bottom:16px}
+.sp-over-h{margin:0 0 10px;font-size:.92rem;color:#1c4d33}
+.sp-over-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
+.sp-over-c{background:#fff;border-radius:10px;padding:9px 10px;display:flex;flex-direction:column;gap:1px}
+.sp-over-c .sp-emo{font-size:1.2rem}
+.sp-over-c b{font-size:.85rem;color:#26323b}
+.sp-over-c small{font-size:.72rem;color:var(--muted)}
+.sp-block{background:#fff;border:1px solid var(--line);border-radius:14px;padding:14px 15px;margin-bottom:13px;box-shadow:0 1px 3px rgba(0,0,0,.04)}
+.sp-block.key{border-color:#bfe6cd;box-shadow:0 0 0 2px #e9f7ee}
+.sp-h{display:flex;align-items:center;gap:9px;font-size:1.02rem;color:#26323b;margin:0 0 9px}
+.sp-n{font-size:1.25rem;flex:none}
+.sp-p{font-size:.9rem;line-height:1.55;margin:0 0 11px;color:#3a4650}
+.sp-pts{display:grid;gap:6px;margin-bottom:11px}
+.sp-pts.two{grid-template-columns:1fr}
+.sp-pt{display:flex;align-items:center;justify-content:space-between;gap:10px;background:#f6f9f7;border:1px solid var(--line);border-radius:9px;padding:8px 12px;font-size:.88rem}
+.sp-pt.hi{background:#eef6ff;border-color:#cfe3f7}
+.sp-pt.win{background:#fff8e9;border-color:#f0d79a}
+.sp-pt .pp{background:var(--green);color:#fff;font-weight:800;border-radius:7px;padding:2px 9px;font-size:.82rem;white-space:nowrap;flex:none}
+.sp-pt .pp.b{background:#e0a106}
+.sp-pt.win .pp{background:#e0a106}
+.sp-warn{background:#fff8ec;border:1px solid #f0d79a;border-radius:10px;padding:9px 12px;font-size:.85rem;line-height:1.5;color:#7a5a16;margin-bottom:11px}
+.sp-two{display:grid;gap:8px;margin-bottom:11px}
+.sp-no,.sp-yes{border-radius:10px;padding:9px 11px}
+.sp-no{background:#fdeeee;border:1px solid #f3cccc}
+.sp-yes{background:#e9f7ee;border:1px solid #bfe6cd}
+.sp-two p{margin:5px 0 0;font-size:.85rem;line-height:1.45}
+.sp-tag{font-weight:800;font-size:.82rem}
+.sp-tag.no{color:#c0392b}.sp-tag.yes{color:#1f8f4e}
+.sp-notes{list-style:none;padding:0;margin:0 0 11px;display:grid;gap:7px}
+.sp-notes li{background:#f6f9f7;border-radius:9px;padding:8px 11px;font-size:.85rem;line-height:1.45}
+.sp-ex{background:#fbfdfc;border:1px solid var(--line);border-radius:11px;padding:10px 12px;margin-bottom:9px}
+.sp-ex.purple{background:#f8f6ff;border-color:#e2dbf5}
+.sp-ex-h{font-weight:800;font-size:.85rem;margin:0 0 6px;color:var(--green)}
+.sp-ex.purple .sp-ex-h{color:#6a4fc8}
+.sp-ex p{margin:5px 0;font-size:.85rem;line-height:1.5}
+.sp-calc{background:#fff;border:1px dashed var(--line);border-radius:8px;padding:7px 10px;font-size:.83rem!important;line-height:1.8}
+.sp-calc b{color:#1f8f4e}
+.sp-tot{margin:6px 0 0;font-weight:600;font-size:.88rem}
+.sp-tot b{color:var(--green);font-size:.98rem}
+.sp-ol{margin:0 0 4px;padding-left:20px;display:grid;gap:5px}
+.sp-ol li{font-size:.88rem;line-height:1.45}
+.sp-go{width:100%;background:#eef6ff;border:1px solid #cfe3f7;border-radius:10px;padding:10px;color:#2f6fd0;font-weight:700;font-size:.86rem;cursor:pointer;margin-top:2px}
+@media(min-width:600px){.sp-over-grid{grid-template-columns:repeat(5,1fr)}.sp-pts.two{grid-template-columns:1fr 1fr}}

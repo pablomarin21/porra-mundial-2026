@@ -13,7 +13,7 @@
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="Porra Mundial" />
-  <link rel="stylesheet" href="styles.css?v=47" />
+  <link rel="stylesheet" href="styles.css?v=48" />
 </head>
 <body x-data="porraApp()" x-init="init()" x-cloak>
 
@@ -30,6 +30,7 @@
           <button :class="{active: tab==='leaderboard'}" @click="openLeaderboard()">Clasificación</button>
           <button :class="{active: tab==='ko27'}" @click="openKo27()">🗓️ 27 jun</button>
           <button :class="{active: tab==='play'}" @click="tab='play'">Mi Porra</button>
+          <button :class="{active: tab==='scoring'}" @click="tab='scoring'">📖 Puntuación</button>
           <button :class="{active: tab==='results'}" @click="openResults()">Resultados</button>
           <button :class="{active: tab==='goals'}" @click="openGoals()">⚽ Goleadores</button>
           <button :class="{active: tab==='admin'}" @click="tab='admin'">Admin</button>
@@ -538,126 +539,12 @@
       <p class="mds-note">⚠️ Los puntos de grupo son <b>provisionales</b> hasta que cada grupo termina — pueden subir o bajar cada jornada.</p>
     </div>
 
-    <!-- Cómo se puntúa (siempre visible) -->
-    <details class="scoring-explain">
-      <summary>📋 ¿Cómo se puntúa? — el modelo de la porra</summary>
-      <div class="se-body">
-        <p>En esta porra <b>ordenaste cada grupo</b> (1º→4º), elegiste tus <b>8 mejores terceros</b> y montaste el <b>cuadro</b> hasta el campeón. Ganas puntos por cada acierto y <b>la clasificación se mueve sola</b> con cada partido.</p>
-        <div class="se-grid">
-          <div class="se-card">
-            <h4>📊 Grupos <small>· en vivo, según se decide</small></h4>
-            <ul>
-              <li>Aciertas el <b>1º</b> del grupo <span class="pp" x-text="'+'+settings.g1"></span></li>
-              <li>Aciertas el <b>2º</b> <span class="pp" x-text="'+'+settings.g2"></span></li>
-              <li>Aciertas el <b>3º</b> <span class="pp" x-text="'+'+settings.g3"></span></li>
-              <li>Aciertas el <b>4º / último</b> <span class="pp" x-text="'+'+settings.g4"></span></li>
-              <li>Cada equipo que <b>clasifica</b> (queda 1º o 2º) <span class="pp" x-text="'+'+settings.qual"></span></li>
-            </ul>
-            <p class="tiny muted">⚖️ <b>Justo:</b> el orden solo puntúa por <b>jornadas completas</b> — una ronda cuenta cuando los <b>4 equipos</b> la han jugado (así nadie cobra "1º" mientras sus rivales aún no han jugado). Dentro de eso es <b>provisional</b>: si cambia la tabla, tus puntos suben o bajan.</p>
-          </div>
-          <div class="se-card">
-            <h4>🥉 Mejores terceros <small>· al acabar los grupos</small></h4>
-            <ul><li>Cada tercero tuyo que acaba <b>clasificando</b> <span class="pp" x-text="'+'+settings.thirdQual"></span></li></ul>
-            <h4>🏆 Eliminatorias <small>· según avanzan</small></h4>
-            <ul>
-              <li>Tu equipo llega a <b>octavos</b> <span class="pp" x-text="'+'+settings.octavos"></span> · <b>cuartos</b> <span class="pp" x-text="'+'+settings.cuartos"></span></li>
-              <li><b>semis</b> <span class="pp" x-text="'+'+settings.semis"></span> · <b>final</b> <span class="pp" x-text="'+'+settings.finalists"></span> · <b>campeón</b> <span class="pp" x-text="'+'+settings.champion"></span></li>
-            </ul>
-            <h4>⭐ Especiales <small>· aparte</small></h4>
-            <ul><li>Revelación <span class="pp" x-text="'+'+settings.revelacion"></span> · Decepción <span class="pp" x-text="'+'+settings.decepcion"></span> · Pichichi <span class="pp" x-text="'+'+settings.pichichi"></span> · Asistente <span class="pp" x-text="'+'+settings.asistente"></span> · Hat-trick <span class="pp" x-text="'+'+settings.hattrick"></span> · Doble roja <span class="pp" x-text="'+'+settings.dobleRoja"></span></li></ul>
-          </div>
-        </div>
-        <p class="tiny muted">💡 Cuanto más lejos llega tu equipo, más puntos. El organizador puede ajustar los valores en Admin → Puntuación.</p>
-
-        <div class="sc-ex">
-          <p class="sc-ex-h">🎓 Ejemplos paso a paso</p>
-
-          <div class="sc-ex-card">
-            <p class="sce-t">1️⃣ Un grupo clavado</p>
-            <p class="sce-d">Aciertas el orden completo de un grupo —1º, 2º, 3º y 4º— y, además, los 2 primeros clasifican.</p>
-            <p class="sce-calc">1º <b>+5</b> · 2º <b>+3</b> · 3º <b>+3</b> · 4º <b>+3</b> · clasifican 2 equipos <b>+2+2</b></p>
-            <p class="sce-tot">= <b>18 puntos</b> de ese grupo</p>
-          </div>
-
-          <div class="sc-ex-card">
-            <p class="sce-t">2️⃣ Aciertas solo una parte</p>
-            <p class="sce-d">Clavas el <b>1º</b> y el <b>último</b> de un grupo; fallas el 2º y el 3º. El 1º además clasifica.</p>
-            <p class="sce-calc">1º <b>+5</b> · 4º <b>+3</b> · clasifica el 1º <b>+2</b></p>
-            <p class="sce-tot">= <b>10 puntos</b> · lo que fallas <b>no resta</b> aquí, simplemente no suma</p>
-          </div>
-
-          <div class="sc-ex-card warn">
-            <p class="sce-t">⚠️ Los puntos pueden BAJAR</p>
-            <p class="sce-d">El orden de un grupo solo cuenta cuando los <b>4 equipos</b> han jugado la misma jornada, y es <b>provisional</b> hasta que el grupo termina. Si clavaste un grupo en la jornada 1 (sumaste) y en la jornada 3 dos equipos cambian de posición, <b>pierdes</b> los puestos que ya no aciertas. Cuando el grupo acaba, esos puntos quedan <b>fijos</b>.</p>
-          </div>
-
-          <div class="sc-ex-card">
-            <p class="sce-t">3️⃣ Eliminatorias: cada equipo cuenta</p>
-            <p class="sce-d">En tu cuadro tienes <b>varios equipos por ronda</b> (los que siguen vivos): hasta 8 en octavos, 4 en semis, 2 en la final, 1 campeón. <b>Cada uno que llegue suma por su cuenta.</b> Ejemplo: llegan 6 de tus 8 de octavos, 3 de tus 4 de cuartos, 1 de tus 2 de semis, tus 2 finalistas, y tu campeón gana:</p>
-            <p class="sce-calc">6×<b>4</b>=24 · 3×<b>7</b>=21 · 1×<b>10</b>=10 · 2×<b>15</b>=30 · campeón <b>+25</b></p>
-            <p class="sce-tot">= <b>110 puntos</b> del cuadro · no se acierta el cruce, solo <b>a qué ronda llega</b> cada equipo</p>
-          </div>
-
-          <div class="sc-ex-card">
-            <p class="sce-t">4️⃣ Especiales (aparte)</p>
-            <p class="sce-d">Aciertas el pichichi, el asistente, el mejor portero, la revelación y que <b>sí</b> hay hat-trick:</p>
-            <p class="sce-calc">pichichi <b>+12</b> · asistente <b>+10</b> · portero <b>+10</b> · revelación <b>+8</b> · hat-trick <b>+5</b></p>
-            <p class="sce-tot">= <b>45 puntos</b> extra</p>
-          </div>
-
-          <p class="tiny muted">📅 El <b>cuadro del 27 de junio</b> (bonus) puntúa con la misma idea pero la mitad — el detalle y su tabla comparativa están en la pestaña <b>27 jun</b>.</p>
-        </div>
-      </div>
-    </details>
-
-    <!-- Cómo se puntúa el CUADRO cuando acaban los grupos -->
-    <details class="se-explain ko-explain">
-      <summary>🏆 El cuadro eliminatorio: dos momentos para puntuar</summary>
-      <div class="se-body">
-        <p class="ko-key">En las eliminatorias <b>NO se puntúan los emparejamientos</b> (quién juega contra quién): cada uno montó un cuadro distinto y los cruces reales serán otros. <b>Se puntúa lo lejos que llega cada equipo que TÚ pusiste</b>, sin importar el rival ni por dónde pase. Y hay <b>dos cuadros</b> que puntúan por separado:</p>
-
-        <div class="ko-phase">
-          <div class="ko-phase-h"><span class="ko-badge">1</span> Cuadro inicial <small>· lo rellenaste al empezar el Mundial</small></div>
-          <p class="tiny ko-phase-d">Premia la <b>visión</b>: lo predijiste sin saber nada. Vale los <b>puntos grandes</b>.</p>
-          <div class="ko-pts">
-            <div class="ko-pt"><span class="ko-r">🥉 Tus mejores terceros que clasifican</span><span class="pp" x-text="'+'+settings.thirdQual"></span></div>
-            <div class="ko-pt"><span class="ko-r">Tu equipo llega a <b>octavos</b></span><span class="pp" x-text="'+'+settings.octavos"></span></div>
-            <div class="ko-pt"><span class="ko-r">…<b>cuartos</b></span><span class="pp" x-text="'+'+settings.cuartos"></span></div>
-            <div class="ko-pt"><span class="ko-r">…<b>semis</b></span><span class="pp" x-text="'+'+settings.semis"></span></div>
-            <div class="ko-pt"><span class="ko-r">…<b>final</b></span><span class="pp" x-text="'+'+settings.finalists"></span></div>
-            <div class="ko-pt win"><span class="ko-r">…<b>campeón</b></span><span class="pp" x-text="'+'+settings.champion"></span></div>
-          </div>
-        </div>
-
-        <div class="ko-phase bonus">
-          <div class="ko-phase-h"><span class="ko-badge b2">2</span> Cuadro post-grupos · <b>BONUS</b> <small>· se abre al acabar los grupos 🔜</small></div>
-          <p class="tiny ko-phase-d">Cuando terminen los grupos ya estarán los <b>32 equipos y los cruces reales</b>. Vuelves a montar el camino a la final, ahora <b>sabiendo ya los emparejamientos</b> → <b>segunda oportunidad</b> para quien se le torció el inicial, y <b>emoción hasta el final</b>. Se rellena en la ventana entre el final de grupos y el <b>primer 1/16</b>, y se <b>bloquea</b> al empezar. Suma en una <b>columna aparte</b>.</p>
-          <p class="tiny ko-phase-d">Como es más fácil (ya conoces el cuadro), vale <b>la mitad</b>:</p>
-          <div class="ko-pts">
-            <div class="ko-pt"><span class="ko-r">Tu equipo llega a <b>octavos</b></span><span class="pp">+2</span></div>
-            <div class="ko-pt"><span class="ko-r">…<b>cuartos</b></span><span class="pp">+4</span></div>
-            <div class="ko-pt"><span class="ko-r">…<b>semis</b></span><span class="pp">+5</span></div>
-            <div class="ko-pt"><span class="ko-r">…<b>final</b></span><span class="pp">+8</span></div>
-            <div class="ko-pt win"><span class="ko-r">…<b>campeón</b></span><span class="pp">+13</span></div>
-          </div>
-          <p class="tiny muted">💬 Así <b>cada ronda hay algo que comentar</b>: ¿quién acertó que tu equipo seguía vivo? Aunque caiga tu campeón, te quedan otros equipos dando puntos hasta la final.</p>
-        </div>
-
-        <div class="ko-ex">
-          <div class="ko-ex-h">📌 Ejemplo sencillo</div>
-          <p>Pusiste a <b>🇧🇷 Brasil</b> de finalista. En el cuadro de verdad los grupos quedan distintos a tu pronóstico, así que Brasil cae por otra zona y se cruza con equipos que tú <b>no</b> habías colocado ahí. <b>Da igual el camino:</b></p>
-          <p class="ko-ex-run">gana su 1/16 → octavos <b x-text="'+'+settings.octavos"></b> · gana otra → cuartos <b x-text="'+'+settings.cuartos"></b> · otra → semis <b x-text="'+'+settings.semis"></b> · otra → final <b x-text="'+'+settings.finalists"></b></p>
-          <p>Si encima lo pusiste de <b>campeón</b> y lo gana, <b x-text="'+'+settings.champion"></b> más. Ese equipo te iría dando puntos <b>en cada ronda que supere</b> (se acumulan). Si Brasil cae en cuartos, te quedas con lo que llegó (octavos + cuartos).</p>
-        </div>
-
-        <ul class="ko-notes">
-          <li>✅ <b>No hace falta acertar el cruce exacto.</b> Solo cuenta a qué ronda llega cada equipo tuyo.</li>
-          <li>🎯 Solo puntúan los equipos que <b>tú</b> colocaste en esa ronda. Si un equipo llega lejos pero no lo pusiste ahí, no suma.</li>
-          <li>📡 Va <b>en directo</b>: cada partido de eliminatorias que termina actualiza los puntos al momento.</li>
-          <li>⚖️ En caso de empate a puntos, <b>desempata quien más puntúe en el cuadro</b> (octavos→campeón). Por eso ir lejos pesa mucho.</li>
-        </ul>
-      </div>
-    </details>
+    <!-- Acceso al apartado completo de puntuación -->
+    <button class="score-link" @click="tab='scoring'">
+      <span class="sl-ic">📖</span>
+      <span class="sl-body"><b>¿Cómo se puntúa?</b><small>Todo el sistema explicado al detalle, con ejemplos</small></span>
+      <span class="sl-arrow">→</span>
+    </button>
 
     <!-- Barra de estado -->
     <div class="live-bar">
@@ -1162,6 +1049,140 @@
     <p class="tiny muted" style="text-align:center;margin-top:14px" x-show="!ko27Editable">Cuando se abra, elegirás el ganador de cada cruce y se irá construyendo tu camino hasta levantar la copa 🏆.</p>
   </section>
 
+  <!-- ===================== ¿CÓMO SE PUNTÚA? (apartado completo) ===================== -->
+  <section x-show="view==='pool' && tab==='scoring'" class="scoring-page">
+    <div class="step-head">
+      <h2>📖 ¿Cómo se puntúa?</h2>
+      <p class="muted">Todo el sistema, al detalle y con ejemplos. Tus puntos se mueven <b>solos</b> con cada partido.</p>
+    </div>
+
+    <!-- De dónde salen los puntos -->
+    <div class="sp-over">
+      <p class="sp-over-h">Tus puntos salen de <b>5 sitios</b>, que suman por separado:</p>
+      <div class="sp-over-grid">
+        <div class="sp-over-c"><span class="sp-emo">📊</span><b>Grupos</b><small>orden y quién clasifica</small></div>
+        <div class="sp-over-c"><span class="sp-emo">🥉</span><b>Mejores terceros</b><small>los 8 que pasan</small></div>
+        <div class="sp-over-c"><span class="sp-emo">🏆</span><b>Eliminatorias</b><small>tu cuadro inicial</small></div>
+        <div class="sp-over-c"><span class="sp-emo">🗓️</span><b>Bonus 27-jun</b><small>2º cuadro · la mitad</small></div>
+        <div class="sp-over-c"><span class="sp-emo">⭐</span><b>Especiales</b><small>pichichi, portero…</small></div>
+      </div>
+    </div>
+
+    <!-- 1. GRUPOS -->
+    <div class="sp-block">
+      <h3 class="sp-h"><span class="sp-n">📊</span> 1. Fase de grupos</h3>
+      <p class="sp-p">Ordenaste cada grupo de <b>1º a 4º</b>. Ganas puntos por cada <b>posición exacta</b> que aciertas, y extra por cada equipo que <b>clasifica</b>.</p>
+      <div class="sp-pts">
+        <div class="sp-pt"><span>Aciertas el <b>1º</b> del grupo</span><span class="pp" x-text="'+'+settings.g1"></span></div>
+        <div class="sp-pt"><span>Aciertas el <b>2º</b></span><span class="pp" x-text="'+'+settings.g2"></span></div>
+        <div class="sp-pt"><span>Aciertas el <b>3º</b></span><span class="pp" x-text="'+'+settings.g3"></span></div>
+        <div class="sp-pt"><span>Aciertas el <b>4º / último</b></span><span class="pp" x-text="'+'+settings.g4"></span></div>
+        <div class="sp-pt hi"><span>Cada equipo que <b>clasifica</b> (queda 1º o 2º)</span><span class="pp" x-text="'+'+settings.qual"></span></div>
+      </div>
+      <div class="sp-warn">
+        <b>⚠️ Importante — los puntos pueden subir y bajar:</b> el orden de un grupo solo cuenta cuando los <b>4 equipos</b> han jugado la misma jornada, y es <b>provisional</b> hasta que el grupo termina. Si la tabla se mueve, tus puntos cambian. Cuando el grupo acaba, quedan <b>fijos</b>.
+      </div>
+      <div class="sp-ex">
+        <p class="sp-ex-h">📌 Ejemplo</p>
+        <p>Clavas el orden completo de un grupo y los 2 primeros clasifican:</p>
+        <p class="sp-calc">1º <b x-text="'+'+settings.g1"></b> · 2º <b x-text="'+'+settings.g2"></b> · 3º <b x-text="'+'+settings.g3"></b> · 4º <b x-text="'+'+settings.g4"></b> · clasifican 2 <b x-text="'+'+settings.qual+' +'+settings.qual"></b></p>
+        <p class="sp-tot">= <b x-text="(settings.g1+settings.g2+settings.g3+settings.g4+2*settings.qual)+' puntos'"></b> de ese grupo</p>
+      </div>
+    </div>
+
+    <!-- 2. TERCEROS -->
+    <div class="sp-block">
+      <h3 class="sp-h"><span class="sp-n">🥉</span> 2. Mejores terceros</h3>
+      <p class="sp-p">En el Mundial 2026 pasan los 2 primeros de cada grupo <b>y</b> los <b>8 mejores terceros</b>. Elegiste cuáles crees que serán.</p>
+      <div class="sp-pts">
+        <div class="sp-pt hi"><span>Cada <b>tercero</b> tuyo que acaba clasificando</span><span class="pp" x-text="'+'+settings.thirdQual"></span></div>
+      </div>
+      <p class="tiny muted">Se decide cuando terminan todos los grupos.</p>
+    </div>
+
+    <!-- 3. ELIMINATORIAS (la clave) -->
+    <div class="sp-block key">
+      <h3 class="sp-h"><span class="sp-n">🏆</span> 3. Eliminatorias — tu cuadro inicial</h3>
+      <p class="sp-p">Esta es la duda más habitual. Montaste un cuadro hasta el campeón, pero <b>los cruces reales saldrán distintos</b> (es imposible clavarlos). <b>No pasa nada:</b></p>
+      <div class="sp-two">
+        <div class="sp-no"><span class="sp-tag no">❌ NO importa</span><p>quién se cruza con quién, ni por qué lado del cuadro pase tu equipo.</p></div>
+        <div class="sp-yes"><span class="sp-tag yes">✅ SÍ puntúa</span><p>lo lejos que llega <b>cada equipo que pusiste</b>, contra quien sea.</p></div>
+      </div>
+      <div class="sp-pts">
+        <div class="sp-pt"><span>Por <b>cada</b> equipo tuyo que llega a <b>octavos</b></span><span class="pp" x-text="'+'+settings.octavos"></span></div>
+        <div class="sp-pt"><span>…a <b>cuartos</b></span><span class="pp" x-text="'+'+settings.cuartos"></span></div>
+        <div class="sp-pt"><span>…a <b>semis</b></span><span class="pp" x-text="'+'+settings.semis"></span></div>
+        <div class="sp-pt"><span>…a la <b>final</b></span><span class="pp" x-text="'+'+settings.finalists"></span></div>
+        <div class="sp-pt win"><span>…es <b>campeón</b></span><span class="pp" x-text="'+'+settings.champion"></span></div>
+      </div>
+      <ul class="sp-notes">
+        <li>👥 <b>Cada equipo cuenta por separado.</b> Tienes varios en cada ronda (8 en octavos, 4 en semis, 2 en la final). Si clavas 2 de tus 4 semifinalistas, sumas 2; si los 4, sumas 4.</li>
+        <li>➕ <b>Se acumula.</b> Un equipo que va avanzando te suma en cada ronda que supera.</li>
+        <li>📡 <b>En directo:</b> cada partido de eliminatorias que termina actualiza los puntos al momento. Si un equipo cae, dejas de sumar por él desde ahí (no resta).</li>
+      </ul>
+      <div class="sp-ex purple">
+        <p class="sp-ex-h">📌 Ejemplo 1 — tu campeón</p>
+        <p>Pusiste a 🇧🇷 <b>Brasil</b> de campeón. En la realidad cae por otra zona, contra rivales que no habías puesto. Da igual el camino:</p>
+        <p class="sp-calc">octavos <b x-text="'+'+settings.octavos"></b> · cuartos <b x-text="'+'+settings.cuartos"></b> · semis <b x-text="'+'+settings.semis"></b> → si cae en semis llevas <b x-text="(settings.octavos+settings.cuartos+settings.semis)"></b> por Brasil. Si llega a la final <b x-text="'+'+settings.finalists"></b> y gana <b x-text="'+'+settings.champion"></b> → <b x-text="(settings.octavos+settings.cuartos+settings.semis+settings.finalists+settings.champion)"></b> en total.</p>
+      </div>
+      <div class="sp-ex purple">
+        <p class="sp-ex-h">📌 Ejemplo 2 — varios equipos</p>
+        <p>Llegan 6 de tus 8 de octavos, 3 de tus 4 de cuartos, 1 de tus 2 de semis, tus 2 finalistas y tu campeón gana:</p>
+        <p class="sp-calc">6×<b x-text="settings.octavos"></b>=<b x-text="6*settings.octavos"></b> · 3×<b x-text="settings.cuartos"></b>=<b x-text="3*settings.cuartos"></b> · 1×<b x-text="settings.semis"></b>=<b x-text="settings.semis"></b> · 2×<b x-text="settings.finalists"></b>=<b x-text="2*settings.finalists"></b> · campeón <b x-text="'+'+settings.champion"></b></p>
+        <p class="sp-tot">= <b x-text="(6*settings.octavos+3*settings.cuartos+settings.semis+2*settings.finalists+settings.champion)+' puntos'"></b> del cuadro</p>
+      </div>
+    </div>
+
+    <!-- 4. BONUS 27-jun -->
+    <div class="sp-block">
+      <h3 class="sp-h"><span class="sp-n">🗓️</span> 4. Cuadro del 27 de junio (bonus)</h3>
+      <p class="sp-p">Cuando acaben los grupos montarás <b>otro cuadro</b> con los cruces ya conocidos. Puntúa <b>igual</b> (lo lejos que llega cada equipo), pero vale <b>la mitad</b> y suma en una <b>columna aparte</b>.</p>
+      <div class="sp-pts">
+        <div class="sp-pt"><span>octavos</span><span class="pp b">+2</span></div>
+        <div class="sp-pt"><span>cuartos</span><span class="pp b">+4</span></div>
+        <div class="sp-pt"><span>semis</span><span class="pp b">+5</span></div>
+        <div class="sp-pt"><span>final</span><span class="pp b">+8</span></div>
+        <div class="sp-pt win"><span>campeón</span><span class="pp b">+13</span></div>
+      </div>
+      <button class="sp-go" @click="openKo27()">Ver el apartado <b>🗓️ 27 jun</b> y su tabla comparativa →</button>
+    </div>
+
+    <!-- 5. ESPECIALES -->
+    <div class="sp-block">
+      <h3 class="sp-h"><span class="sp-n">⭐</span> 5. Predicciones especiales</h3>
+      <p class="sp-p">Aciertos sueltos que suman aparte:</p>
+      <div class="sp-pts two">
+        <div class="sp-pt"><span>🌟 <b>Revelación</b></span><span class="pp" x-text="'+'+settings.revelacion"></span></div>
+        <div class="sp-pt"><span>💀 <b>Decepción</b></span><span class="pp" x-text="'+'+settings.decepcion"></span></div>
+        <div class="sp-pt"><span>⚽ <b>Pichichi</b> (máx. goleador)</span><span class="pp" x-text="'+'+settings.pichichi"></span></div>
+        <div class="sp-pt"><span>🅰️ <b>Asistente</b></span><span class="pp" x-text="'+'+settings.asistente"></span></div>
+        <div class="sp-pt"><span>🧤 <b>Mejor portero</b></span><span class="pp" x-text="'+'+settings.portero"></span></div>
+        <div class="sp-pt"><span>🎩 <b>Hat-trick</b> (sí/no)</span><span class="pp" x-text="'+'+settings.hattrick"></span></div>
+        <div class="sp-pt"><span>🟥🟥 <b>Doble roja</b> (sí/no)</span><span class="pp" x-text="'+'+settings.dobleRoja"></span></div>
+      </div>
+    </div>
+
+    <!-- 6. EMPATE -->
+    <div class="sp-block">
+      <h3 class="sp-h"><span class="sp-n">🟰</span> 6. ¿Empate a puntos?</h3>
+      <p class="sp-p">Si dos quedáis con los mismos puntos, se desempata en este orden:</p>
+      <ol class="sp-ol">
+        <li>Más puntos en las <b>eliminatorias</b> (el cuadro: octavos→campeón).</li>
+        <li>Más puntos en <b>especiales</b>.</li>
+        <li>Más puntos en <b>grupos</b>.</li>
+        <li>Si todo fuera igual, por <b>orden alfabético</b>.</li>
+      </ol>
+      <p class="tiny muted">Por eso ir lejos en el cuadro pesa doble: además de sumar, rompe empates.</p>
+    </div>
+
+    <!-- 7. CUÁNDO -->
+    <div class="sp-block">
+      <h3 class="sp-h"><span class="sp-n">⏱️</span> 7. ¿Cuándo se puntúa?</h3>
+      <p class="sp-p"><b>En directo</b>, con cada partido — la clasificación se recalcula sola. Lo de grupos cuenta por <b>jornadas completas</b> (cuando los 4 equipos han jugado la ronda); las eliminatorias, según se van jugando.</p>
+      <p class="tiny muted">El organizador puede ajustar los valores en <b>Admin → Puntuación</b> (estos números se actualizan solos si los cambia).</p>
+    </div>
+  </section>
+
   <!-- ===================== RESULTADOS / CALENDARIO ===================== -->
   <section x-show="view==='pool' && tab==='results'" class="results">
     <div class="step-head"><h2>Resultados y calendario</h2>
@@ -1583,10 +1604,10 @@
   </div>
 
   <!-- ====== Dependencias ====== -->
-  <script src="data.js?v=47"></script>
-  <script src="engine.js?v=47"></script>
+  <script src="data.js?v=48"></script>
+  <script src="engine.js?v=48"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
-  <script src="app.js?v=47"></script>
+  <script src="app.js?v=48"></script>
   <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.1/dist/cdn.min.js"></script>
 </body>
 </html>
