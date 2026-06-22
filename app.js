@@ -1549,7 +1549,7 @@ window.porraApp = function () {
           isMe: !!(this.me && r.id === this.me.id), champ: champ ? D.es(champ) : null, champQ,
           gapTxt, bestGroup, finalists, bets, exTotal: ex.total, trajTxt, trend, climb: best24,
           _hat: ex.hattrick > 0, _doble: ex.dobleRoja > 0,
-          bien: bien.slice(0, 12), mal: mal.slice(0, 12), nBien: bien.length, nMal: mal.length };
+          bien: bien, mal: mal, nBien: bien.length, nMal: mal.length };
       });
       const leader = real[0], second = real[1], last = real[real.length - 1];
       const totalProv = players.reduce((a, p) => a + (p.prov || 0), 0);

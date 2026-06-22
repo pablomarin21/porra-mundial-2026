@@ -13,7 +13,7 @@
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="Porra Mundial" />
-  <link rel="stylesheet" href="styles.css?v=61" />
+  <link rel="stylesheet" href="styles.css?v=62" />
 </head>
 <body x-data="porraApp()" x-init="init()" x-cloak>
 
@@ -566,12 +566,10 @@
                 <div class="ppl-col good" x-show="p.bien.length">
                   <div class="ppl-col-h" x-text="'✅ Va por buen camino ('+p.nBien+')'"></div>
                   <template x-for="(f,i) in p.bien" :key="'b'+p.pos+i"><div class="ppl-li" x-text="f"></div></template>
-                  <div class="ppl-li muted" x-show="p.nBien>p.bien.length" x-text="'…y '+(p.nBien-p.bien.length)+' más'"></div>
                 </div>
                 <div class="ppl-col bad" x-show="p.mal.length">
                   <div class="ppl-col-h" x-text="'❌ Va mal / ojo ('+p.nMal+')'"></div>
                   <template x-for="(m,i) in p.mal" :key="'m'+p.pos+i"><div class="ppl-li" x-text="m"></div></template>
-                  <div class="ppl-li muted" x-show="p.nMal>p.mal.length" x-text="'…y '+(p.nMal-p.mal.length)+' más'"></div>
                 </div>
               </div>
             </div>
@@ -1749,10 +1747,10 @@
   </div>
 
   <!-- ====== Dependencias ====== -->
-  <script src="data.js?v=61"></script>
-  <script src="engine.js?v=61"></script>
+  <script src="data.js?v=62"></script>
+  <script src="engine.js?v=62"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
-  <script src="app.js?v=61"></script>
+  <script src="app.js?v=62"></script>
   <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.1/dist/cdn.min.js"></script>
 </body>
 </html>
