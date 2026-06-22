@@ -82,6 +82,7 @@ window.porraApp = function () {
     // datos
     entries: [], ranked: [], results: {}, rEdit: defaultREdit(), koEdit: defaultKoEdit(), liveBr: { teamsByMatch: {}, winnerOf: {}, complete: false },
     koPreview: null, koPreviewShow: false, ko27: null, ko27Round: "r32",
+    bracket2: {}, _cols2: [], _champion2: null, ko27Busy: false, ko27Saved: false,
     // admin
     adminOk: false, adminPin: "", settings: Object.assign({}, D.DEFAULT_SCORING),
     scoreKeys: [
@@ -1216,7 +1217,59 @@ window.porraApp = function () {
       ];
       this.ko27 = { rounds, ready: kp.ready, complete: kp.complete, total: kp.total, nIn: kp.nIn, nOut: kp.nOut, nMaybe: kp.nMaybe };
     },
-    openKo27() { this.tab = "ko27"; this.selectedId = null; this.det = null; this.buildKo27(); },
+    openKo27() { this.tab = "ko27"; this.selectedId = null; this.det = null; this.buildKo27(); this.loadBracket2(); },
+
+    // ¿se puede rellenar ya? grupos terminados + dentro de plazo + estás dentro de la porra
+    get ko27Editable() {
+      if (!this.me || !this.me.id) return false;
+      if (!this.ko27 || !this.ko27.ready) return false;
+      try { return new Date() < new Date("2026-06-28T16:00:00"); } catch (e) { return true; }
+    },
+    loadBracket2() {
+      const e = this.myEntry;
+      this.bracket2 = (e && e.picks && e.picks.bracket2) ? Object.assign({}, e.picks.bracket2) : (this.bracket2 || {});
+      this.rebuild2();
+    },
+    // Reconstruye el 2º cuadro SEMBRADO desde los clasificados REALES (no desde tu predicción de grupos).
+    rebuild2() {
+      const standings = {};
+      for (const L of D.GROUP_LETTERS) standings[L] = Eng.groupStandings(L, this.results, false, null);
+      let teams = null;
+      try { teams = Eng.buildR32Teams(Eng.computeQualifiers(standings)).teams; } catch (e) { teams = null; }
+      const tbm = {}; for (const m of D.R32) tbm[m.match] = teams ? teams[m.match] : { a: null, b: null };
+      const b = this.bracket2; const winnerOf = {};
+      const valid = (mNum) => { const pair = tbm[mNum]; const w = b[mNum]; if (w && pair && (w === pair.a || w === pair.b)) return w; if (w !== undefined) delete b[mNum]; return null; };
+      for (const m of D.R32) winnerOf[m.match] = valid(m.match);
+      for (const list of [D.R16, D.QF, D.SF, [D.FINAL]]) for (const m of list) { tbm[m.match] = { a: winnerOf[m.a] || null, b: winnerOf[m.b] || null }; winnerOf[m.match] = valid(m.match); }
+      const cell = (t) => ({ team: t, es: t ? D.es(t) : null, flag: t ? D.flag(t) : "" });
+      const defs = [{ key: "r32", title: "1/16", list: D.R32 }, { key: "r16", title: "Octavos", list: D.R16 }, { key: "qf", title: "Cuartos", list: D.QF }, { key: "sf", title: "Semis", list: D.SF }, { key: "final", title: "Final", list: [D.FINAL] }];
+      this._cols2 = defs.map((d) => ({ key: d.key, title: d.title, matches: d.list.map((m, i) => ({ n: i + 1, match: m.match, a: cell(tbm[m.match].a), b: cell(tbm[m.match].b), pick: this.bracket2[m.match] || null })) }));
+      this._champion2 = winnerOf[D.FINAL.match] || null;
+    },
+    get bracketCols2() { return this._cols2; },
+    get activeCol2() { return (this._cols2 || []).find((c) => c.key === this.ko27Round) || null; },
+    get myChampion2() { return this._champion2; },
+    get bracket2Picked() { let n = 0; for (const m of [...D.R32, ...D.R16, ...D.QF, ...D.SF, D.FINAL]) if (this.bracket2[m.match]) n++; return n; },
+    get bracket2Done() { return this.bracket2Picked === 31; },
+    pickWinner2(match, team) {
+      if (!team || !this.ko27Editable) return;
+      this.bracket2[match] = team; this.ko27Saved = false; this.rebuild2();
+      const order = ["r32", "r16", "qf", "sf", "final"]; const idx = order.indexOf(this.ko27Round);
+      const col = this._cols2[idx];
+      if (col && idx < order.length - 1 && col.matches.every((m) => this.bracket2[m.match])) this.ko27Round = order[idx + 1];
+    },
+    async saveBracket2() {
+      if (!this.ko27Editable || !this.me.id || this.ko27Busy) return;
+      this.ko27Busy = true;
+      try {
+        await this.rpc("porra_set_bracket2", { p_code: this.pool.code, p_participant_id: this.me.id, p_bracket2: this.bracket2 });
+        const e = this.myEntry; if (e) { e.picks = e.picks || {}; e.picks.bracket2 = Object.assign({}, this.bracket2); }
+        this.ko27Saved = true;
+        this.toast("✅ ¡Camino guardado! Sumarás los puntos bonus según avance el cuadro.");
+        if (this.recomputeRanking) this.recomputeRanking();
+      } catch (err) { this.toast(this.errMsg ? this.errMsg(err) : "No se pudo guardar", "err"); }
+      finally { this.ko27Busy = false; }
+    },
 
     // ---------- clasificación + probabilidades ----------
     openLeaderboard() { this.tab = "leaderboard"; this.selectedId = null; this.det = null; this.loadBoard(); },

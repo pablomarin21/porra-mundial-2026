@@ -281,18 +281,35 @@
 
   // -------- derivar de una quiniela los conjuntos "llega a la ronda X" --------
   // picks = { groups:{L:[4]}, thirds:[...], bracket:{matchNum: team} }
-  function derivePicks(picks) {
-    const b = picks.bracket || {};
+  function bracketSets(b) {
+    b = b || {};
     const win = (nums) => nums.map((n) => b[n] || b[String(n)]).filter(Boolean);
     return {
-      groups: picks.groups || {},
-      thirds: picks.thirds || [],
       octavos: new Set(win(DATA.R32.map((m) => m.match))),
       cuartos: new Set(win(DATA.R16.map((m) => m.match))),
       semis: new Set(win(DATA.QF.map((m) => m.match))),
       final: new Set(win(DATA.SF.map((m) => m.match))),
       champion: b[DATA.FINAL.match] || b[String(DATA.FINAL.match)] || null,
     };
+  }
+  function derivePicks(picks) {
+    const s = bracketSets(picks.bracket);
+    return {
+      groups: picks.groups || {},
+      thirds: picks.thirds || [],
+      octavos: s.octavos, cuartos: s.cuartos, semis: s.semis, final: s.final, champion: s.champion,
+      b2: bracketSets(picks.bracket2),   // segundo cuadro (BONUS post-grupos)
+    };
+  }
+  // Puntos BONUS del 2º cuadro: mismo modelo (lo lejos que llega tu equipo), la mitad.
+  var BONUS2 = { octavos: 2, cuartos: 4, semis: 5, final: 8, champion: 13 };
+  function scoreBonus(P, oc) {
+    if (!P || !P.b2 || !oc || !oc.reached) return 0;
+    let n = 0;
+    const stages = [["octavos", BONUS2.octavos], ["cuartos", BONUS2.cuartos], ["semis", BONUS2.semis], ["final", BONUS2.final]];
+    for (const [stage, pts] of stages) { const a = oc.reached[stage], p = P.b2[stage]; if (a && p) p.forEach((t) => { if (a.has(t)) n += pts; }); }
+    if (oc.reached.champion && P.b2.champion && P.b2.champion === oc.reached.champion) n += BONUS2.champion;
+    return n;
   }
 
   // -------- puntuación de una quiniela frente a un outcome --------
@@ -322,12 +339,13 @@
       predSet.forEach((t) => { if (actSet.has(t)) total += pts; });
     }
     if (oc.reached.champion && P.champion && P.champion === oc.reached.champion) total += S.champion;
+    total += scoreBonus(P, oc);   // BONUS 2º cuadro (cuenta para el total)
     return total;
   }
 
   // -------- desglose de puntos por categoría (para mostrar en la app) --------
   function scoreBreakdown(P, oc, S) {
-    const bd = { grupos: 0, terceros: 0, octavos: 0, cuartos: 0, semis: 0, final: 0, campeon: 0 };
+    const bd = { grupos: 0, terceros: 0, octavos: 0, cuartos: 0, semis: 0, final: 0, campeon: 0, bonus: 0 };
     for (const L of LETTERS) {
       const act = oc.groupOrder[L]; const pred = P.groups[L];
       if (!act || !pred) continue;
@@ -349,7 +367,8 @@
       predSet.forEach((t) => { if (actSet.has(t)) bd[key] += pts; });
     }
     if (oc.reached.champion && P.champion && P.champion === oc.reached.champion) bd.campeon += S.champion;
-    bd.total = bd.grupos + bd.terceros + bd.octavos + bd.cuartos + bd.semis + bd.final + bd.campeon;
+    bd.bonus = scoreBonus(P, oc);   // BONUS 2º cuadro (columna aparte, suma al total)
+    bd.total = bd.grupos + bd.terceros + bd.octavos + bd.cuartos + bd.semis + bd.final + bd.campeon + bd.bonus;
     return bd;
   }
 

@@ -13,7 +13,7 @@
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="Porra Mundial" />
-  <link rel="stylesheet" href="styles.css?v=42" />
+  <link rel="stylesheet" href="styles.css?v=43" />
 </head>
 <body x-data="porraApp()" x-init="init()" x-cloak>
 
@@ -820,6 +820,7 @@
             <span x-text="'Semis '+det.bd.semis"></span>
             <span x-text="'Final '+det.bd.final"></span>
             <span x-text="'Campeón '+det.bd.campeon"></span>
+            <span class="bd-bonus" x-show="det.bd && det.bd.bonus" x-text="'🗓️ 27-jun '+(det.bd?det.bd.bonus:0)"></span>
             <span class="bd-extra" x-show="det.ex.total" x-text="'⭐ Especiales '+det.ex.total"></span>
           </div>
         </template>
@@ -904,14 +905,15 @@
       <p class="muted">Cuando acabe la fase de grupos montarás tu <b>cuadro de eliminatorias</b> desde los <b>dieciseisavos (1/16)</b> hasta el campeón, para sumar <b>puntos extra</b>.</p>
     </div>
 
-    <!-- candado / cuenta atrás -->
-    <div class="k27-lock">
+    <!-- candado / cuenta atrás (o ABIERTO) -->
+    <div class="k27-lock" :class="{open: ko27Editable}">
       <div class="k27-lock-l">
-        <span class="k27-lock-ic">🔒</span>
+        <span class="k27-lock-ic" x-text="ko27Editable?'🟢':'🔒'"></span>
         <div>
-          <b>Se abre el 27 de junio</b>
-          <small x-show="ko27DaysLeft>0" x-text="'Faltan '+ko27DaysLeft+' día'+(ko27DaysLeft===1?'':'s')+' · al acabar la fase de grupos'"></small>
-          <small x-show="ko27DaysLeft<=0">en cuanto terminen todos los grupos</small>
+          <b x-text="ko27Editable?'¡Abierto! Monta tu camino a la final':'Se abre el 27 de junio'"></b>
+          <small x-show="!ko27Editable && ko27DaysLeft>0" x-text="'Faltan '+ko27DaysLeft+' día'+(ko27DaysLeft===1?'':'s')+' · al acabar la fase de grupos'"></small>
+          <small x-show="!ko27Editable && ko27DaysLeft<=0">en cuanto terminen todos los grupos</small>
+          <small x-show="ko27Editable">Elige los ganadores antes del primer 1/16 (28-jun). Puedes editar hasta entonces.</small>
         </div>
       </div>
       <span class="k27-prog" x-text="(ko27?ko27.complete:0)+'/'+(ko27?ko27.total:12)+' grupos cerrados'"></span>
@@ -926,6 +928,44 @@
       <p class="tiny muted">Igual que el cuadro inicial: puntúas por <b>lo lejos que llega cada equipo que pongas</b>, da igual el rival. Aquí ya conocerás los <b>cruces reales</b> → segunda oportunidad y emoción hasta el final.</p>
     </div>
 
+    <!-- TABLA COMPARATIVA: cómo puntúa cada cosa vs la predicción inicial -->
+    <details class="k27-cmp" open>
+      <summary>📊 Cómo puntúa cada cosa — comparado con tu predicción inicial</summary>
+      <div class="k27-cmp-body">
+        <p class="tiny">Hay <b>dos predicciones distintas</b> que suman puntos por separado. La de <b>antes del Mundial</b> la hiciste a ciegas (vale más); la del <b>27 de junio</b> la harás con los cruces ya conocidos (vale la mitad y va en columna aparte). En las dos puntúas igual: <b>por lo lejos que llega cada equipo que pones</b>, no por acertar el rival.</p>
+        <div class="k27-table-wrap">
+          <table class="k27-table">
+            <thead>
+              <tr><th>Qué puntúa</th><th>🅰️ Inicial<small>antes del Mundial</small></th><th>🅱️ 27-jun<small>bonus</small></th></tr>
+            </thead>
+            <tbody>
+              <tr class="grp"><td colspan="3">Fase de grupos</td></tr>
+              <tr><td>Aciertas el <b>1º</b> de un grupo</td><td><span class="pp" x-text="'+'+settings.g1"></span></td><td class="na">—</td></tr>
+              <tr><td>Aciertas el <b>2º</b></td><td><span class="pp" x-text="'+'+settings.g2"></span></td><td class="na">—</td></tr>
+              <tr><td>Aciertas el <b>3º</b></td><td><span class="pp" x-text="'+'+settings.g3"></span></td><td class="na">—</td></tr>
+              <tr><td>Aciertas el <b>4º/último</b></td><td><span class="pp" x-text="'+'+settings.g4"></span></td><td class="na">—</td></tr>
+              <tr><td>Equipo que <b>clasifica</b> (1º o 2º)</td><td><span class="pp" x-text="'+'+settings.qual"></span></td><td class="na">—</td></tr>
+              <tr><td>Cada <b>mejor tercero</b> que clasifica</td><td><span class="pp" x-text="'+'+settings.thirdQual"></span></td><td class="na">—</td></tr>
+              <tr class="grp"><td colspan="3">Eliminatorias (lo lejos que llega tu equipo)</td></tr>
+              <tr><td>Llega a <b>octavos</b></td><td><span class="pp" x-text="'+'+settings.octavos"></span></td><td><span class="pp b" x-text="'+2'"></span></td></tr>
+              <tr><td>Llega a <b>cuartos</b></td><td><span class="pp" x-text="'+'+settings.cuartos"></span></td><td><span class="pp b">+4</span></td></tr>
+              <tr><td>Llega a <b>semis</b></td><td><span class="pp" x-text="'+'+settings.semis"></span></td><td><span class="pp b">+5</span></td></tr>
+              <tr><td>Llega a la <b>final</b></td><td><span class="pp" x-text="'+'+settings.finalists"></span></td><td><span class="pp b">+8</span></td></tr>
+              <tr class="win"><td>Es <b>campeón</b></td><td><span class="pp" x-text="'+'+settings.champion"></span></td><td><span class="pp b">+13</span></td></tr>
+              <tr class="grp"><td colspan="3">Especiales</td></tr>
+              <tr><td>Revelación, decepción, pichichi, asistente…</td><td class="yes">Sí ⭐</td><td class="na">—</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <ul class="k27-cmp-notes">
+          <li>🔑 <b>No se acierta el cruce</b> (quién juega contra quién): se puntúa <b>a qué ronda llega</b> cada equipo que pones, da igual el rival y por dónde pase.</li>
+          <li>➕ <b>Se acumula:</b> un equipo que pones de campeón y gana te da octavos+cuartos+semis+final+campeón en cada ronda que supera.</li>
+          <li>📊 <b>Por separado:</b> el 27-jun suma en su <b>propia columna</b>, pero cuenta para el total de la clasificación. Lo difícil (la inicial) sigue pesando el doble.</li>
+          <li>⚖️ <b>Ejemplo:</b> si pones a un equipo de semifinalista y llega, en la inicial son <b x-text="'+'+settings.semis"></b> (acumulando octavos y cuartos antes) y en el 27-jun <b>+5</b> (acumulando +2 y +4). La misma idea, la mitad de puntos.</li>
+        </ul>
+      </div>
+    </details>
+
     <!-- selector de ronda -->
     <div class="k27-rounds">
       <template x-for="r in (ko27?ko27.rounds:[])" :key="r.key">
@@ -937,40 +977,79 @@
     </div>
 
     <!-- leyenda de estados (solo en 1/16) -->
-    <div class="k27-legend" x-show="ko27Round==='r32'">
+    <div class="k27-legend" x-show="ko27Round==='r32' && !ko27Editable">
       <span class="kps in">✅ clasificado</span><span class="kps out">❌ eliminado</span><span class="kps maybe">⏳ en juego</span>
     </div>
 
-    <!-- partidos de la ronda activa -->
-    <template x-for="r in (ko27?ko27.rounds:[]).filter(x=>x.key===ko27Round)" :key="'rd'+r.key">
-      <div>
-        <p class="k27-note" x-show="r.seeded">Cruces <b>provisionales</b> según cómo van los grupos ahora mismo. <span x-show="!(ko27&&ko27.ready)">Irán cambiando hasta el 27.</span> <span class="ok" x-show="ko27&&ko27.ready">✅ ya son los reales.</span></p>
-        <p class="k27-note" x-show="!r.seeded">Esta ronda se irá dibujando con <b>los ganadores que elijas</b> a partir del 27 de junio.</p>
-        <div class="k27-list">
-          <template x-for="m in r.matches" :key="r.key+'m'+m.n">
-            <div class="k27-m" :class="{seeded:r.seeded}">
+    <!-- ===== EDITABLE: ya abierto (grupos terminados + en plazo) — elige ganadores ===== -->
+    <template x-if="ko27Editable">
+      <div class="k27-edit">
+        <div class="k27-edit-bar">
+          <span class="k27-prog2" x-text="bracket2Picked+'/31 elegidos'"></span>
+          <span class="k27-champ2" x-show="myChampion2"><span x-text="flag(myChampion2)"></span> <b x-text="es(myChampion2)"></b> 🏆</span>
+        </div>
+        <p class="k27-note">Toca al equipo que crees que <b>gana</b> cada cruce; el ganador pasa solo a la siguiente ronda. Cuando termines (o por el camino), <b>guarda</b>.</p>
+        <div class="k27-list" x-show="activeCol2">
+          <template x-for="m in (activeCol2?activeCol2.matches:[])" :key="'e'+(activeCol2?activeCol2.key:'')+m.match">
+            <div class="k27-em">
               <span class="k27-mn" x-text="'#'+m.n"></span>
-              <template x-if="r.seeded">
-                <div class="k27-teams">
-                  <span class="k27-t" :class="m.a.st?('s-'+m.a.st.k):''"><span class="k27-fl" x-text="m.a.flag"></span> <span class="k27-nm" x-text="m.a.es"></span><span class="k27-b" x-show="m.a.st" x-text="m.a.st?({in:'✅',out:'❌',maybe:'⏳'}[m.a.st.k]):''"></span></span>
-                  <span class="k27-vs">vs</span>
-                  <span class="k27-t" :class="m.b.st?('s-'+m.b.st.k):''"><span class="k27-fl" x-text="m.b.flag"></span> <span class="k27-nm" x-text="m.b.es"></span><span class="k27-b" x-show="m.b.st" x-text="m.b.st?({in:'✅',out:'❌',maybe:'⏳'}[m.b.st.k]):''"></span></span>
-                </div>
-              </template>
-              <template x-if="!r.seeded">
-                <div class="k27-teams ph">
-                  <span class="k27-t ph" x-text="m.fa"></span>
-                  <span class="k27-vs">vs</span>
-                  <span class="k27-t ph" x-text="m.fb"></span>
-                </div>
-              </template>
+              <div class="k27-epick">
+                <button class="k27-opt" :class="{sel:m.pick && m.pick===m.a.team}" :disabled="!m.a.team" @click="pickWinner2(m.match, m.a.team)">
+                  <template x-if="m.a.team"><span><span class="k27-fl" x-text="m.a.flag"></span> <span class="k27-nm" x-text="m.a.es"></span></span></template>
+                  <template x-if="!m.a.team"><span class="muted">Ganador anterior</span></template>
+                </button>
+                <span class="k27-vs">vs</span>
+                <button class="k27-opt" :class="{sel:m.pick && m.pick===m.b.team}" :disabled="!m.b.team" @click="pickWinner2(m.match, m.b.team)">
+                  <template x-if="m.b.team"><span><span class="k27-fl" x-text="m.b.flag"></span> <span class="k27-nm" x-text="m.b.es"></span></span></template>
+                  <template x-if="!m.b.team"><span class="muted">Ganador anterior</span></template>
+                </button>
+              </div>
             </div>
           </template>
+        </div>
+        <div class="k27-save">
+          <button class="btn primary block" :disabled="ko27Busy" @click="saveBracket2()">
+            <span x-show="!ko27Busy" x-text="ko27Saved?'✅ Guardado · volver a guardar':(bracket2Done?'💾 Guardar mi camino completo':'💾 Guardar (puedes seguir luego)')"></span>
+            <span x-show="ko27Busy">Guardando…</span>
+          </button>
+          <p class="tiny muted" x-show="!bracket2Done">Te faltan <b x-text="31-bracket2Picked"></b> cruces. Puedes guardar e ir completando hasta que empiecen los 1/16.</p>
+          <p class="tiny ok" x-show="bracket2Done && ko27Saved">✅ Camino completo y guardado. ¡Suerte!</p>
         </div>
       </div>
     </template>
 
-    <p class="tiny muted" style="text-align:center;margin-top:14px">Cuando se abra, elegirás el ganador de cada cruce y se irá construyendo tu camino hasta levantar la copa 🏆.</p>
+    <!-- ===== READ-ONLY: vista previa provisional (antes de abrirse) ===== -->
+    <template x-if="!ko27Editable">
+      <template x-for="r in (ko27?ko27.rounds:[]).filter(x=>x.key===ko27Round)" :key="'rd'+r.key">
+        <div>
+          <p class="k27-note" x-show="r.seeded">Cruces <b>provisionales</b> según cómo van los grupos ahora mismo. <span x-show="!(ko27&&ko27.ready)">Irán cambiando hasta el 27.</span> <span class="ok" x-show="ko27&&ko27.ready">✅ ya son los reales.</span></p>
+          <p class="k27-note" x-show="!r.seeded">Esta ronda se irá dibujando con <b>los ganadores que elijas</b> a partir del 27 de junio.</p>
+          <div class="k27-list">
+            <template x-for="m in r.matches" :key="r.key+'m'+m.n">
+              <div class="k27-m" :class="{seeded:r.seeded}">
+                <span class="k27-mn" x-text="'#'+m.n"></span>
+                <template x-if="r.seeded">
+                  <div class="k27-teams">
+                    <span class="k27-t" :class="m.a.st?('s-'+m.a.st.k):''"><span class="k27-fl" x-text="m.a.flag"></span> <span class="k27-nm" x-text="m.a.es"></span><span class="k27-b" x-show="m.a.st" x-text="m.a.st?({in:'✅',out:'❌',maybe:'⏳'}[m.a.st.k]):''"></span></span>
+                    <span class="k27-vs">vs</span>
+                    <span class="k27-t" :class="m.b.st?('s-'+m.b.st.k):''"><span class="k27-fl" x-text="m.b.flag"></span> <span class="k27-nm" x-text="m.b.es"></span><span class="k27-b" x-show="m.b.st" x-text="m.b.st?({in:'✅',out:'❌',maybe:'⏳'}[m.b.st.k]):''"></span></span>
+                  </div>
+                </template>
+                <template x-if="!r.seeded">
+                  <div class="k27-teams ph">
+                    <span class="k27-t ph" x-text="m.fa"></span>
+                    <span class="k27-vs">vs</span>
+                    <span class="k27-t ph" x-text="m.fb"></span>
+                  </div>
+                </template>
+              </div>
+            </template>
+          </div>
+        </div>
+      </template>
+    </template>
+
+    <p class="tiny muted" style="text-align:center;margin-top:14px" x-show="!ko27Editable">Cuando se abra, elegirás el ganador de cada cruce y se irá construyendo tu camino hasta levantar la copa 🏆.</p>
   </section>
 
   <!-- ===================== RESULTADOS / CALENDARIO ===================== -->
@@ -1394,10 +1473,10 @@
   </div>
 
   <!-- ====== Dependencias ====== -->
-  <script src="data.js?v=42"></script>
-  <script src="engine.js?v=42"></script>
+  <script src="data.js?v=43"></script>
+  <script src="engine.js?v=43"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
-  <script src="app.js?v=42"></script>
+  <script src="app.js?v=43"></script>
   <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.1/dist/cdn.min.js"></script>
 </body>
 </html>

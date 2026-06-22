@@ -962,3 +962,46 @@ tr.clickrow.sel td{background:#e7f1ec}
 .k27-b{margin-left:auto;font-size:.78rem;flex:none}
 .k27-vs{text-align:center;color:var(--muted);font-size:.66rem;font-weight:700}
 @media(min-width:600px){.k27-list{grid-template-columns:1fr 1fr;gap:7px 12px}}
+
+/* ===== Tabla comparativa de puntuación (27-jun vs inicial) ===== */
+.k27-cmp{background:#fff;border:1px solid var(--line);border-radius:13px;margin-bottom:14px;overflow:hidden}
+.k27-cmp>summary{cursor:pointer;list-style:none;padding:11px 13px;font-weight:800;color:var(--green);font-size:.9rem;background:#f3faf5}
+.k27-cmp>summary::-webkit-details-marker{display:none}
+.k27-cmp>summary::after{content:"▾";float:right;color:var(--muted)}
+.k27-cmp[open]>summary::after{content:"▴"}
+.k27-cmp-body{padding:11px 13px}
+.k27-table-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;margin:10px 0}
+.k27-table{width:100%;border-collapse:collapse;font-size:.8rem;min-width:300px}
+.k27-table th,.k27-table td{padding:7px 8px;text-align:left;border-bottom:1px solid var(--line)}
+.k27-table thead th{background:#f6f9f7;font-size:.74rem;color:#26323b;vertical-align:top;text-align:center}
+.k27-table thead th:first-child{text-align:left}
+.k27-table thead th small{display:block;font-weight:600;color:var(--muted);font-size:.64rem;margin-top:1px}
+.k27-table td:nth-child(2),.k27-table td:nth-child(3){text-align:center;white-space:nowrap;width:78px}
+.k27-table tr.grp td{background:#eef4f0;font-weight:800;color:var(--green);font-size:.72rem;text-transform:uppercase;letter-spacing:.02em;text-align:left}
+.k27-table tr.win td{background:#fffaf0}
+.k27-table .pp{background:var(--green);color:#fff;font-weight:800;border-radius:6px;padding:2px 7px;font-size:.76rem;display:inline-block}
+.k27-table .pp.b{background:#e0a106}
+.k27-table .na{color:#c0392b;font-weight:700}
+.k27-table .yes{color:#1f8f4e;font-weight:700;text-align:center}
+.k27-cmp-notes{list-style:none;padding:0;margin:8px 0 0;display:grid;gap:6px}
+.k27-cmp-notes li{background:#f6f9f7;border-radius:8px;padding:7px 10px;font-size:.82rem;line-height:1.45}
+
+/* ===== 27-jun: modo editable (elegir ganadores) ===== */
+.k27-lock.open{background:linear-gradient(135deg,#e9f8ef,#d7f0e0);border-color:#9fd9b4}
+.k27-lock.open .k27-lock-l small{color:#1f8f4e}
+.k27-edit{margin-top:4px}
+.k27-edit-bar{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;margin-bottom:8px}
+.k27-prog2{background:#eef4f0;border-radius:20px;padding:4px 11px;font-size:.76rem;font-weight:800;color:var(--green)}
+.k27-champ2{background:#fff8e9;border:1px solid #f0d79a;border-radius:20px;padding:4px 11px;font-size:.8rem;font-weight:700;color:#a9741a}
+.k27-em{display:grid;grid-template-columns:26px 1fr;align-items:center;gap:7px;margin-bottom:7px}
+.k27-epick{display:grid;grid-template-columns:1fr 24px 1fr;align-items:stretch;gap:5px}
+.k27-opt{display:flex;align-items:center;justify-content:center;gap:5px;background:#fff;border:1.5px solid var(--line);border-radius:10px;padding:9px 8px;cursor:pointer;font-size:.84rem;font-weight:600;color:#26323b;min-height:42px;transition:.12s;text-align:center}
+.k27-opt:active{transform:scale(.98)}
+.k27-opt:disabled{opacity:.55;cursor:not-allowed;font-style:italic}
+.k27-opt.sel{border-color:var(--green);background:#e8f6ee;color:var(--green);font-weight:800;box-shadow:inset 0 0 0 1px var(--green)}
+.k27-opt .k27-fl{font-size:1.1rem}
+.k27-save{margin-top:12px}
+.k27-save .tiny{text-align:center;margin-top:6px}
+
+/* chip bonus 27-jun en el desglose */
+.bd-chips .bd-bonus{background:#fff3d6;color:#a9741a;font-weight:800;border:1px solid #f0d79a}
