@@ -1035,3 +1035,16 @@ tr.clickrow.sel td{background:#e7f1ec}
 .k27-key-h{font-weight:800;color:#2f6fd0;font-size:.92rem!important}
 .k27-key-ex{background:#fff;border-radius:8px;padding:7px 10px;font-size:.83rem!important}
 .k27-table td .muted{font-weight:600;font-size:.72rem}
+
+/* ===== Ejemplos paso a paso del sistema de puntuación ===== */
+.sc-ex{margin-top:14px;border-top:1px solid var(--line);padding-top:12px}
+.sc-ex-h{font-weight:800;color:var(--green);font-size:.95rem;margin:0 0 9px}
+.sc-ex-card{background:#fbfdfc;border:1px solid var(--line);border-radius:11px;padding:10px 12px;margin-bottom:9px}
+.sc-ex-card.warn{background:#fff8ec;border-color:#f0d79a}
+.sce-t{font-weight:800;color:#26323b;font-size:.88rem;margin:0 0 5px}
+.sce-d{font-size:.85rem;line-height:1.5;margin:0 0 7px;color:#3a4650}
+.sce-calc{background:#fff;border:1px dashed var(--line);border-radius:8px;padding:7px 10px;font-size:.82rem;margin:0 0 6px;line-height:1.7}
+.sce-calc b{color:#1f8f4e}
+.sce-tot{margin:0;font-size:.86rem;font-weight:600;color:#26323b}
+.sce-tot b{color:var(--green);font-size:.95rem}
+.sc-ex-card.warn .sce-d{color:#7a5a16}

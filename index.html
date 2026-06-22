@@ -13,7 +13,7 @@
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="Porra Mundial" />
-  <link rel="stylesheet" href="styles.css?v=45" />
+  <link rel="stylesheet" href="styles.css?v=46" />
 </head>
 <body x-data="porraApp()" x-init="init()" x-cloak>
 
@@ -550,6 +550,45 @@
           </div>
         </div>
         <p class="tiny muted">💡 Cuanto más lejos llega tu equipo, más puntos. El organizador puede ajustar los valores en Admin → Puntuación.</p>
+
+        <div class="sc-ex">
+          <p class="sc-ex-h">🎓 Ejemplos paso a paso</p>
+
+          <div class="sc-ex-card">
+            <p class="sce-t">1️⃣ Un grupo clavado</p>
+            <p class="sce-d">Aciertas el orden completo de un grupo —1º, 2º, 3º y 4º— y, además, los 2 primeros clasifican.</p>
+            <p class="sce-calc">1º <b>+5</b> · 2º <b>+3</b> · 3º <b>+3</b> · 4º <b>+3</b> · clasifican 2 equipos <b>+2+2</b></p>
+            <p class="sce-tot">= <b>18 puntos</b> de ese grupo</p>
+          </div>
+
+          <div class="sc-ex-card">
+            <p class="sce-t">2️⃣ Aciertas solo una parte</p>
+            <p class="sce-d">Clavas el <b>1º</b> y el <b>último</b> de un grupo; fallas el 2º y el 3º. El 1º además clasifica.</p>
+            <p class="sce-calc">1º <b>+5</b> · 4º <b>+3</b> · clasifica el 1º <b>+2</b></p>
+            <p class="sce-tot">= <b>10 puntos</b> · lo que fallas <b>no resta</b> aquí, simplemente no suma</p>
+          </div>
+
+          <div class="sc-ex-card warn">
+            <p class="sce-t">⚠️ Los puntos pueden BAJAR</p>
+            <p class="sce-d">El orden de un grupo solo cuenta cuando los <b>4 equipos</b> han jugado la misma jornada, y es <b>provisional</b> hasta que el grupo termina. Si clavaste un grupo en la jornada 1 (sumaste) y en la jornada 3 dos equipos cambian de posición, <b>pierdes</b> los puestos que ya no aciertas. Cuando el grupo acaba, esos puntos quedan <b>fijos</b>.</p>
+          </div>
+
+          <div class="sc-ex-card">
+            <p class="sce-t">3️⃣ Eliminatorias: cada equipo cuenta</p>
+            <p class="sce-d">En tu cuadro tienes <b>varios equipos por ronda</b> (los que siguen vivos): hasta 8 en octavos, 4 en semis, 2 en la final, 1 campeón. <b>Cada uno que llegue suma por su cuenta.</b> Ejemplo: llegan 6 de tus 8 de octavos, 3 de tus 4 de cuartos, 1 de tus 2 de semis, tus 2 finalistas, y tu campeón gana:</p>
+            <p class="sce-calc">6×<b>4</b>=24 · 3×<b>7</b>=21 · 1×<b>10</b>=10 · 2×<b>15</b>=30 · campeón <b>+25</b></p>
+            <p class="sce-tot">= <b>110 puntos</b> del cuadro · no se acierta el cruce, solo <b>a qué ronda llega</b> cada equipo</p>
+          </div>
+
+          <div class="sc-ex-card">
+            <p class="sce-t">4️⃣ Especiales (aparte)</p>
+            <p class="sce-d">Aciertas el pichichi, el asistente, el mejor portero, la revelación y que <b>sí</b> hay hat-trick:</p>
+            <p class="sce-calc">pichichi <b>+12</b> · asistente <b>+10</b> · portero <b>+10</b> · revelación <b>+8</b> · hat-trick <b>+5</b></p>
+            <p class="sce-tot">= <b>45 puntos</b> extra</p>
+          </div>
+
+          <p class="tiny muted">📅 El <b>cuadro del 27 de junio</b> (bonus) puntúa con la misma idea pero la mitad — el detalle y su tabla comparativa están en la pestaña <b>27 jun</b>.</p>
+        </div>
       </div>
     </details>
 
@@ -982,7 +1021,7 @@
         <div class="k27-keybox">
           <p class="k27-key-h">👥 Cuenta <u>CADA</u> equipo, no uno solo</p>
           <p>En cada ronda pones <b>varios</b> equipos (8 en octavos, <b>4 en semis</b>, 2 en la final…). <b>Cada uno que llegue suma por su cuenta</b> — clasificar, llegar a esa ronda o ganar.</p>
-          <p class="k27-key-ex">📌 Tu ejemplo: pones <b>Argentina, Francia, Inglaterra y España</b> en semis y llegan <b>2</b> → sumas <b>2 veces</b> (no una). Inicial = 2×<span x-text="settings.semis"></span> = <b x-text="(2*settings.semis)"></b> · 27-jun = 2×5 = <b>10</b>. Si llegaran los 4, ×4.</p>
+          <p class="k27-key-ex">📌 Ejemplo: pones <b>4 equipos</b> en semis y llegan <b>3</b> → sumas <b>3 veces</b> (no una). Inicial = 3×<span x-text="settings.semis"></span> = <b x-text="(3*settings.semis)"></b> · 27-jun = 3×5 = <b>15</b>. Si llegaran los 4, ×4; si solo 1, ×1.</p>
         </div>
 
         <div class="k27-table-wrap">
@@ -1526,10 +1565,10 @@
   </div>
 
   <!-- ====== Dependencias ====== -->
-  <script src="data.js?v=45"></script>
-  <script src="engine.js?v=45"></script>
+  <script src="data.js?v=46"></script>
+  <script src="engine.js?v=46"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
-  <script src="app.js?v=45"></script>
+  <script src="app.js?v=46"></script>
   <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.1/dist/cdn.min.js"></script>
 </body>
 </html>
