@@ -13,7 +13,7 @@
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="Porra Mundial" />
-  <link rel="stylesheet" href="styles.css?v=62" />
+  <link rel="stylesheet" href="styles.css?v=63" />
 </head>
 <body x-data="porraApp()" x-init="init()" x-cloak>
 
@@ -481,155 +481,9 @@
 
   <!-- ===================== CLASIFICACIÓN ===================== -->
   <section x-show="view==='pool' && tab==='leaderboard'" class="board">
-    <!-- Predicción nueva: mejor portero (aparece hasta que la rellenas; al guardar se va) -->
-    <div class="portero-prompt" x-show="me.id && pool && !myPortero">
-      <div class="pp-ic">🧤</div>
-      <div class="pp-body">
-        <p class="pp-h">¡Predicción nueva! ¿Quién será el <b>mejor portero</b> del Mundial?</p>
-        <p class="pp-sub">La hemos añadido ahora. Escríbelo y se guarda en tu porra (suma <b>+10</b> si aciertas).</p>
-        <div class="pp-form">
-          <input type="text" x-model="porteroDraft" maxlength="40" placeholder="Ej: Unai Simón" @keydown.enter="savePortero()">
-          <button class="btn primary" @click="savePortero()" :disabled="porteroSaving || !porteroDraft.trim()"><span x-show="!porteroSaving">Guardar</span><span x-show="porteroSaving">…</span></button>
-        </div>
-      </div>
-    </div>
-
     <div class="step-head">
       <h2>🏆 Clasificación</h2>
       <p class="muted">La liga de la familia. <span x-show="probBusy">⏳ calculando probabilidades…</span></p>
-    </div>
-
-    <!-- EL PARTE: panorama + riesgos/bazas de cada jugador -->
-    <div class="parte" x-show="parte">
-      <div class="parte-h">📋 El parte de la porra <small class="muted" x-show="parte" x-text="parte?('Jornada '+parte.jornada+' · '+parte.gPlayed+'/'+parte.gTotal+' partidos de grupos'):''"></small></div>
-
-      <!-- RESUMEN rico -->
-      <p class="parte-head" x-show="parte" x-text="parte?parte.head:''"></p>
-
-      <!-- podio con distancias -->
-      <div class="parte-podio" x-show="parte && parte.top3">
-        <template x-for="(t,i) in (parte?parte.top3:[])" :key="'t3'+i">
-          <div class="pp3" :class="'r'+(i+1)">
-            <span class="pp3-m" x-text="['🥇','🥈','🥉'][i]"></span>
-            <span class="pp3-n" x-text="t.name"></span>
-            <span class="pp3-p"><b x-text="t.pts"></b><small x-show="t.behind>0" x-text="' −'+t.behind"></small></span>
-          </div>
-        </template>
-      </div>
-
-      <div class="parte-facts">
-        <div class="pf" x-show="parte && parte.totalProv"><span class="pf-ic">🔥</span><span><b x-text="parte?parte.totalProv:0"></b> pts <b>en juego</b> en grupos sin cerrar — puede cambiar todo.</span></div>
-        <div class="pf" x-show="parte && parte.spread"><span class="pf-ic">📏</span><span>Del 1º al último hay <b x-text="parte?parte.spread:0"></b> pts.</span></div>
-        <div class="pf" x-show="parte && parte.champPop"><span class="pf-ic">🏅</span><span><b x-text="parte?(parte.champPop.n+'/'+parte.total):''"></b> apostaron por <b x-text="parte?parte.champPop.team:''"></b> de campeón<span x-show="parte && parte.champPop.n>=parte.total-1"> — la pelea se decide en grupos y especiales</span>.</span></div>
-        <div class="pf" x-show="parte && parte.mover && parte.mover.from>parte.mover.to"><span class="pf-ic">🚀</span><span><b>Sube:</b> <span x-text="parte?(parte.mover.name+' ('+parte.mover.from+'º→'+parte.mover.to+'º)'):''"></span></span></div>
-        <div class="pf" x-show="parte && parte.faller && parte.faller.from<parte.faller.to"><span class="pf-ic">📉</span><span><b>Baja:</b> <span x-text="parte?(parte.faller.name+' ('+parte.faller.from+'º→'+parte.faller.to+'º)'):''"></span></span></div>
-        <div class="pf" x-show="parte && parte.leaders && parte.leaders.length"><span class="pf-ic">🕰️</span><span><b>Líderes por jornada:</b> <template x-for="(l,i) in (parte?parte.leaders:[])" :key="'ld'+i"><span x-text="(i?' · ':'')+l.j+': '+l.name"></span></template></span></div>
-        <div class="pf" x-show="parte && parte.specials && parte.specials.length"><span class="pf-ic">⭐</span><span><b>Especiales resueltas:</b> <template x-for="(s,i) in (parte?parte.specials:[])" :key="'sp'+i"><span x-text="(i?' · ':'')+s.k+': lo clavaron '+s.n"></span></template></span></div>
-      </div>
-
-      <div class="parte-sec">🎯 Ficha de cada jugador <span class="muted tiny">— personalizada según lo que puso</span></div>
-      <div class="parte-players">
-        <template x-for="p in (parte?parte.players:[])" :key="'pp'+p.pos">
-          <div class="parte-pl" :class="{me:p.isMe}" x-data="{open:false}">
-            <div class="ppl-top" @click="open=!open">
-              <span class="ppl-pos" x-text="p.pos+'º'"></span>
-              <b class="ppl-name" x-text="p.name"></b>
-              <span class="ppl-pts"><b x-text="p.pts"></b> pts<span class="ppl-prov" x-show="p.prov" x-text="' · '+p.prov+' en juego'"></span></span>
-              <span class="ppl-chev" x-text="open?'▴':'▾'"></span>
-            </div>
-            <div class="ppl-gap">
-              <span x-text="p.gapTxt"></span>
-              <span class="ppl-trend" :class="p.trend" x-show="p.trajTxt" x-text="p.trend==='up'?'▲':(p.trend==='down'?'▼':'=')"></span>
-            </div>
-
-            <!-- resumen compacto (plegado) -->
-            <div class="ppl-quick" x-show="!open" @click="open=true">
-              <span class="ppl-q champ" x-show="p.champ" x-text="'🏅 '+p.champ"></span>
-              <span class="ppl-q good" x-show="p.nBien" x-text="'✅ '+p.nBien+' a favor'"></span>
-              <span class="ppl-q bad" x-show="p.nMal" x-text="'❌ '+p.nMal+' en contra'"></span>
-              <span class="ppl-more">ver detalle ▾</span>
-            </div>
-
-            <!-- detalle desplegable -->
-            <div class="ppl-detail" x-show="open" x-cloak>
-              <div class="ppl-evo" x-show="p.trajTxt">📈 <span x-text="p.trajTxt"></span></div>
-              <div class="ppl-dossier">
-                <div class="ppl-d" x-show="p.champ">🏅 Campeón: <b x-text="p.champ"></b><span class="muted" x-show="p.champQ!=null" x-text="' · '+pct(p.champQ)+' de clasificar'"></span></div>
-                <div class="ppl-d" x-show="p.bestGroup">🎯 Su mejor grupo: <b x-text="p.bestGroup?('Grupo '+p.bestGroup.L+' (+'+p.bestGroup.pts+')'):''"></b> <span class="muted" x-text="p.bestGroup?(p.bestGroup.complete?'fijo':'provisional'):''"></span></div>
-                <div class="ppl-d" x-show="p.finalists && p.finalists.length===2">🥇 Sus finalistas: <span x-text="p.finalists.join(' y ')"></span></div>
-                <div class="ppl-d ppl-bets" x-show="p.bets.length">⭐ Apuestas:
-                  <template x-for="(bt,bi) in p.bets" :key="'bt'+p.pos+bi"><span class="ppl-bet" :class="{ok:bt.ok}"><span x-text="bt.t"></span><span x-show="bt.ok"> ✓</span></span></template>
-                </div>
-                <div class="ppl-d ok" x-show="p.exTotal">✅ Especiales ya logradas: <b x-text="'+'+p.exTotal"></b></div>
-              </div>
-              <div class="ppl-vb">
-                <div class="ppl-col good" x-show="p.bien.length">
-                  <div class="ppl-col-h" x-text="'✅ Va por buen camino ('+p.nBien+')'"></div>
-                  <template x-for="(f,i) in p.bien" :key="'b'+p.pos+i"><div class="ppl-li" x-text="f"></div></template>
-                </div>
-                <div class="ppl-col bad" x-show="p.mal.length">
-                  <div class="ppl-col-h" x-text="'❌ Va mal / ojo ('+p.nMal+')'"></div>
-                  <template x-for="(m,i) in p.mal" :key="'m'+p.pos+i"><div class="ppl-li" x-text="m"></div></template>
-                </div>
-              </div>
-            </div>
-          </div>
-        </template>
-      </div>
-    </div>
-
-    <!-- Resumen de la jornada (auto) -->
-    <div class="md-summary" x-show="matchdaySummary">
-      <p class="mds-h">📋 Jornada <span x-text="matchdaySummary ? matchdaySummary.jornada : ''"></span> completada — cómo va la cosa</p>
-      <p class="mds-line">🏆 Va líder <b x-text="matchdaySummary ? matchdaySummary.leader : ''"></b> con <b x-text="(matchdaySummary ? matchdaySummary.leaderPts : 0)+' pts'"></b><span x-show="matchdaySummary && matchdaySummary.gap>0" x-text="', '+(matchdaySummary?matchdaySummary.gap:0)+' por delante de '+(matchdaySummary?matchdaySummary.second:'')"></span><span x-show="matchdaySummary && matchdaySummary.gap===0" x-text="', empatado con '+(matchdaySummary?matchdaySummary.second:'')"></span>.</p>
-      <p class="mds-line">🥇🥈🥉 Podio: <b x-text="matchdaySummary ? matchdaySummary.podio.join(' · ') : ''"></b>.</p>
-      <p class="mds-line" x-show="matchdaySummary && matchdaySummary.esp.length">✅ Especiales ya resueltas: <b x-text="matchdaySummary ? matchdaySummary.esp.join(', ') : ''"></b>.</p>
-      <p class="mds-note">⚠️ Los puntos de grupo son <b>provisionales</b> hasta que cada grupo termina — pueden subir o bajar cada jornada.</p>
-    </div>
-
-    <!-- Acceso al apartado completo de puntuación -->
-    <button class="score-link" @click="tab='scoring'">
-      <span class="sl-ic">📖</span>
-      <span class="sl-body"><b>¿Cómo se puntúa?</b><small>Todo el sistema explicado al detalle, con ejemplos</small></span>
-      <span class="sl-arrow">→</span>
-    </button>
-
-    <!-- Barra de estado -->
-    <div class="live-bar">
-      <span class="live-dot" :class="{on: liveMatches.some(m=>m.live)}"></span>
-      <span x-show="liveMatches.some(m=>m.live)"><b>EN DIRECTO</b> · </span>
-      <span x-text="boardLocked ? playedTxt : 'Probabilidad según tu predicción'"></span>
-      <span class="muted tiny" x-show="lastProb"> · <span x-text="simN.toLocaleString('es')"></span> simulaciones</span>
-      <button class="btn mini ghost" @click="loadBoard()" :disabled="probBusy"><span x-show="!probBusy">↻ actualizar</span><span x-show="probBusy">…</span></button>
-    </div>
-
-    <!-- Guía clara: cuándo se puntúa y por qué suben/bajan los puntos -->
-    <div class="points-guide" x-show="boardLocked">
-      <p class="pg-title">📖 Cómo cambian tus puntos <span class="muted">— léelo, es fácil</span></p>
-      <div class="pg-row">
-        <span class="pg-ic">⏱️</span>
-        <div><b>¿Cuándo se puntúa?</b> En directo, con cada partido — la clasificación se recalcula sola. El orden de un grupo solo cuenta cuando los <b>4 equipos</b> han jugado la jornada (si falta un partido, ese grupo todavía no suma; lo ves avisado justo abajo).</div>
-      </div>
-      <div class="pg-row up">
-        <span class="pg-ic">🟢</span>
-        <div><b>¿Por qué SUBES?</b> Por cada puesto del grupo que <b>clavas</b> (1º +<span x-text="settings.g1"></span>, 2º +<span x-text="settings.g2"></span>, 3º +<span x-text="settings.g3"></span>, 4º/último +<span x-text="settings.g4"></span>), por cada equipo tuyo que <b>clasifica</b> (queda 1º o 2º, +<span x-text="settings.qual"></span>), y más adelante por los mejores <b>terceros</b>, el <b>cuadro</b> de eliminatorias y las <b>especiales</b>.</div>
-      </div>
-      <div class="pg-row down">
-        <span class="pg-ic">🔴</span>
-        <div><b>¿Por qué puedes BAJAR?</b> Los puntos de un grupo son <b>provisionales</b> hasta que ese grupo termina (sus 3 jornadas). Suben y bajan según la tabla real de cada momento. <span class="muted"><b>Ejemplo fácil:</b> en la <b>jornada 1</b> clavas el Grupo A tal cual lo predijiste → sumas <b>todo</b> (los 4 puestos + los que clasifican). Pero en la <b>jornada 2</b>, Chequia adelanta a Corea: tu "Corea 2ª" ya no es correcto → <b>te quitan esos puntos</b> (y se los lleva quien puso a Chequia 2ª). No te los quita nadie a mano: es automático y justo. <b>Solo se congelan cuando el grupo acaba.</b></span></div>
-      </div>
-    </div>
-
-    <!-- Aviso: por qué algunos grupos aún no puntúan (justicia por jornadas completas) -->
-    <div class="scoring-status" x-show="boardLocked && scoringStatus && scoringStatus.waiting.length">
-      <p class="ss-h">⚖️ Por qué algunos puntos aún no cuentan</p>
-      <p class="ss-txt">El orden de cada grupo se puntúa <b>por jornadas completas</b>: hace falta que los <b>4 equipos</b> hayan jugado la ronda. Así nadie cobra por ir "1º" mientras sus rivales todavía no han jugado.</p>
-      <ul class="ss-list">
-        <template x-for="w in (scoringStatus ? scoringStatus.waiting : [])" :key="'sw'+w.L">
-          <li>⏳ <b>Grupo <span x-text="w.L"></span></b> aún no puntúa — falta <b x-text="w.pending || 'un partido'"></b>. En cuanto se juegue, sumará.</li>
-        </template>
-      </ul>
-      <p class="ss-ok" x-show="scoringStatus && scoringStatus.scoring.length">✅ Ya puntúan: <b>grupo<span x-show="scoringStatus && scoringStatus.scoring.length>1">s</span> <span x-text="scoringStatus ? scoringStatus.scoring.join(', ') : ''"></span></b>.</p>
     </div>
 
     <!-- Podio (solo familiares; los invitados no ocupan podio) -->
@@ -933,6 +787,152 @@
         </div>
       </div>
     </template>
+    <!-- Predicción nueva: mejor portero (aparece hasta que la rellenas; al guardar se va) -->
+    <div class="portero-prompt" x-show="me.id && pool && !myPortero">
+      <div class="pp-ic">🧤</div>
+      <div class="pp-body">
+        <p class="pp-h">¡Predicción nueva! ¿Quién será el <b>mejor portero</b> del Mundial?</p>
+        <p class="pp-sub">La hemos añadido ahora. Escríbelo y se guarda en tu porra (suma <b>+10</b> si aciertas).</p>
+        <div class="pp-form">
+          <input type="text" x-model="porteroDraft" maxlength="40" placeholder="Ej: Unai Simón" @keydown.enter="savePortero()">
+          <button class="btn primary" @click="savePortero()" :disabled="porteroSaving || !porteroDraft.trim()"><span x-show="!porteroSaving">Guardar</span><span x-show="porteroSaving">…</span></button>
+        </div>
+      </div>
+    </div>
+
+    <!-- EL PARTE: panorama + riesgos/bazas de cada jugador -->
+    <div class="parte" x-show="parte">
+      <div class="parte-h">📋 El parte de la porra <small class="muted" x-show="parte" x-text="parte?('Jornada '+parte.jornada+' · '+parte.gPlayed+'/'+parte.gTotal+' partidos de grupos'):''"></small></div>
+
+      <!-- RESUMEN rico -->
+      <p class="parte-head" x-show="parte" x-text="parte?parte.head:''"></p>
+
+      <!-- podio con distancias -->
+      <div class="parte-podio" x-show="parte && parte.top3">
+        <template x-for="(t,i) in (parte?parte.top3:[])" :key="'t3'+i">
+          <div class="pp3" :class="'r'+(i+1)">
+            <span class="pp3-m" x-text="['🥇','🥈','🥉'][i]"></span>
+            <span class="pp3-n" x-text="t.name"></span>
+            <span class="pp3-p"><b x-text="t.pts"></b><small x-show="t.behind>0" x-text="' −'+t.behind"></small></span>
+          </div>
+        </template>
+      </div>
+
+      <div class="parte-facts">
+        <div class="pf" x-show="parte && parte.totalProv"><span class="pf-ic">🔥</span><span><b x-text="parte?parte.totalProv:0"></b> pts <b>en juego</b> en grupos sin cerrar — puede cambiar todo.</span></div>
+        <div class="pf" x-show="parte && parte.spread"><span class="pf-ic">📏</span><span>Del 1º al último hay <b x-text="parte?parte.spread:0"></b> pts.</span></div>
+        <div class="pf" x-show="parte && parte.champPop"><span class="pf-ic">🏅</span><span><b x-text="parte?(parte.champPop.n+'/'+parte.total):''"></b> apostaron por <b x-text="parte?parte.champPop.team:''"></b> de campeón<span x-show="parte && parte.champPop.n>=parte.total-1"> — la pelea se decide en grupos y especiales</span>.</span></div>
+        <div class="pf" x-show="parte && parte.mover && parte.mover.from>parte.mover.to"><span class="pf-ic">🚀</span><span><b>Sube:</b> <span x-text="parte?(parte.mover.name+' ('+parte.mover.from+'º→'+parte.mover.to+'º)'):''"></span></span></div>
+        <div class="pf" x-show="parte && parte.faller && parte.faller.from<parte.faller.to"><span class="pf-ic">📉</span><span><b>Baja:</b> <span x-text="parte?(parte.faller.name+' ('+parte.faller.from+'º→'+parte.faller.to+'º)'):''"></span></span></div>
+        <div class="pf" x-show="parte && parte.leaders && parte.leaders.length"><span class="pf-ic">🕰️</span><span><b>Líderes por jornada:</b> <template x-for="(l,i) in (parte?parte.leaders:[])" :key="'ld'+i"><span x-text="(i?' · ':'')+l.j+': '+l.name"></span></template></span></div>
+        <div class="pf" x-show="parte && parte.specials && parte.specials.length"><span class="pf-ic">⭐</span><span><b>Especiales resueltas:</b> <template x-for="(s,i) in (parte?parte.specials:[])" :key="'sp'+i"><span x-text="(i?' · ':'')+s.k+': lo clavaron '+s.n"></span></template></span></div>
+      </div>
+
+      <div class="parte-sec">🎯 Ficha de cada jugador <span class="muted tiny">— personalizada según lo que puso</span></div>
+      <div class="parte-players">
+        <template x-for="p in (parte?parte.players:[])" :key="'pp'+p.pos">
+          <div class="parte-pl" :class="{me:p.isMe}" x-data="{open:false}">
+            <div class="ppl-top" @click="open=!open">
+              <span class="ppl-pos" x-text="p.pos+'º'"></span>
+              <b class="ppl-name" x-text="p.name"></b>
+              <span class="ppl-pts"><b x-text="p.pts"></b> pts<span class="ppl-prov" x-show="p.prov" x-text="' · '+p.prov+' en juego'"></span></span>
+              <span class="ppl-chev" x-text="open?'▴':'▾'"></span>
+            </div>
+            <div class="ppl-gap">
+              <span x-text="p.gapTxt"></span>
+              <span class="ppl-trend" :class="p.trend" x-show="p.trajTxt" x-text="p.trend==='up'?'▲':(p.trend==='down'?'▼':'=')"></span>
+            </div>
+
+            <!-- resumen compacto (plegado) -->
+            <div class="ppl-quick" x-show="!open" @click="open=true">
+              <span class="ppl-q champ" x-show="p.champ" x-text="'🏅 '+p.champ"></span>
+              <span class="ppl-q good" x-show="p.nBien" x-text="'✅ '+p.nBien+' a favor'"></span>
+              <span class="ppl-q bad" x-show="p.nMal" x-text="'❌ '+p.nMal+' en contra'"></span>
+              <span class="ppl-more">ver detalle ▾</span>
+            </div>
+
+            <!-- detalle desplegable -->
+            <div class="ppl-detail" x-show="open" x-cloak>
+              <div class="ppl-evo" x-show="p.trajTxt">📈 <span x-text="p.trajTxt"></span></div>
+              <div class="ppl-dossier">
+                <div class="ppl-d" x-show="p.champ">🏅 Campeón: <b x-text="p.champ"></b><span class="muted" x-show="p.champQ!=null" x-text="' · '+pct(p.champQ)+' de clasificar'"></span></div>
+                <div class="ppl-d" x-show="p.bestGroup">🎯 Su mejor grupo: <b x-text="p.bestGroup?('Grupo '+p.bestGroup.L+' (+'+p.bestGroup.pts+')'):''"></b> <span class="muted" x-text="p.bestGroup?(p.bestGroup.complete?'fijo':'provisional'):''"></span></div>
+                <div class="ppl-d" x-show="p.finalists && p.finalists.length===2">🥇 Sus finalistas: <span x-text="p.finalists.join(' y ')"></span></div>
+                <div class="ppl-d ppl-bets" x-show="p.bets.length">⭐ Apuestas:
+                  <template x-for="(bt,bi) in p.bets" :key="'bt'+p.pos+bi"><span class="ppl-bet" :class="{ok:bt.ok}"><span x-text="bt.t"></span><span x-show="bt.ok"> ✓</span></span></template>
+                </div>
+                <div class="ppl-d ok" x-show="p.exTotal">✅ Especiales ya logradas: <b x-text="'+'+p.exTotal"></b></div>
+              </div>
+              <div class="ppl-vb">
+                <div class="ppl-col good" x-show="p.bien.length">
+                  <div class="ppl-col-h" x-text="'✅ Va por buen camino ('+p.nBien+')'"></div>
+                  <template x-for="(f,i) in p.bien" :key="'b'+p.pos+i"><div class="ppl-li" x-text="f"></div></template>
+                </div>
+                <div class="ppl-col bad" x-show="p.mal.length">
+                  <div class="ppl-col-h" x-text="'❌ Va mal / ojo ('+p.nMal+')'"></div>
+                  <template x-for="(m,i) in p.mal" :key="'m'+p.pos+i"><div class="ppl-li" x-text="m"></div></template>
+                </div>
+              </div>
+            </div>
+          </div>
+        </template>
+      </div>
+    </div>
+
+    <!-- Resumen de la jornada (auto) -->
+    <div class="md-summary" x-show="matchdaySummary">
+      <p class="mds-h">📋 Jornada <span x-text="matchdaySummary ? matchdaySummary.jornada : ''"></span> completada — cómo va la cosa</p>
+      <p class="mds-line">🏆 Va líder <b x-text="matchdaySummary ? matchdaySummary.leader : ''"></b> con <b x-text="(matchdaySummary ? matchdaySummary.leaderPts : 0)+' pts'"></b><span x-show="matchdaySummary && matchdaySummary.gap>0" x-text="', '+(matchdaySummary?matchdaySummary.gap:0)+' por delante de '+(matchdaySummary?matchdaySummary.second:'')"></span><span x-show="matchdaySummary && matchdaySummary.gap===0" x-text="', empatado con '+(matchdaySummary?matchdaySummary.second:'')"></span>.</p>
+      <p class="mds-line">🥇🥈🥉 Podio: <b x-text="matchdaySummary ? matchdaySummary.podio.join(' · ') : ''"></b>.</p>
+      <p class="mds-line" x-show="matchdaySummary && matchdaySummary.esp.length">✅ Especiales ya resueltas: <b x-text="matchdaySummary ? matchdaySummary.esp.join(', ') : ''"></b>.</p>
+      <p class="mds-note">⚠️ Los puntos de grupo son <b>provisionales</b> hasta que cada grupo termina — pueden subir o bajar cada jornada.</p>
+    </div>
+
+    <!-- Acceso al apartado completo de puntuación -->
+    <button class="score-link" @click="tab='scoring'">
+      <span class="sl-ic">📖</span>
+      <span class="sl-body"><b>¿Cómo se puntúa?</b><small>Todo el sistema explicado al detalle, con ejemplos</small></span>
+      <span class="sl-arrow">→</span>
+    </button>
+
+    <!-- Barra de estado -->
+    <div class="live-bar">
+      <span class="live-dot" :class="{on: liveMatches.some(m=>m.live)}"></span>
+      <span x-show="liveMatches.some(m=>m.live)"><b>EN DIRECTO</b> · </span>
+      <span x-text="boardLocked ? playedTxt : 'Probabilidad según tu predicción'"></span>
+      <span class="muted tiny" x-show="lastProb"> · <span x-text="simN.toLocaleString('es')"></span> simulaciones</span>
+      <button class="btn mini ghost" @click="loadBoard()" :disabled="probBusy"><span x-show="!probBusy">↻ actualizar</span><span x-show="probBusy">…</span></button>
+    </div>
+
+    <!-- Guía clara: cuándo se puntúa y por qué suben/bajan los puntos -->
+    <div class="points-guide" x-show="boardLocked">
+      <p class="pg-title">📖 Cómo cambian tus puntos <span class="muted">— léelo, es fácil</span></p>
+      <div class="pg-row">
+        <span class="pg-ic">⏱️</span>
+        <div><b>¿Cuándo se puntúa?</b> En directo, con cada partido — la clasificación se recalcula sola. El orden de un grupo solo cuenta cuando los <b>4 equipos</b> han jugado la jornada (si falta un partido, ese grupo todavía no suma; lo ves avisado justo abajo).</div>
+      </div>
+      <div class="pg-row up">
+        <span class="pg-ic">🟢</span>
+        <div><b>¿Por qué SUBES?</b> Por cada puesto del grupo que <b>clavas</b> (1º +<span x-text="settings.g1"></span>, 2º +<span x-text="settings.g2"></span>, 3º +<span x-text="settings.g3"></span>, 4º/último +<span x-text="settings.g4"></span>), por cada equipo tuyo que <b>clasifica</b> (queda 1º o 2º, +<span x-text="settings.qual"></span>), y más adelante por los mejores <b>terceros</b>, el <b>cuadro</b> de eliminatorias y las <b>especiales</b>.</div>
+      </div>
+      <div class="pg-row down">
+        <span class="pg-ic">🔴</span>
+        <div><b>¿Por qué puedes BAJAR?</b> Los puntos de un grupo son <b>provisionales</b> hasta que ese grupo termina (sus 3 jornadas). Suben y bajan según la tabla real de cada momento. <span class="muted"><b>Ejemplo fácil:</b> en la <b>jornada 1</b> clavas el Grupo A tal cual lo predijiste → sumas <b>todo</b> (los 4 puestos + los que clasifican). Pero en la <b>jornada 2</b>, Chequia adelanta a Corea: tu "Corea 2ª" ya no es correcto → <b>te quitan esos puntos</b> (y se los lleva quien puso a Chequia 2ª). No te los quita nadie a mano: es automático y justo. <b>Solo se congelan cuando el grupo acaba.</b></span></div>
+      </div>
+    </div>
+
+    <!-- Aviso: por qué algunos grupos aún no puntúan (justicia por jornadas completas) -->
+    <div class="scoring-status" x-show="boardLocked && scoringStatus && scoringStatus.waiting.length">
+      <p class="ss-h">⚖️ Por qué algunos puntos aún no cuentan</p>
+      <p class="ss-txt">El orden de cada grupo se puntúa <b>por jornadas completas</b>: hace falta que los <b>4 equipos</b> hayan jugado la ronda. Así nadie cobra por ir "1º" mientras sus rivales todavía no han jugado.</p>
+      <ul class="ss-list">
+        <template x-for="w in (scoringStatus ? scoringStatus.waiting : [])" :key="'sw'+w.L">
+          <li>⏳ <b>Grupo <span x-text="w.L"></span></b> aún no puntúa — falta <b x-text="w.pending || 'un partido'"></b>. En cuanto se juegue, sumará.</li>
+        </template>
+      </ul>
+      <p class="ss-ok" x-show="scoringStatus && scoringStatus.scoring.length">✅ Ya puntúan: <b>grupo<span x-show="scoringStatus && scoringStatus.scoring.length>1">s</span> <span x-text="scoringStatus ? scoringStatus.scoring.join(', ') : ''"></span></b>.</p>
+    </div>
+
   </section>
 
   <!-- ===================== 27 DE JUNIO · CAMINO A LA FINAL (BONUS) ===================== -->
@@ -1747,10 +1747,10 @@
   </div>
 
   <!-- ====== Dependencias ====== -->
-  <script src="data.js?v=62"></script>
-  <script src="engine.js?v=62"></script>
+  <script src="data.js?v=63"></script>
+  <script src="engine.js?v=63"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
-  <script src="app.js?v=62"></script>
+  <script src="app.js?v=63"></script>
   <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.1/dist/cdn.min.js"></script>
 </body>
 </html>
