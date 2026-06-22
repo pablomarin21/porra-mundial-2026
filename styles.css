@@ -1213,3 +1213,11 @@ tr.clickrow.sel td{background:#e7f1ec}
 .ppl-bets{display:flex;flex-wrap:wrap;align-items:center;gap:5px}
 .ppl-bet{background:#f1f4f2;border-radius:6px;padding:2px 7px;font-size:.76rem}
 .ppl-bet.ok{background:#e9f7ee;color:#1f8f4e;font-weight:700}
+
+/* historia / evolución en el parte */
+.ppl-trend{font-weight:800;font-size:.78rem;margin-left:5px}
+.ppl-trend.up{color:#1f8f4e}
+.ppl-trend.down{color:#c0392b}
+.ppl-trend.\=,.ppl-trend{color:var(--muted)}
+.ppl-evo{font-size:.78rem;color:#54606a;margin-top:4px;background:#f6f9f7;border-radius:7px;padding:5px 8px;line-height:1.4}
+.parte-pan p .pico{display:inline-block;width:18px}

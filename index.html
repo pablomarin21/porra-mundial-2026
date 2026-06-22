@@ -13,7 +13,7 @@
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="Porra Mundial" />
-  <link rel="stylesheet" href="styles.css?v=53" />
+  <link rel="stylesheet" href="styles.css?v=54" />
 </head>
 <body x-data="porraApp()" x-init="init()" x-cloak>
 
@@ -493,6 +493,8 @@
         <p x-show="parte && parte.raceTxt"><span class="pico">🏆</span> <span x-text="parte?parte.raceTxt:''"></span>.</p>
         <p x-show="parte && parte.totalProv"><span class="pico">⚠️</span> Hay <b x-text="parte?parte.totalProv:0"></b> pts <b>en juego</b> en grupos sin cerrar — la clasificación aún puede moverse.</p>
         <p class="muted tiny" x-show="parte && !parte.totalProv"><span class="pico">✅</span> Los grupos jugados ya están cerrados: esos puntos no cambian.</p>
+        <p x-show="parte && parte.leaders && parte.leaders.length"><span class="pico">🕰️</span> <b>Líderes por jornada:</b> <template x-for="(l,i) in (parte?parte.leaders:[])" :key="'ld'+i"><span x-text="(i?' · ':' ')+l.j+': '+l.name"></span></template></p>
+        <p x-show="parte && parte.mover && parte.mover.from>parte.mover.to"><span class="pico">🚀</span> <b>Mayor subida:</b> <span x-text="parte?(parte.mover.name+' ('+parte.mover.from+'º → '+parte.mover.to+'º)'):''"></span></p>
       </div>
 
       <div class="parte-sec">🎯 Ficha de cada jugador <span class="muted tiny">— personalizada según lo que puso</span></div>
@@ -504,7 +506,11 @@
               <b class="ppl-name" x-text="p.name"></b>
               <span class="ppl-pts"><b x-text="p.pts"></b> pts<span class="ppl-prov" x-show="p.prov" x-text="' · '+p.prov+' en juego'"></span></span>
             </div>
-            <div class="ppl-gap" x-text="p.gapTxt"></div>
+            <div class="ppl-gap">
+              <span x-text="p.gapTxt"></span>
+              <span class="ppl-trend" :class="p.trend" x-show="p.trajTxt" x-text="p.trend==='up'?'▲':(p.trend==='down'?'▼':'=')"></span>
+            </div>
+            <div class="ppl-evo" x-show="p.trajTxt">📈 <span x-text="p.trajTxt"></span></div>
             <div class="ppl-dossier">
               <div class="ppl-d" x-show="p.champ">🏅 Campeón: <b x-text="p.champ"></b><span class="muted" x-show="p.champQ!=null" x-text="' · '+pct(p.champQ)+' de clasificar'"></span></div>
               <div class="ppl-d" x-show="p.bestGroup">🎯 Su mejor grupo: <b x-text="p.bestGroup?('Grupo '+p.bestGroup.L+' (+'+p.bestGroup.pts+')'):''"></b> <span class="muted" x-text="p.bestGroup?(p.bestGroup.complete?'fijo':'provisional'):''"></span></div>
@@ -1678,10 +1684,10 @@
   </div>
 
   <!-- ====== Dependencias ====== -->
-  <script src="data.js?v=53"></script>
-  <script src="engine.js?v=53"></script>
+  <script src="data.js?v=54"></script>
+  <script src="engine.js?v=54"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
-  <script src="app.js?v=53"></script>
+  <script src="app.js?v=54"></script>
   <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.1/dist/cdn.min.js"></script>
 </body>
 </html>

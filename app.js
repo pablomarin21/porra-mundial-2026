@@ -1363,6 +1363,7 @@ window.porraApp = function () {
       try { chances = Eng.monteCarloTeams(this.results, 1500).byTeam; } catch (e) {}
       const qp = (t) => { const c = chances[t]; return c ? c.qualify : null; };
       const byId = {}; (this.entries || []).forEach((e) => (byId[e.id] = e));
+      const H = this.buildParteHistory(oc, S);
       const players = real.map((r, i) => {
         const e = byId[r.id]; const picks = e && e.picks;
         let gd = { seguro: 0, provisional: 0, groups: [] }, dp = null, ex = { total: 0 };
@@ -1403,9 +1404,15 @@ window.porraApp = function () {
         let gapTxt = "";
         if (i === 0) gapTxt = real.length > 1 ? ("👑 Líder · +" + (r.points - real[1].points) + " sobre el 2º") : "👑 Líder";
         else gapTxt = "a " + (real[i - 1].points - r.points) + " pts de " + this._shortName(real[i - 1]);
+        // historia: trayectoria + tendencia
+        const t = (H.traj && H.traj[r.id]) || [];
+        const trajTxt = t.slice(-3).map((x) => x.j + " " + x.pos + "º (" + x.pts + ")").join(" → ");
+        let trend = "=";
+        if (t.length >= 2) { const a = t[t.length - 2], b = t[t.length - 1]; trend = b.pos < a.pos ? "up" : b.pos > a.pos ? "down" : (b.pts > a.pts ? "up" : b.pts < a.pts ? "down" : "="); }
+        const best24 = t.length >= 2 ? (t[0].pos - t[t.length - 1].pos) : 0;
         return { pos: i + 1, name: this._shortName(r), pts: r.points, prov: gd.provisional, seguro: gd.seguro,
           isMe: !!(this.me && r.id === this.me.id), champ: champ ? D.es(champ) : null, champQ,
-          gapTxt, bestGroup, finalists, bets, exTotal: ex.total,
+          gapTxt, bestGroup, finalists, bets, exTotal: ex.total, trajTxt, trend, climb: best24,
           fav: fav.slice(0, 1), risk: risk.slice(0, 2) };
       });
       const leader = real[0], second = real[1];
@@ -1420,7 +1427,30 @@ window.porraApp = function () {
       this.parte = {
         jornada: this.tournamentMatchday(), gPlayed, gTotal: D.GROUP_FIXTURES.length,
         raceTxt, second: second ? this._shortName(second) : null, totalProv, players,
+        leaders: H.leaders, mover: H.mover,
       };
+    },
+    // HISTORIA: re-puntúa la clasificación al final de cada jornada (reconstruida de los resultados).
+    buildParteHistory(oc, S) {
+      const gm = (oc && oc.groupMap) || this.results || {};
+      const J = this.tournamentMatchday();
+      const real = (this.ranked || []).filter((r) => !this.isGuest(r));
+      const byId = {}; (this.entries || []).forEach((e) => (byId[e.id] = e));
+      const traj = {}; real.forEach((r) => (traj[r.id] = []));
+      const leaders = [];
+      for (let j = 1; j <= J; j++) {
+        const sub = {};
+        for (const fx of D.GROUP_FIXTURES) { if (fx.md <= j) { const x = gm[fx.code]; if (x && x.played && x.home_score != null) sub[fx.code] = x; } }
+        let hoc; try { hoc = Eng.liveOutcome(sub); } catch (e) { continue; }
+        const sc = real.map((r) => { const e = byId[r.id]; let p = 0; if (e && e.picks) { try { p = Eng.scoreEntry(Eng.derivePicks(e.picks), hoc, S) + Eng.scoreExtras(e.picks.extras, this.extrasActual, S).total; } catch (x) {} } return { id: r.id, pts: p }; });
+        sc.sort((a, b) => b.pts - a.pts);
+        sc.forEach((s, idx) => traj[s.id].push({ j: "J" + j, pts: s.pts, pos: idx + 1 }));
+        if (byId[sc[0].id]) leaders.push({ j: "J" + j, name: this._shortName(byId[sc[0].id]) });
+      }
+      real.forEach((r, idx) => traj[r.id].push({ j: "ahora", pts: r.points, pos: idx + 1 }));
+      let mover = null, bestClimb = 0;
+      real.forEach((r) => { const t = traj[r.id]; if (t.length >= 2) { const climb = t[0].pos - t[t.length - 1].pos; if (climb > bestClimb) { bestClimb = climb; mover = { name: this._shortName(r), from: t[0].pos, to: t[t.length - 1].pos }; } } });
+      return { traj, leaders, J, mover };
     },
     // Briefing "qué ha cambiado desde tu última visita": posiciones y puntos (sobre participantes reales).
     computeBriefing() {
