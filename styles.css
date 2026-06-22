@@ -1048,3 +1048,24 @@ tr.clickrow.sel td{background:#e7f1ec}
 .sce-tot{margin:0;font-size:.86rem;font-weight:600;color:#26323b}
 .sce-tot b{color:var(--green);font-size:.95rem}
 .sc-ex-card.warn .sce-d{color:#7a5a16}
+
+/* ===== FAQ cuadro inicial (Mi Porra) ===== */
+.bracket-faq{background:#fff;border:1px solid var(--line);border-radius:14px;padding:13px 15px;margin-bottom:14px;box-shadow:0 1px 3px rgba(0,0,0,.05)}
+.bfaq-head{font-weight:800;color:var(--green);font-size:1rem;margin-bottom:8px}
+.bfaq-calm{background:#eef6ff;border:1px solid #cfe3f7;border-radius:10px;padding:9px 11px;margin:0 0 11px;font-size:.9rem;line-height:1.5}
+.bfaq-two{display:grid;gap:8px;margin-bottom:11px}
+.bfaq-no,.bfaq-yes{border-radius:10px;padding:9px 11px}
+.bfaq-no{background:#fdeeee;border:1px solid #f3cccc}
+.bfaq-yes{background:#e9f7ee;border:1px solid #bfe6cd}
+.bfaq-two p{margin:5px 0 0;font-size:.86rem;line-height:1.45}
+.bfaq-tag{font-weight:800;font-size:.82rem}
+.bfaq-tag.no{color:#c0392b}
+.bfaq-tag.yes{color:#1f8f4e}
+.bfaq-pts{background:#fbfdfc;border:1px dashed var(--line);border-radius:9px;padding:9px 11px;margin:0 0 11px;font-size:.85rem;line-height:1.7}
+.bfaq-pts b{color:#1f8f4e}
+.bfaq-ex{background:#f8f6ff;border:1px solid #e2dbf5;border-radius:11px;padding:10px 12px;margin-bottom:10px}
+.bfaq-ex-h{font-weight:800;color:#6a4fc8;font-size:.86rem;margin:0 0 6px}
+.bfaq-ex p{margin:5px 0;font-size:.86rem;line-height:1.5}
+.bfaq-ex-calc{background:#fff;border-radius:8px;padding:7px 10px;font-size:.83rem;line-height:1.7}
+.bfaq-ex-calc b{color:#1f8f4e}
+@media(min-width:560px){.bfaq-two{grid-template-columns:1fr 1fr}}

@@ -13,7 +13,7 @@
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="Porra Mundial" />
-  <link rel="stylesheet" href="styles.css?v=46" />
+  <link rel="stylesheet" href="styles.css?v=47" />
 </head>
 <body x-data="porraApp()" x-init="init()" x-cloak>
 
@@ -121,6 +121,24 @@
     <template x-if="!isLocked && lockCountdown">
       <div class="banner countdown">⏳ Puedes editar hasta <b>1 hora antes</b> del primer partido. <b>Cierra en <span x-text="lockCountdown"></span></b> (jue 11 jun, 18:00 UTC · 20:00 en España).</div>
     </template>
+
+    <!-- FAQ: cómo puntúa el cuadro inicial (la duda más preguntada de la familia) -->
+    <div class="bracket-faq" x-show="isLocked">
+      <div class="bfaq-head">🏆 ¿Cómo puntúa tu cuadro (el de antes del Mundial)?</div>
+      <p class="bfaq-calm">😌 <b>Es imposible clavar el cuadro entero, y no hace falta.</b> Tus cruces (quién juega contra quién) casi seguro saldrán distintos a la realidad. <b>Da igual: los cruces NO puntúan.</b></p>
+      <div class="bfaq-two">
+        <div class="bfaq-no"><span class="bfaq-tag no">❌ NO importa</span><p>quién se cruza con quién, ni por qué lado del cuadro pase tu equipo.</p></div>
+        <div class="bfaq-yes"><span class="bfaq-tag yes">✅ SÍ puntúa</span><p>lo lejos que llega <b>cada equipo que pusiste</b>, contra quien sea.</p></div>
+      </div>
+      <p class="bfaq-pts">Por cada equipo tuyo que llega a: octavos <b>+4</b> · cuartos <b>+7</b> · semis <b>+10</b> · final <b>+15</b> · campeón <b>+25</b>. Y <b>cada equipo cuenta por separado</b> (tienes varios en cada ronda).</p>
+      <div class="bfaq-ex">
+        <p class="bfaq-ex-h">📌 Ejemplo</p>
+        <p>Pusiste a 🇧🇷 <b>Brasil</b> de campeón. En la realidad el cuadro sale distinto y Brasil cae por otra zona, contra rivales que tú no habías puesto ahí. <b>No importa el camino:</b></p>
+        <p class="bfaq-ex-calc">octavos <b>+4</b> · cuartos <b>+7</b> · semis <b>+10</b> → si cae en semis, llevas <b>21</b> por Brasil. Si llega a la final <b>+15</b> y gana el Mundial <b>+25</b> → <b>61</b> en total.</p>
+        <p class="tiny muted">Si Brasil cae antes, simplemente dejas de sumar por él desde ahí (no resta). Se va sumando <b>en directo</b> según se juegan las eliminatorias.</p>
+      </div>
+      <p class="tiny muted">Los <b>grupos</b> y los <b>mejores terceros</b> puntúan aparte. Tienes todos los ejemplos en <b>Clasificación → 📋 ¿Cómo se puntúa?</b></p>
+    </div>
 
     <!-- ===== FASE: BIENVENIDA / NOMBRE ===== -->
     <div x-show="phase==='welcome'" class="phase welcome">
@@ -1565,10 +1583,10 @@
   </div>
 
   <!-- ====== Dependencias ====== -->
-  <script src="data.js?v=46"></script>
-  <script src="engine.js?v=46"></script>
+  <script src="data.js?v=47"></script>
+  <script src="engine.js?v=47"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
-  <script src="app.js?v=46"></script>
+  <script src="app.js?v=47"></script>
   <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.1/dist/cdn.min.js"></script>
 </body>
 </html>
