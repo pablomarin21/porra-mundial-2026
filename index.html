@@ -13,7 +13,7 @@
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="Porra Mundial" />
-  <link rel="stylesheet" href="styles.css?v=54" />
+  <link rel="stylesheet" href="styles.css?v=55" />
 </head>
 <body x-data="porraApp()" x-init="init()" x-cloak>
 
@@ -489,12 +489,28 @@
     <div class="parte" x-show="parte">
       <div class="parte-h">📋 El parte de la porra <small class="muted" x-show="parte" x-text="parte?('Jornada '+parte.jornada+' · '+parte.gPlayed+'/'+parte.gTotal+' partidos de grupos'):''"></small></div>
 
-      <div class="parte-pan">
-        <p x-show="parte && parte.raceTxt"><span class="pico">🏆</span> <span x-text="parte?parte.raceTxt:''"></span>.</p>
-        <p x-show="parte && parte.totalProv"><span class="pico">⚠️</span> Hay <b x-text="parte?parte.totalProv:0"></b> pts <b>en juego</b> en grupos sin cerrar — la clasificación aún puede moverse.</p>
-        <p class="muted tiny" x-show="parte && !parte.totalProv"><span class="pico">✅</span> Los grupos jugados ya están cerrados: esos puntos no cambian.</p>
-        <p x-show="parte && parte.leaders && parte.leaders.length"><span class="pico">🕰️</span> <b>Líderes por jornada:</b> <template x-for="(l,i) in (parte?parte.leaders:[])" :key="'ld'+i"><span x-text="(i?' · ':' ')+l.j+': '+l.name"></span></template></p>
-        <p x-show="parte && parte.mover && parte.mover.from>parte.mover.to"><span class="pico">🚀</span> <b>Mayor subida:</b> <span x-text="parte?(parte.mover.name+' ('+parte.mover.from+'º → '+parte.mover.to+'º)'):''"></span></p>
+      <!-- RESUMEN rico -->
+      <p class="parte-head" x-show="parte" x-text="parte?parte.head:''"></p>
+
+      <!-- podio con distancias -->
+      <div class="parte-podio" x-show="parte && parte.top3">
+        <template x-for="(t,i) in (parte?parte.top3:[])" :key="'t3'+i">
+          <div class="pp3" :class="'r'+(i+1)">
+            <span class="pp3-m" x-text="['🥇','🥈','🥉'][i]"></span>
+            <span class="pp3-n" x-text="t.name"></span>
+            <span class="pp3-p"><b x-text="t.pts"></b><small x-show="t.behind>0" x-text="' −'+t.behind"></small></span>
+          </div>
+        </template>
+      </div>
+
+      <div class="parte-facts">
+        <div class="pf" x-show="parte && parte.totalProv"><span class="pf-ic">🔥</span><span><b x-text="parte?parte.totalProv:0"></b> pts <b>en juego</b> en grupos sin cerrar — puede cambiar todo.</span></div>
+        <div class="pf" x-show="parte && parte.spread"><span class="pf-ic">📏</span><span>Del 1º al último hay <b x-text="parte?parte.spread:0"></b> pts.</span></div>
+        <div class="pf" x-show="parte && parte.champPop"><span class="pf-ic">🏅</span><span><b x-text="parte?(parte.champPop.n+'/'+parte.total):''"></b> apostaron por <b x-text="parte?parte.champPop.team:''"></b> de campeón<span x-show="parte && parte.champPop.n>=parte.total-1"> — la pelea se decide en grupos y especiales</span>.</span></div>
+        <div class="pf" x-show="parte && parte.mover && parte.mover.from>parte.mover.to"><span class="pf-ic">🚀</span><span><b>Sube:</b> <span x-text="parte?(parte.mover.name+' ('+parte.mover.from+'º→'+parte.mover.to+'º)'):''"></span></span></div>
+        <div class="pf" x-show="parte && parte.faller && parte.faller.from<parte.faller.to"><span class="pf-ic">📉</span><span><b>Baja:</b> <span x-text="parte?(parte.faller.name+' ('+parte.faller.from+'º→'+parte.faller.to+'º)'):''"></span></span></div>
+        <div class="pf" x-show="parte && parte.leaders && parte.leaders.length"><span class="pf-ic">🕰️</span><span><b>Líderes por jornada:</b> <template x-for="(l,i) in (parte?parte.leaders:[])" :key="'ld'+i"><span x-text="(i?' · ':'')+l.j+': '+l.name"></span></template></span></div>
+        <div class="pf" x-show="parte && parte.specials && parte.specials.length"><span class="pf-ic">⭐</span><span><b>Especiales resueltas:</b> <template x-for="(s,i) in (parte?parte.specials:[])" :key="'sp'+i"><span x-text="(i?' · ':'')+s.k+': lo clavaron '+s.n"></span></template></span></div>
       </div>
 
       <div class="parte-sec">🎯 Ficha de cada jugador <span class="muted tiny">— personalizada según lo que puso</span></div>
@@ -1684,10 +1700,10 @@
   </div>
 
   <!-- ====== Dependencias ====== -->
-  <script src="data.js?v=54"></script>
-  <script src="engine.js?v=54"></script>
+  <script src="data.js?v=55"></script>
+  <script src="engine.js?v=55"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
-  <script src="app.js?v=54"></script>
+  <script src="app.js?v=55"></script>
   <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.1/dist/cdn.min.js"></script>
 </body>
 </html>

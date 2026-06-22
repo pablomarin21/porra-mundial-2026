@@ -1413,21 +1413,35 @@ window.porraApp = function () {
         return { pos: i + 1, name: this._shortName(r), pts: r.points, prov: gd.provisional, seguro: gd.seguro,
           isMe: !!(this.me && r.id === this.me.id), champ: champ ? D.es(champ) : null, champQ,
           gapTxt, bestGroup, finalists, bets, exTotal: ex.total, trajTxt, trend, climb: best24,
+          _hat: ex.hattrick > 0, _doble: ex.dobleRoja > 0,
           fav: fav.slice(0, 1), risk: risk.slice(0, 2) };
       });
-      const leader = real[0], second = real[1];
+      const leader = real[0], second = real[1], last = real[real.length - 1];
       const totalProv = players.reduce((a, p) => a + (p.prov || 0), 0);
       let gPlayed = 0;
       if (oc.standingsByGroup) for (const L of D.GROUP_LETTERS) { const s = oc.standingsByGroup[L]; if (s) gPlayed += s.reduce((a, t) => a + (t.pj || 0), 0); }
       gPlayed = Math.round(gPlayed / 2);
-      const gap = second ? (leader.points - second.points) : null;
-      let raceTxt = "";
-      if (second) raceTxt = gap > 0 ? (this._shortName(leader) + " lidera por " + gap + " pts sobre " + this._shortName(second))
-                                    : (this._shortName(leader) + " y " + this._shortName(second) + " van empatados arriba");
+      // --- estadísticas del RESUMEN ---
+      const top3 = players.slice(0, 3).map((p) => ({ name: p.name, pts: p.pts, behind: leader.points - p.pts }));
+      const champCount = {}; players.forEach((p) => { if (p.champ) champCount[p.champ] = (champCount[p.champ] || 0) + 1; });
+      let champPop = null; for (const k in champCount) if (!champPop || champCount[k] > champPop.n) champPop = { team: k, n: champCount[k] };
+      const spread = real.length > 1 ? (leader.points - last.points) : 0;
+      const aSb = (this.extrasActual || {}).sidebets || {};
+      const specials = [];
+      if (aSb.hattrick) specials.push({ k: "🎩 Hat-trick", n: players.filter((p) => p._hat).length });
+      if (aSb.dobleRoja) specials.push({ k: "🟥 Doble roja", n: players.filter((p) => p._doble).length });
+      const gap = second ? (leader.points - second.points) : 0;
+      let head = "";
+      if (second) head = gap === 0 ? (this._shortName(leader) + " y " + this._shortName(second) + " comparten el liderato")
+        : gap <= 3 ? (this._shortName(leader) + " manda por los pelos: solo " + gap + " pts sobre " + this._shortName(second))
+        : (this._shortName(leader) + " lidera con renta de " + gap + " pts sobre " + this._shortName(second));
+      else head = this._shortName(leader) + " va primero";
+      const inPodio = players.filter((p) => p.pos > 3 && (top3[2] ? p.pts >= top3[2].pts - 10 : false)).length;
       this.parte = {
         jornada: this.tournamentMatchday(), gPlayed, gTotal: D.GROUP_FIXTURES.length,
-        raceTxt, second: second ? this._shortName(second) : null, totalProv, players,
-        leaders: H.leaders, mover: H.mover,
+        total: real.length, second: second ? this._shortName(second) : null, totalProv, players,
+        head, top3, champPop, spread, specials, inPodio,
+        leaders: H.leaders, mover: H.mover, faller: H.faller,
       };
     },
     // HISTORIA: re-puntúa la clasificación al final de cada jornada (reconstruida de los resultados).
@@ -1448,9 +1462,13 @@ window.porraApp = function () {
         if (byId[sc[0].id]) leaders.push({ j: "J" + j, name: this._shortName(byId[sc[0].id]) });
       }
       real.forEach((r, idx) => traj[r.id].push({ j: "ahora", pts: r.points, pos: idx + 1 }));
-      let mover = null, bestClimb = 0;
-      real.forEach((r) => { const t = traj[r.id]; if (t.length >= 2) { const climb = t[0].pos - t[t.length - 1].pos; if (climb > bestClimb) { bestClimb = climb; mover = { name: this._shortName(r), from: t[0].pos, to: t[t.length - 1].pos }; } } });
-      return { traj, leaders, J, mover };
+      let mover = null, bestClimb = 0, faller = null, worstDrop = 0;
+      real.forEach((r) => { const t = traj[r.id]; if (t.length >= 2) {
+        const d = t[0].pos - t[t.length - 1].pos;
+        if (d > bestClimb) { bestClimb = d; mover = { name: this._shortName(r), from: t[0].pos, to: t[t.length - 1].pos }; }
+        if (-d > worstDrop) { worstDrop = -d; faller = { name: this._shortName(r), from: t[0].pos, to: t[t.length - 1].pos }; }
+      } });
+      return { traj, leaders, J, mover, faller };
     },
     // Briefing "qué ha cambiado desde tu última visita": posiciones y puntos (sobre participantes reales).
     computeBriefing() {

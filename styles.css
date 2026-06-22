@@ -1221,3 +1221,18 @@ tr.clickrow.sel td{background:#e7f1ec}
 .ppl-trend.\=,.ppl-trend{color:var(--muted)}
 .ppl-evo{font-size:.78rem;color:#54606a;margin-top:4px;background:#f6f9f7;border-radius:7px;padding:5px 8px;line-height:1.4}
 .parte-pan p .pico{display:inline-block;width:18px}
+
+/* ===== Resumen rico del parte ===== */
+.parte-head{font-size:.96rem;font-weight:700;color:#26323b;background:#f3faf5;border-left:4px solid var(--green);border-radius:9px;padding:9px 12px;margin:0 0 11px;line-height:1.4}
+.parte-podio{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-bottom:11px}
+.pp3{display:flex;flex-direction:column;align-items:center;gap:1px;border-radius:11px;padding:9px 6px;border:1px solid var(--line);background:#fbfdfc;text-align:center;min-width:0}
+.pp3.r1{background:#fff8e9;border-color:#f0d79a}
+.pp3-m{font-size:1.2rem}
+.pp3-n{font-weight:800;font-size:.82rem;color:#26323b;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+.pp3-p{font-size:.84rem}
+.pp3-p b{color:var(--green)}
+.pp3-p small{color:#c0392b;font-weight:700;margin-left:3px}
+.parte-facts{display:grid;gap:6px;margin-bottom:13px}
+.pf{display:flex;gap:8px;align-items:flex-start;background:#f6f9f7;border-radius:9px;padding:7px 11px;font-size:.85rem;line-height:1.45}
+.pf-ic{flex:none;width:20px}
+.pf b{color:#26323b}
