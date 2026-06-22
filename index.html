@@ -13,7 +13,7 @@
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="Porra Mundial" />
-  <link rel="stylesheet" href="styles.css?v=58" />
+  <link rel="stylesheet" href="styles.css?v=59" />
 </head>
 <body x-data="porraApp()" x-init="init()" x-cloak>
 
@@ -44,6 +44,7 @@
           Código <b x-text="pool.code"></b> · 🔗 copiar enlace
         </span>
         <span class="lock-chip" :class="pool.locked ? 'closed':'open'" x-text="pool.locked ? '🔒 Cerrada' : '✏️ Abierta'"></span>
+        <button class="notif-chip" x-show="pushSupported" :class="{on:pushOn}" :disabled="pushBusy" @click="togglePush()" x-text="pushBusy ? '…' : (pushOn ? '🔔 Avisos ON' : '🔕 Activar avisos')"></button>
       </div>
     </template>
   </header>
@@ -1543,6 +1544,20 @@
 
     <template x-if="adminOk">
       <div>
+        <!-- Notificaciones -->
+        <div class="card slim">
+          <h3>🔔 Notificaciones</h3>
+          <p class="muted tiny" style="margin:0 0 10px">Avisos push a quien las haya activado (botón «Activar avisos» arriba). En iPhone solo llegan si han <b>instalado</b> la porra en la pantalla de inicio.</p>
+          <div class="admin-row" style="flex-direction:column;align-items:stretch;gap:8px">
+            <button class="btn" :disabled="notifBusy" @click="sendTestPush()" x-text="notifBusy ? 'Enviando…' : '🧪 Enviar prueba (solo a mí)'"></button>
+            <div style="display:flex;gap:7px">
+              <input type="text" x-model="notifTitle" placeholder="Título" style="flex:1" maxlength="80" />
+            </div>
+            <input type="text" x-model="notifBody" placeholder="Mensaje para toda la porra" maxlength="240" />
+            <button class="btn primary" :disabled="notifBusy || !(notifBody||'').trim()" @click="notifyAll(notifTitle||'⚽ Porra Mundial 2026', notifBody); notifBody=''" x-text="notifBusy ? 'Enviando…' : '📣 Avisar a toda la porra'"></button>
+          </div>
+        </div>
+
         <!-- Gestión porra -->
         <div class="card slim">
           <h3>⚙️ Gestión de la porra</h3>
@@ -1719,10 +1734,10 @@
   </div>
 
   <!-- ====== Dependencias ====== -->
-  <script src="data.js?v=58"></script>
-  <script src="engine.js?v=58"></script>
+  <script src="data.js?v=59"></script>
+  <script src="engine.js?v=59"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
-  <script src="app.js?v=58"></script>
+  <script src="app.js?v=59"></script>
   <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.1/dist/cdn.min.js"></script>
 </body>
 </html>

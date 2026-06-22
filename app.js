@@ -7,6 +7,16 @@ const sb = window.supabase.createClient(SUPA_URL, SUPA_KEY);
 const D = window.PORRA_DATA;
 const Eng = window.PorraEngine;
 
+// Notificaciones push (clave pública VAPID — segura de exponer)
+const VAPID_PUBLIC = "BC3GZiF1s-TvML2SMYI20INg-qpugMyGZVWjtMzIrVvSmt6o-s4MNE2UA8blaB3RPEq3xmZ0OZPaNyWxQ9ATpZU";
+function urlB64ToUint8Array(b) {
+  const pad = "=".repeat((4 - (b.length % 4)) % 4);
+  const base64 = (b + pad).replace(/-/g, "+").replace(/_/g, "/");
+  const raw = atob(base64); const out = new Uint8Array(raw.length);
+  for (let i = 0; i < raw.length; i++) out[i] = raw.charCodeAt(i);
+  return out;
+}
+
 const ALL_TEAMS = [].concat(...D.GROUP_LETTERS.map((L) => D.GROUPS[L]));
 // Sedes del Mundial 2026: zona horaria local + temperatura típica (máx. diurna jun-jul, °C).
 // Se busca por ciudad (de ESPN venue.address.city), sin acentos y en minúsculas.
@@ -71,6 +81,7 @@ window.porraApp = function () {
     // ui
     toasts: [], busy: false, probBusy: false, syncBusy: false, syncMsg: "",
     showInstall: false, deferredPrompt: null,
+    pushSupported: false, pushOn: false, pushBusy: false, notifBusy: false, notifTitle: "", notifBody: "",
     // pronósticos
     groups: emptyGroups(), thirds: [], bracket: {}, _cols: [], _champion: null,
     extras: { revelacion: "", decepcion: "", pichichi: "", asistente: "", portero: "", sidebets: {} },
@@ -247,6 +258,65 @@ window.porraApp = function () {
       } catch (err) { this.toast(this.errMsg ? this.errMsg(err) : "No se pudo guardar", "err"); }
       finally { this.porteroSaving = false; }
     },
+    // ---------- Notificaciones push ----------
+    async initPush() {
+      this.pushSupported = ("serviceWorker" in navigator) && ("PushManager" in window) && ("Notification" in window);
+      if (!this.pushSupported) return;
+      try {
+        const reg = await navigator.serviceWorker.register("sw.js");
+        const sub = await reg.pushManager.getSubscription();
+        this.pushOn = !!sub;
+      } catch (e) { this.pushSupported = false; }
+    },
+    async togglePush() {
+      if (!this.pushSupported || this.pushBusy) return;
+      this.pushBusy = true;
+      try {
+        if (this.pushOn) await this._unsubscribePush();
+        else await this._subscribePush();
+      } catch (e) { this.toast(this.errMsg ? this.errMsg(e) : "No se pudo cambiar las notificaciones", "err"); }
+      finally { this.pushBusy = false; }
+    },
+    async _subscribePush() {
+      if (!this.pool) return this.toast("Entra en una porra primero.", "warn");
+      const perm = await Notification.requestPermission();
+      if (perm !== "granted") { this.toast("Permiso de notificaciones denegado. Actívalo en los ajustes del navegador.", "warn"); return; }
+      const reg = await navigator.serviceWorker.ready;
+      const sub = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: urlB64ToUint8Array(VAPID_PUBLIC) });
+      const raw = sub.toJSON();
+      await this.rpc("porra_push_subscribe", { p_code: this.pool.code, p_participant_id: (this.me && this.me.id) || null, p_endpoint: sub.endpoint, p_p256dh: raw.keys.p256dh, p_auth: raw.keys.auth, p_ua: navigator.userAgent });
+      this.pushOn = true;
+      this.toast("🔔 ¡Notificaciones activadas!");
+    },
+    async _unsubscribePush() {
+      const reg = await navigator.serviceWorker.ready;
+      const sub = await reg.pushManager.getSubscription();
+      if (sub) { try { await this.rpc("porra_push_unsubscribe", { p_endpoint: sub.endpoint }); } catch (e) {} try { await sub.unsubscribe(); } catch (e) {} }
+      this.pushOn = false;
+      this.toast("🔕 Notificaciones desactivadas.");
+    },
+    // Admin: enviar una notificación de prueba (solo a mí)
+    async sendTestPush() {
+      if (!this.adminOk || !this.adminPin || this.notifBusy) return;
+      this.notifBusy = true;
+      try {
+        const { data, error } = await sb.functions.invoke("porra-notify", { body: { code: this.pool.code, pin: this.adminPin, title: "🔔 Prueba de la porra", body: "¡Las notificaciones funcionan! ⚽", participant_id: (this.me && this.me.id) || null } });
+        if (error || (data && data.error)) throw new Error((data && data.error) || "error");
+        this.toast("Enviada a tus dispositivos (" + (data.sent || 0) + ").");
+      } catch (e) { this.toast("No se pudo enviar la prueba.", "err"); }
+      finally { this.notifBusy = false; }
+    },
+    // Admin: avisar a TODA la porra
+    async notifyAll(title, body) {
+      if (!this.adminOk || !this.adminPin || this.notifBusy) return;
+      this.notifBusy = true;
+      try {
+        const { data, error } = await sb.functions.invoke("porra-notify", { body: { code: this.pool.code, pin: this.adminPin, title, body } });
+        if (error || (data && data.error)) throw new Error((data && data.error) || "error");
+        this.toast("Enviada a " + (data.sent || 0) + " dispositivos.");
+      } catch (e) { this.toast("No se pudo enviar.", "err"); }
+      finally { this.notifBusy = false; }
+    },
     groupFixtures(L) { return D.GROUP_FIXTURES.filter((f) => f.group === L); },
     scoreTxt(code) {
       const g = this.outcome && this.outcome.groupMap && this.outcome.groupMap[code];
@@ -385,6 +455,7 @@ window.porraApp = function () {
       setInterval(() => { this.nowTs = Date.now(); }, 20000);
       window.addEventListener("beforeinstallprompt", (e) => { e.preventDefault(); this.deferredPrompt = e; });
       window.addEventListener("appinstalled", () => { this.deferredPrompt = null; this.showInstall = false; });
+      this.initPush();
       // Mostrar el tutorial de instalación una sola vez (primera visita, si no es ya una app)
       try { if (!this.isStandalone && !localStorage.getItem("porra_install_seen")) setTimeout(() => { if (!this.isStandalone) this.showInstall = true; }, 1800); } catch (e) {}
       this._espnTimer = setInterval(() => { if (!this.pool) return; if (this.tab === "leaderboard") this.loadBoard(); else if (this.tab === "results" || this.tab === "goals") this.fetchEspn(false); }, 60000);
