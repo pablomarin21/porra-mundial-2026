@@ -1167,3 +1167,15 @@ tr.clickrow.sel td{background:#e7f1ec}
 .vchip.on{background:#e8f6ee;border-color:#bfe6cd}
 .vchip.off{background:#f6f7f8;opacity:.6}
 @media(min-width:600px){.vsemis{grid-template-columns:repeat(4,1fr)}}
+
+/* visuales del bonus 27-jun */
+.vex.bonus{background:#fffaf0;border-color:#f0d79a}
+.vpath.b .vstep.on{background:#fdf3dd;border-color:#e0a106;color:#a9741a;box-shadow:inset 0 0 0 1px #e0a106}
+.vex.bonus .vpath-scn b,.vex.bonus .vex-tot b{color:#b3791f}
+.vex.bonus .vdot{border-color:#e0a106}
+.vex.bonus .vdot.a{background:#fdf3dd}
+.vex.bonus .vdot.b{background:#e0a106}
+.vex.bonus .vchip.on{background:#fdf3dd;border-color:#f0d79a}
+.vex.bonus .vchk{color:#b3791f}
+.vex-cmp{margin-top:8px;font-size:.79rem;color:#54606a;background:#fff;border-radius:8px;padding:7px 9px;line-height:1.5}
+.vex-cmp b{color:var(--green)}
