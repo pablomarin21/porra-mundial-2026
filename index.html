@@ -13,7 +13,7 @@
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="Porra Mundial" />
-  <link rel="stylesheet" href="styles.css?v=50" />
+  <link rel="stylesheet" href="styles.css?v=52" />
 </head>
 <body x-data="porraApp()" x-init="init()" x-cloak>
 
@@ -485,49 +485,34 @@
       <p class="muted">La liga de la familia. <span x-show="probBusy">⏳ calculando probabilidades…</span></p>
     </div>
 
-    <!-- Briefing: qué ha cambiado desde tu última visita -->
-    <div class="brief" x-show="briefing">
-      <div class="brief-h">
-        <span>📋 Cambios desde tu última visita</span>
-        <small class="muted" x-text="briefing?briefing.ago:''"></small>
+    <!-- EL PARTE: panorama + riesgos/bazas de cada jugador -->
+    <div class="parte" x-show="parte">
+      <div class="parte-h">📋 El parte de la porra <small class="muted" x-show="parte" x-text="parte?('Jornada '+parte.jornada+' · '+parte.gPlayed+'/'+parte.gTotal+' partidos de grupos'):''"></small></div>
+
+      <div class="parte-pan">
+        <p x-show="parte && parte.raceTxt"><span class="pico">🏆</span> <span x-text="parte?parte.raceTxt:''"></span>.</p>
+        <p x-show="parte && parte.totalProv"><span class="pico">⚠️</span> Hay <b x-text="parte?parte.totalProv:0"></b> pts <b>en juego</b> en grupos sin cerrar — la clasificación aún puede moverse.</p>
+        <p class="muted tiny" x-show="parte && !parte.totalProv"><span class="pico">✅</span> Los grupos jugados ya están cerrados: esos puntos no cambian.</p>
       </div>
-      <template x-if="briefing && !briefing.changed">
-        <p class="brief-none">Sin cambios desde la última vez. 😴</p>
-      </template>
-      <template x-if="briefing && briefing.changed">
-        <div class="brief-body">
-          <p class="brief-leader" x-show="briefing.leader">👑 <b>Nuevo líder:</b> <span x-text="briefing.leader?briefing.leader.name:''"></span></p>
-          <template x-if="briefing.mine && (briefing.mine.posDelta!==0 || briefing.mine.ptsDelta!==0)">
-            <p class="brief-mine">
-              <b>Tú:</b>
-              <span class="up" x-show="briefing.mine.posDelta>0" x-text="'▲ subiste '+briefing.mine.posDelta+' ('+briefing.mine.from+'º→'+briefing.mine.to+'º)'"></span>
-              <span class="down" x-show="briefing.mine.posDelta<0" x-text="'▼ bajaste '+(-briefing.mine.posDelta)+' ('+briefing.mine.from+'º→'+briefing.mine.to+'º)'"></span>
-              <span x-show="briefing.mine.posDelta===0 && briefing.mine.ptsDelta!==0" x-text="'sigues '+briefing.mine.to+'º'"></span>
-              <span class="brief-pts" :class="briefing.mine.ptsDelta>=0?'up':'down'" x-show="briefing.mine.ptsDelta!==0" x-text="(briefing.mine.ptsDelta>0?'+':'')+briefing.mine.ptsDelta+' pts'"></span>
-            </p>
-          </template>
-          <div class="brief-list" x-show="briefing.moves.length">
-            <span class="brief-lab">📈 Posiciones</span>
-            <template x-for="m in briefing.moves" :key="'bm'+m.id">
-              <div class="brief-row" :class="{me:m.isMe}">
-                <span class="brief-arrow" :class="m.up?'up':'down'" x-text="m.up?'▲':'▼'"></span>
-                <span class="brief-name" x-text="m.name"></span>
-                <span class="brief-detail" x-text="m.from+'º → '+m.to+'º'"></span>
-              </div>
-            </template>
+
+      <div class="parte-sec">🎯 Riesgos y bazas de cada jugador <span class="muted tiny">— según lo que puso</span></div>
+      <div class="parte-players">
+        <template x-for="p in (parte?parte.players:[])" :key="'pp'+p.pos">
+          <div class="parte-pl" :class="{me:p.isMe}">
+            <div class="ppl-top">
+              <span class="ppl-pos" x-text="p.pos+'º'"></span>
+              <b class="ppl-name" x-text="p.name"></b>
+              <span class="ppl-pts"><b x-text="p.pts"></b> pts<span class="ppl-prov" x-show="p.prov" x-text="' · '+p.prov+' en juego'"></span></span>
+            </div>
+            <div class="ppl-champ" x-show="p.champ">🏅 Su campeón: <b x-text="p.champ"></b><span class="muted" x-show="p.champQ!=null" x-text="' · '+pct(p.champQ)+' de clasificar'"></span></div>
+            <div class="ppl-bits">
+              <template x-for="(f,i) in p.fav" :key="'f'+p.pos+i"><div class="ppl-bit fav">🟢 <span x-text="f"></span></div></template>
+              <template x-for="(r,i) in p.risk" :key="'r'+p.pos+i"><div class="ppl-bit risk">🔴 <span x-text="r"></span></div></template>
+              <div class="ppl-bit none" x-show="!p.fav.length && !p.risk.length">Sin novedades destacadas por ahora.</div>
+            </div>
           </div>
-          <div class="brief-list" x-show="briefing.gains.length">
-            <span class="brief-lab">⚽ Puntos</span>
-            <template x-for="g in briefing.gains" :key="'bg'+g.id">
-              <div class="brief-row" :class="{me:g.isMe}">
-                <span class="brief-pts" :class="g.d>0?'up':'down'" x-text="(g.d>0?'+':'')+g.d"></span>
-                <span class="brief-name" x-text="g.name"></span>
-              </div>
-            </template>
-          </div>
-          <p class="brief-new" x-show="briefing.newcomers.length" x-text="'🆕 Se han unido: '+(briefing?briefing.newcomers.join(', '):'')"></p>
-        </div>
-      </template>
+        </template>
+      </div>
     </div>
 
     <!-- Resumen de la jornada (auto) -->
@@ -1685,10 +1670,10 @@
   </div>
 
   <!-- ====== Dependencias ====== -->
-  <script src="data.js?v=50"></script>
-  <script src="engine.js?v=50"></script>
+  <script src="data.js?v=52"></script>
+  <script src="engine.js?v=52"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
-  <script src="app.js?v=50"></script>
+  <script src="app.js?v=52"></script>
   <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.1/dist/cdn.min.js"></script>
 </body>
 </html>

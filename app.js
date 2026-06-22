@@ -94,7 +94,7 @@ window.porraApp = function () {
       { key: "finalists", label: "Llega a la final" }, { key: "champion", label: "Campeón del mundo" },
     ],
     // probabilidades
-    lastProb: false, simN: 0, probData: {}, briefing: null, _briefBaseline: undefined,
+    lastProb: false, simN: 0, probData: {}, briefing: null, _briefBaseline: undefined, parte: null,
     boardLocked: false, usingServerBoard: false, boardIncomplete: 0,
     selectedId: null, det: null,
     koMeta: KO_META,
@@ -1351,7 +1351,58 @@ window.porraApp = function () {
         r._tied = !!((up && up.points === r.points) || (dn && dn.points === r.points));
         r._tieReason = (up && up.points === r.points) ? reason(up._tb, r._tb) : (dn && dn.points === r.points ? reason(r._tb, dn._tb) : "");
       }
-      this.computeBriefing();
+      this.computeParte();
+    },
+    // EL PARTE: panorama + riesgos/bazas de cada jugador según lo que puso (forward-looking).
+    computeParte() {
+      if (!this.boardLocked) { this.parte = null; return; }
+      const real = (this.ranked || []).filter((r) => !this.isGuest(r));
+      if (!real.length) { this.parte = null; return; }
+      const oc = this.outcome || Eng.liveOutcome(this.results); const S = this.settings;
+      let chances = {};
+      try { chances = Eng.monteCarloTeams(this.results, 1500).byTeam; } catch (e) {}
+      const qp = (t) => { const c = chances[t]; return c ? c.qualify : null; };
+      const byId = {}; (this.entries || []).forEach((e) => (byId[e.id] = e));
+      const players = real.map((r, i) => {
+        const e = byId[r.id]; const picks = e && e.picks;
+        let gd = { seguro: 0, provisional: 0 }, champ = null;
+        if (picks) {
+          try { gd = this._groupDetail(picks, oc, S); } catch (x) {}
+          try { champ = Eng.derivePicks(picks).champion; } catch (x) {}
+        }
+        const champQ = champ ? qp(champ) : null;
+        const risky = [];
+        if (picks && picks.groups) for (const L of D.GROUP_LETTERS) {
+          const g = picks.groups[L]; if (!g) continue;
+          for (const t of [g[0], g[1]]) { const q = qp(t); if (q != null && q < 0.4) risky.push({ es: D.es(t), q }); }
+        }
+        risky.sort((a, b) => a.q - b.q);
+        const fav = [], risk = [];
+        if (champ && champQ != null) {
+          if (champQ >= 0.7) fav.push("su campeón " + D.es(champ) + " va camino (" + this.pct(champQ) + " de clasificar de grupo)");
+          else if (champQ <= 0.02) risk.push("su campeón " + D.es(champ) + " ya está fuera (no clasifica) — pierde su mayor baza");
+          else if (champQ <= 0.4) risk.push("su campeón " + D.es(champ) + " flojea: solo " + this.pct(champQ) + " de clasificar");
+        }
+        if (gd.seguro > 0) fav.push(gd.seguro + " pts ya fijos (grupos cerrados)");
+        if (gd.provisional > 0) risk.push(gd.provisional + " pts en juego que pueden bajar si cambian los grupos");
+        if (risky.length) risk.push("ojo con " + risky.slice(0, 2).map((x) => x.es).join(" y ") + " (los puso arriba y van flojos)");
+        return { pos: i + 1, name: this._shortName(r), pts: r.points, prov: gd.provisional, seguro: gd.seguro,
+          isMe: !!(this.me && r.id === this.me.id), champ: champ ? D.es(champ) : null, champQ,
+          fav: fav.slice(0, 2), risk: risk.slice(0, 2) };
+      });
+      const leader = real[0], second = real[1];
+      const totalProv = players.reduce((a, p) => a + (p.prov || 0), 0);
+      let gPlayed = 0;
+      if (oc.standingsByGroup) for (const L of D.GROUP_LETTERS) { const s = oc.standingsByGroup[L]; if (s) gPlayed += s.reduce((a, t) => a + (t.pj || 0), 0); }
+      gPlayed = Math.round(gPlayed / 2);
+      const gap = second ? (leader.points - second.points) : null;
+      let raceTxt = "";
+      if (second) raceTxt = gap > 0 ? (this._shortName(leader) + " lidera por " + gap + " pts sobre " + this._shortName(second))
+                                    : (this._shortName(leader) + " y " + this._shortName(second) + " van empatados arriba");
+      this.parte = {
+        jornada: this.tournamentMatchday(), gPlayed, gTotal: D.GROUP_FIXTURES.length,
+        raceTxt, second: second ? this._shortName(second) : null, totalProv, players,
+      };
     },
     // Briefing "qué ha cambiado desde tu última visita": posiciones y puntos (sobre participantes reales).
     computeBriefing() {

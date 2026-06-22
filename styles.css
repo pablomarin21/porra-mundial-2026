@@ -1179,3 +1179,27 @@ tr.clickrow.sel td{background:#e7f1ec}
 .vex.bonus .vchk{color:#b3791f}
 .vex-cmp{margin-top:8px;font-size:.79rem;color:#54606a;background:#fff;border-radius:8px;padding:7px 9px;line-height:1.5}
 .vex-cmp b{color:var(--green)}
+
+/* ===== EL PARTE (panorama + riesgos por jugador) ===== */
+.parte{background:#fff;border:1px solid var(--line);border-radius:14px;padding:13px 15px;margin-bottom:14px;box-shadow:0 1px 3px rgba(0,0,0,.05)}
+.parte-h{font-weight:800;color:var(--green);font-size:1rem;margin-bottom:9px;display:flex;flex-wrap:wrap;align-items:baseline;gap:7px}
+.parte-h small{font-weight:600;font-size:.72rem}
+.parte-pan{background:#f3faf5;border:1px solid #d9ece1;border-radius:10px;padding:9px 12px;margin-bottom:12px}
+.parte-pan p{margin:4px 0;font-size:.88rem;line-height:1.45}
+.parte-pan .pico{display:inline-block;width:18px}
+.parte-sec{font-weight:800;color:#26323b;font-size:.9rem;margin:0 0 8px}
+.parte-players{display:grid;gap:9px}
+.parte-pl{border:1px solid var(--line);border-radius:11px;padding:9px 11px;background:#fbfdfc}
+.parte-pl.me{background:#eef6ff;border-color:#cfe3f7}
+.ppl-top{display:flex;align-items:center;gap:8px}
+.ppl-pos{font-weight:800;color:var(--muted);font-size:.78rem;flex:none;min-width:22px}
+.ppl-name{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:.95rem}
+.ppl-pts{font-size:.82rem;color:#3a4650;white-space:nowrap;flex:none}
+.ppl-pts b{color:var(--green)}
+.ppl-prov{color:#b3791f;font-weight:700}
+.ppl-champ{font-size:.82rem;color:#3a4650;margin-top:5px}
+.ppl-bits{display:grid;gap:5px;margin-top:7px}
+.ppl-bit{font-size:.83rem;line-height:1.4;border-radius:8px;padding:6px 9px}
+.ppl-bit.fav{background:#e9f7ee}
+.ppl-bit.risk{background:#fdeeee}
+.ppl-bit.none{background:#f4f6f7;color:var(--muted)}
