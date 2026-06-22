@@ -1203,3 +1203,13 @@ tr.clickrow.sel td{background:#e7f1ec}
 .ppl-bit.fav{background:#e9f7ee}
 .ppl-bit.risk{background:#fdeeee}
 .ppl-bit.none{background:#f4f6f7;color:var(--muted)}
+
+/* dossier personalizado por jugador (parte) */
+.ppl-gap{font-size:.78rem;color:#54606a;margin-top:3px;font-weight:600}
+.parte-pl.me .ppl-gap{color:#2f6fd0}
+.ppl-dossier{display:grid;gap:4px;margin-top:7px;padding:8px 10px;background:#fff;border:1px solid var(--line);border-radius:9px}
+.ppl-d{font-size:.82rem;line-height:1.4;color:#3a4650}
+.ppl-d.ok{color:#1f8f4e;font-weight:600}
+.ppl-bets{display:flex;flex-wrap:wrap;align-items:center;gap:5px}
+.ppl-bet{background:#f1f4f2;border-radius:6px;padding:2px 7px;font-size:.76rem}
+.ppl-bet.ok{background:#e9f7ee;color:#1f8f4e;font-weight:700}

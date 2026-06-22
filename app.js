@@ -1365,12 +1365,27 @@ window.porraApp = function () {
       const byId = {}; (this.entries || []).forEach((e) => (byId[e.id] = e));
       const players = real.map((r, i) => {
         const e = byId[r.id]; const picks = e && e.picks;
-        let gd = { seguro: 0, provisional: 0 }, champ = null;
+        let gd = { seguro: 0, provisional: 0, groups: [] }, dp = null, ex = { total: 0 };
         if (picks) {
           try { gd = this._groupDetail(picks, oc, S); } catch (x) {}
-          try { champ = Eng.derivePicks(picks).champion; } catch (x) {}
+          try { dp = Eng.derivePicks(picks); } catch (x) {}
+          try { ex = Eng.scoreExtras(picks.extras, this.extrasActual, S); } catch (x) {}
         }
+        const champ = dp ? dp.champion : null;
         const champQ = champ ? qp(champ) : null;
+        // su mejor grupo hasta ahora
+        let best = null;
+        for (const g of (gd.groups || [])) { if (g.pts > 0 && (!best || g.pts > best.pts)) best = g; }
+        const bestGroup = best ? { L: best.L, pts: best.pts, complete: !!best.complete } : null;
+        const finalists = dp ? [...dp.final].map((t) => D.es(t)) : [];
+        // sus apuestas especiales
+        const ext = (picks && picks.extras) || {}; const bets = [];
+        if (ext.pichichi) bets.push({ t: "⚽ " + ext.pichichi, ok: ex.pichichi > 0 });
+        if (ext.asistente) bets.push({ t: "🅰️ " + ext.asistente, ok: ex.asistente > 0 });
+        if (ext.portero) bets.push({ t: "🧤 " + ext.portero, ok: ex.portero > 0 });
+        if (ext.revelacion) bets.push({ t: "✨ " + D.es(ext.revelacion), ok: ex.revelacion > 0 });
+        if (ext.decepcion) bets.push({ t: "💀 " + D.es(ext.decepcion), ok: ex.decepcion > 0 });
+        // equipos flojos que puso arriba
         const risky = [];
         if (picks && picks.groups) for (const L of D.GROUP_LETTERS) {
           const g = picks.groups[L]; if (!g) continue;
@@ -1379,16 +1394,19 @@ window.porraApp = function () {
         risky.sort((a, b) => a.q - b.q);
         const fav = [], risk = [];
         if (champ && champQ != null) {
-          if (champQ >= 0.7) fav.push("su campeón " + D.es(champ) + " va camino (" + this.pct(champQ) + " de clasificar de grupo)");
-          else if (champQ <= 0.02) risk.push("su campeón " + D.es(champ) + " ya está fuera (no clasifica) — pierde su mayor baza");
+          if (champQ >= 0.7) fav.push("su campeón " + D.es(champ) + " va camino (" + this.pct(champQ) + " de clasificar)");
+          else if (champQ <= 0.02) risk.push("su campeón " + D.es(champ) + " ya está fuera — pierde su mayor baza");
           else if (champQ <= 0.4) risk.push("su campeón " + D.es(champ) + " flojea: solo " + this.pct(champQ) + " de clasificar");
         }
-        if (gd.seguro > 0) fav.push(gd.seguro + " pts ya fijos (grupos cerrados)");
         if (gd.provisional > 0) risk.push(gd.provisional + " pts en juego que pueden bajar si cambian los grupos");
         if (risky.length) risk.push("ojo con " + risky.slice(0, 2).map((x) => x.es).join(" y ") + " (los puso arriba y van flojos)");
+        let gapTxt = "";
+        if (i === 0) gapTxt = real.length > 1 ? ("👑 Líder · +" + (r.points - real[1].points) + " sobre el 2º") : "👑 Líder";
+        else gapTxt = "a " + (real[i - 1].points - r.points) + " pts de " + this._shortName(real[i - 1]);
         return { pos: i + 1, name: this._shortName(r), pts: r.points, prov: gd.provisional, seguro: gd.seguro,
           isMe: !!(this.me && r.id === this.me.id), champ: champ ? D.es(champ) : null, champQ,
-          fav: fav.slice(0, 2), risk: risk.slice(0, 2) };
+          gapTxt, bestGroup, finalists, bets, exTotal: ex.total,
+          fav: fav.slice(0, 1), risk: risk.slice(0, 2) };
       });
       const leader = real[0], second = real[1];
       const totalProv = players.reduce((a, p) => a + (p.prov || 0), 0);

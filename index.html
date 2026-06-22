@@ -13,7 +13,7 @@
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="Porra Mundial" />
-  <link rel="stylesheet" href="styles.css?v=52" />
+  <link rel="stylesheet" href="styles.css?v=53" />
 </head>
 <body x-data="porraApp()" x-init="init()" x-cloak>
 
@@ -495,7 +495,7 @@
         <p class="muted tiny" x-show="parte && !parte.totalProv"><span class="pico">✅</span> Los grupos jugados ya están cerrados: esos puntos no cambian.</p>
       </div>
 
-      <div class="parte-sec">🎯 Riesgos y bazas de cada jugador <span class="muted tiny">— según lo que puso</span></div>
+      <div class="parte-sec">🎯 Ficha de cada jugador <span class="muted tiny">— personalizada según lo que puso</span></div>
       <div class="parte-players">
         <template x-for="p in (parte?parte.players:[])" :key="'pp'+p.pos">
           <div class="parte-pl" :class="{me:p.isMe}">
@@ -504,11 +504,19 @@
               <b class="ppl-name" x-text="p.name"></b>
               <span class="ppl-pts"><b x-text="p.pts"></b> pts<span class="ppl-prov" x-show="p.prov" x-text="' · '+p.prov+' en juego'"></span></span>
             </div>
-            <div class="ppl-champ" x-show="p.champ">🏅 Su campeón: <b x-text="p.champ"></b><span class="muted" x-show="p.champQ!=null" x-text="' · '+pct(p.champQ)+' de clasificar'"></span></div>
+            <div class="ppl-gap" x-text="p.gapTxt"></div>
+            <div class="ppl-dossier">
+              <div class="ppl-d" x-show="p.champ">🏅 Campeón: <b x-text="p.champ"></b><span class="muted" x-show="p.champQ!=null" x-text="' · '+pct(p.champQ)+' de clasificar'"></span></div>
+              <div class="ppl-d" x-show="p.bestGroup">🎯 Su mejor grupo: <b x-text="p.bestGroup?('Grupo '+p.bestGroup.L+' (+'+p.bestGroup.pts+')'):''"></b> <span class="muted" x-text="p.bestGroup?(p.bestGroup.complete?'fijo':'provisional'):''"></span></div>
+              <div class="ppl-d" x-show="p.finalists && p.finalists.length===2">🥇 Sus finalistas: <span x-text="p.finalists.join(' y ')"></span></div>
+              <div class="ppl-d ppl-bets" x-show="p.bets.length">⭐ Apuestas:
+                <template x-for="(bt,bi) in p.bets" :key="'bt'+p.pos+bi"><span class="ppl-bet" :class="{ok:bt.ok}"><span x-text="bt.t"></span><span x-show="bt.ok"> ✓</span></span></template>
+              </div>
+              <div class="ppl-d ok" x-show="p.exTotal">✅ Especiales ya logradas: <b x-text="'+'+p.exTotal"></b></div>
+            </div>
             <div class="ppl-bits">
               <template x-for="(f,i) in p.fav" :key="'f'+p.pos+i"><div class="ppl-bit fav">🟢 <span x-text="f"></span></div></template>
               <template x-for="(r,i) in p.risk" :key="'r'+p.pos+i"><div class="ppl-bit risk">🔴 <span x-text="r"></span></div></template>
-              <div class="ppl-bit none" x-show="!p.fav.length && !p.risk.length">Sin novedades destacadas por ahora.</div>
             </div>
           </div>
         </template>
@@ -1670,10 +1678,10 @@
   </div>
 
   <!-- ====== Dependencias ====== -->
-  <script src="data.js?v=52"></script>
-  <script src="engine.js?v=52"></script>
+  <script src="data.js?v=53"></script>
+  <script src="engine.js?v=53"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
-  <script src="app.js?v=52"></script>
+  <script src="app.js?v=53"></script>
   <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.1/dist/cdn.min.js"></script>
 </body>
 </html>
