@@ -13,7 +13,7 @@
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="Porra Mundial" />
-  <link rel="stylesheet" href="styles.css?v=48" />
+  <link rel="stylesheet" href="styles.css?v=49" />
 </head>
 <body x-data="porraApp()" x-init="init()" x-cloak>
 
@@ -1088,6 +1088,28 @@
         <p class="sp-calc">1º <b x-text="'+'+settings.g1"></b> · 2º <b x-text="'+'+settings.g2"></b> · 3º <b x-text="'+'+settings.g3"></b> · 4º <b x-text="'+'+settings.g4"></b> · clasifican 2 <b x-text="'+'+settings.qual+' +'+settings.qual"></b></p>
         <p class="sp-tot">= <b x-text="(settings.g1+settings.g2+settings.g3+settings.g4+2*settings.qual)+' puntos'"></b> de ese grupo</p>
       </div>
+
+      <div class="vex">
+        <div class="vex-h">👀 Otro caso, en imagen: aciertas el <b>1º</b> y el <b>último</b></div>
+        <div class="vgrp">
+          <div class="vgrp-col">
+            <div class="vgrp-cap">Tu pronóstico</div>
+            <div class="vgrp-row hit"><span class="vpos">1º</span><span class="vfl">🇪🇸</span><span class="vnm">España</span><span class="vchk" x-text="'✓+'+settings.g1"></span></div>
+            <div class="vgrp-row miss"><span class="vpos">2º</span><span class="vfl">🇩🇪</span><span class="vnm">Alemania</span><span class="vx">✗</span></div>
+            <div class="vgrp-row miss"><span class="vpos">3º</span><span class="vfl">🇭🇷</span><span class="vnm">Croacia</span><span class="vx">✗</span></div>
+            <div class="vgrp-row hit"><span class="vpos">4º</span><span class="vfl">🇲🇦</span><span class="vnm">Marruecos</span><span class="vchk" x-text="'✓+'+settings.g4"></span></div>
+          </div>
+          <div class="vgrp-mid">vs</div>
+          <div class="vgrp-col">
+            <div class="vgrp-cap">Resultado real</div>
+            <div class="vgrp-row real"><span class="vpos">1º</span><span class="vfl">🇪🇸</span><span class="vnm">España</span></div>
+            <div class="vgrp-row real"><span class="vpos">2º</span><span class="vfl">🇭🇷</span><span class="vnm">Croacia</span></div>
+            <div class="vgrp-row real"><span class="vpos">3º</span><span class="vfl">🇩🇪</span><span class="vnm">Alemania</span></div>
+            <div class="vgrp-row real"><span class="vpos">4º</span><span class="vfl">🇲🇦</span><span class="vnm">Marruecos</span></div>
+          </div>
+        </div>
+        <div class="vex-tot">Clavas 1º y 4º + España clasifica → <b x-text="(settings.g1+settings.g4+settings.qual)+' pts'"></b> <span class="muted" x-text="'('+settings.g1+'+'+settings.g4+'+'+settings.qual+')'"></span></div>
+      </div>
     </div>
 
     <!-- 2. TERCEROS -->
@@ -1120,10 +1142,28 @@
         <li>➕ <b>Se acumula.</b> Un equipo que va avanzando te suma en cada ronda que supera.</li>
         <li>📡 <b>En directo:</b> cada partido de eliminatorias que termina actualiza los puntos al momento. Si un equipo cae, dejas de sumar por él desde ahí (no resta).</li>
       </ul>
-      <div class="sp-ex purple">
-        <p class="sp-ex-h">📌 Ejemplo 1 — tu campeón</p>
-        <p>Pusiste a 🇧🇷 <b>Brasil</b> de campeón. En la realidad cae por otra zona, contra rivales que no habías puesto. Da igual el camino:</p>
-        <p class="sp-calc">octavos <b x-text="'+'+settings.octavos"></b> · cuartos <b x-text="'+'+settings.cuartos"></b> · semis <b x-text="'+'+settings.semis"></b> → si cae en semis llevas <b x-text="(settings.octavos+settings.cuartos+settings.semis)"></b> por Brasil. Si llega a la final <b x-text="'+'+settings.finalists"></b> y gana <b x-text="'+'+settings.champion"></b> → <b x-text="(settings.octavos+settings.cuartos+settings.semis+settings.finalists+settings.champion)"></b> en total.</p>
+      <div class="vex">
+        <div class="vex-h">👥 «Cada equipo cuenta»: pones <b>4 semifinalistas</b>, llegan <b>2</b></div>
+        <div class="vsemis">
+          <div class="vchip on"><span class="vfl">🇧🇷</span><span class="vnm">Brasil</span><span class="vchk" x-text="'✓+'+settings.semis"></span></div>
+          <div class="vchip on"><span class="vfl">🇫🇷</span><span class="vnm">Francia</span><span class="vchk" x-text="'✓+'+settings.semis"></span></div>
+          <div class="vchip off"><span class="vfl">🏴󠁧󠁢󠁥󠁮󠁧󠁿</span><span class="vnm">Inglaterra</span><span class="vx">✗</span></div>
+          <div class="vchip off"><span class="vfl">🇵🇹</span><span class="vnm">Portugal</span><span class="vx">✗</span></div>
+        </div>
+        <div class="vex-tot">Llegan 2 de tus 4 → <b x-text="(2*settings.semis)+' pts'"></b> <span class="muted" x-text="'(2 × '+settings.semis+', no 1)'"></span></div>
+      </div>
+      <div class="vex purple">
+        <div class="vex-h">🛤️ El camino de un equipo tuyo — ejemplo: tu campeón <span class="vfl">🇧🇷</span> <b>Brasil</b></div>
+        <p class="vpath-sub">Da igual contra quién juegue ni por dónde pase. Por cada ronda que supera, suma. Se va llenando:</p>
+        <div class="vpath">
+          <div class="vstep on"><small>Octavos</small><b x-text="'+'+settings.octavos"></b></div>
+          <div class="vstep on"><small>Cuartos</small><b x-text="'+'+settings.cuartos"></b></div>
+          <div class="vstep on"><small>Semis</small><b x-text="'+'+settings.semis"></b></div>
+          <div class="vstep"><small>Final</small><b x-text="'+'+settings.finalists"></b></div>
+          <div class="vstep"><small>Campeón</small><b x-text="'+'+settings.champion"></b></div>
+        </div>
+        <div class="vpath-scn"><span class="vdot a"></span>Si <b>cae en semis</b> (lo verde) → <b x-text="(settings.octavos+settings.cuartos+settings.semis)+' pts'"></b> por Brasil</div>
+        <div class="vpath-scn b"><span class="vdot b"></span>Si <b>gana el Mundial</b> (todo verde) → <b x-text="(settings.octavos+settings.cuartos+settings.semis+settings.finalists+settings.champion)+' pts'"></b></div>
       </div>
       <div class="sp-ex purple">
         <p class="sp-ex-h">📌 Ejemplo 2 — varios equipos</p>
@@ -1604,10 +1644,10 @@
   </div>
 
   <!-- ====== Dependencias ====== -->
-  <script src="data.js?v=48"></script>
-  <script src="engine.js?v=48"></script>
+  <script src="data.js?v=49"></script>
+  <script src="engine.js?v=49"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
-  <script src="app.js?v=48"></script>
+  <script src="app.js?v=49"></script>
   <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.1/dist/cdn.min.js"></script>
 </body>
 </html>
