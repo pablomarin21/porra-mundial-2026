@@ -1469,3 +1469,35 @@ tr.clickrow.sel td{background:#e7f1ec}
 @media(min-width:1300px){
   .parte-players{grid-template-columns:1fr 1fr 1fr}
 }
+
+/* ===== LLAVES RECONSTRUIDAS: codo limpio que sale de cada cruce ===== */
+.wcb-mirror .wcb-box{width:calc(100% - 22px)}              /* hueco fijo de 22px a la derecha para el conector */
+/* OUT: sale de la caja hasta el centro del hueco */
+.wcb-side .wcb-col:not(:last-child) .wcb-m::after{content:"";position:absolute;left:auto;right:11px;top:50%;width:11px;height:2px;background:#f4c84a !important;box-shadow:none !important}
+/* VERTICAL: une la pareja (mitad superior / inferior) en el centro del hueco */
+.wcb-side .wcb-col:not(:last-child) .wcb-m:nth-child(odd)::before{content:"";position:absolute;left:auto;right:11px;top:50%;bottom:auto;width:2px;height:50%;background:#f4c84a !important;box-shadow:none !important}
+.wcb-side .wcb-col:not(:last-child) .wcb-m:nth-child(even)::before{content:"";position:absolute;left:auto;right:11px;bottom:50%;top:auto;width:2px;height:50%;background:#f4c84a !important;box-shadow:none !important}
+/* IN: entra a la caja siguiente desde el vertical anterior */
+.wcb-in{display:none}
+.wcb-side .wcb-col:not(:first-child) .wcb-in{display:block;position:absolute;left:-11px;top:50%;width:11px;height:2px;background:#f4c84a;z-index:1}
+/* última columna (semis) -> sale hacia el centro */
+.wcb-side .wcb-col:last-child .wcb-m::after{content:"";position:absolute;left:auto;right:-14px;top:50%;width:14px;height:2px;background:#f4c84a !important}
+.wcb-side .wcb-col:last-child .wcb-m::before{display:none}
+/* centro: la final recibe de ambos semis */
+.wcb-final{position:relative}
+.wcb-final::before{content:"";position:absolute;left:-14px;top:50%;width:14px;height:2px;background:#f4c84a}
+.wcb-final::after{content:"";position:absolute;right:-14px;top:50%;width:14px;height:2px;background:#f4c84a}
+
+/* móvil: conector pequeño para que las banderas se vean */
+@media(max-width:640px){
+  .wcb-mirror .wcb-box{width:calc(100% - 9px)}
+  .wcb-side .wcb-col:not(:last-child) .wcb-m::after{right:4px;width:5px}
+  .wcb-side .wcb-col:not(:last-child) .wcb-m:nth-child(odd)::before{right:4px}
+  .wcb-side .wcb-col:not(:last-child) .wcb-m:nth-child(even)::before{right:4px}
+  .wcb-side .wcb-col:not(:first-child) .wcb-in{left:-5px;width:5px}
+  .wcb-side .wcb-col:last-child .wcb-m::after{right:-6px;width:6px}
+  .wcb-final::before{left:-6px;width:6px}
+  .wcb-final::after{right:-6px;width:6px}
+  .wcb-wrap{padding:8px 8px 14px}
+  .wcb-box{padding:3px}
+}
