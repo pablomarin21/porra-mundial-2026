@@ -1281,9 +1281,9 @@ window.porraApp = function () {
       this.koPreviewShow = !this.koPreviewShow;
     },
 
-    // ---------- Pestaña "27 de junio": camino a la final (1/16 → campeón) ----------
+    // ---------- Pestaña "28 de junio": camino a la final (1/16 → campeón) ----------
     get ko27DaysLeft() {
-      try { const now = new Date(); const t = new Date("2026-06-27T00:00:00"); return Math.ceil((t - now) / 86400000); } catch (e) { return 0; }
+      try { const now = new Date(); const t = new Date("2026-06-28T00:00:00"); return Math.ceil((t - now) / 86400000); } catch (e) { return 0; }
     },
     buildKo27() {
       this.buildKoPreview();

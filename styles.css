@@ -1276,3 +1276,32 @@ tr.clickrow.sel td{background:#e7f1ec}
 .nb-actions .btn{padding:8px 14px;font-size:.85rem;white-space:nowrap}
 .nb-x{background:none;border:0;color:var(--muted);font-size:.74rem;cursor:pointer;text-decoration:underline}
 @media(max-width:520px){.notif-banner{align-items:flex-start}.nb-actions{flex-direction:row;align-items:center}}
+
+/* ===== Cuadro visual estilo Mundial (bracket) ===== */
+.wcb-section{margin:14px 0}
+.wcb-title{font-weight:800;color:var(--green);font-size:.95rem;margin-bottom:9px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.wcb-leg{font-size:.68rem;color:var(--muted);font-weight:600;display:inline-flex;align-items:center;gap:3px}
+.wcb-leg .wd{display:inline-block;width:9px;height:9px;border-radius:50%;margin:0 1px 0 7px}
+.wd.in{background:#1f8f4e}.wd.out{background:#c0392b}.wd.maybe{background:#e0a106}
+.wcb-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;background:linear-gradient(135deg,#0b3d2e,#15573f);border-radius:14px;padding:14px 10px;box-shadow:inset 0 0 36px rgba(0,0,0,.28)}
+.wcb{display:flex;align-items:stretch;min-width:max-content}
+.wcb-col{display:flex;flex-direction:column;width:132px;flex:none}
+.wcb-col.champ{width:74px;justify-content:center}
+.wcb-col-h{text-align:center;color:var(--gold);font-weight:800;font-size:.66rem;letter-spacing:.06em;text-transform:uppercase;margin-bottom:10px;white-space:nowrap}
+.wcb-matches{display:flex;flex-direction:column;justify-content:space-around;flex:1}
+.wcb-m{position:relative;flex:1;display:flex;align-items:center;min-height:42px}
+.wcb-box{width:114px;background:rgba(255,255,255,.97);border-radius:8px;padding:3px 5px;box-shadow:0 2px 5px rgba(0,0,0,.3)}
+.wcb-t{display:flex;align-items:center;gap:4px;font-size:.72rem;font-weight:600;color:#26323b;padding:3px 2px;white-space:nowrap;overflow:hidden}
+.wcb-t+.wcb-t{border-top:1px solid #eef0f2}
+.wcb-fl{font-size:.95rem;flex:none}
+.wcb-nm{overflow:hidden;text-overflow:ellipsis}
+.wcb-t.s-in{color:#1f8f4e;font-weight:800}
+.wcb-t.s-out{opacity:.42;text-decoration:line-through}
+.wcb-t.ph{color:#9aa6a0;font-style:italic;font-size:.64rem;justify-content:center}
+/* conectores: stub horizontal + vertical que une parejas */
+.wcb-col:not(.champ):not(.r-final) .wcb-m::after{content:"";position:absolute;left:114px;top:50%;width:16px;height:2px;background:rgba(255,255,255,.4)}
+.wcb-col:not(.champ):not(.r-final) .wcb-m:nth-child(odd)::before{content:"";position:absolute;left:130px;top:50%;width:2px;height:50%;background:rgba(255,255,255,.4)}
+.wcb-col:not(.champ):not(.r-final) .wcb-m:nth-child(even)::before{content:"";position:absolute;left:130px;bottom:50%;width:2px;height:50%;background:rgba(255,255,255,.4)}
+.wcb-col.r-final .wcb-m::after{content:"";position:absolute;left:114px;top:50%;width:16px;height:2px;background:rgba(255,255,255,.4)}
+.wcb-trophy{font-size:2.1rem;text-align:center;width:100%;filter:drop-shadow(0 3px 7px rgba(0,0,0,.45))}
+.wcb-hint{font-size:.72rem;color:var(--muted);text-align:right;margin:6px 4px 0}

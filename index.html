@@ -13,7 +13,7 @@
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="Porra Mundial" />
-  <link rel="stylesheet" href="styles.css?v=64" />
+  <link rel="stylesheet" href="styles.css?v=65" />
 </head>
 <body x-data="porraApp()" x-init="init()" x-cloak>
 
@@ -28,7 +28,7 @@
       <template x-if="pool">
         <nav class="tabs">
           <button :class="{active: tab==='leaderboard'}" @click="openLeaderboard()">Clasificación</button>
-          <button :class="{active: tab==='ko27'}" @click="openKo27()">🗓️ 27 jun</button>
+          <button :class="{active: tab==='ko27'}" @click="openKo27()">🗓️ 28 jun</button>
           <button :class="{active: tab==='play'}" @click="tab='play'">Mi Porra</button>
           <button :class="{active: tab==='scoring'}" @click="tab='scoring'">📖 Puntuación</button>
           <button :class="{active: tab==='results'}" @click="openResults()">Resultados</button>
@@ -711,7 +711,7 @@
             <span x-text="'Semis '+det.bd.semis"></span>
             <span x-text="'Final '+det.bd.final"></span>
             <span x-text="'Campeón '+det.bd.campeon"></span>
-            <span class="bd-bonus" x-show="det.bd && det.bd.bonus" x-text="'🗓️ 27-jun '+(det.bd?det.bd.bonus:0)"></span>
+            <span class="bd-bonus" x-show="det.bd && det.bd.bonus" x-text="'🗓️ 28-jun '+(det.bd?det.bd.bonus:0)"></span>
             <span class="bd-extra" x-show="det.ex.total" x-text="'⭐ Especiales '+det.ex.total"></span>
           </div>
         </template>
@@ -938,7 +938,7 @@
   <!-- ===================== 27 DE JUNIO · CAMINO A LA FINAL (BONUS) ===================== -->
   <section x-show="view==='pool' && tab==='ko27'" class="ko27">
     <div class="step-head">
-      <h2>🗓️ 27 de junio · El camino a la final</h2>
+      <h2>🗓️ 28 de junio · El camino a la final</h2>
       <p class="muted">Cuando acabe la fase de grupos montarás tu <b>cuadro de eliminatorias</b> desde los <b>dieciseisavos (1/16)</b> hasta el campeón, para sumar <b>puntos extra</b>.</p>
     </div>
 
@@ -956,6 +956,45 @@
       <span class="k27-prog" x-text="(ko27?ko27.complete:0)+'/'+(ko27?ko27.total:12)+' grupos cerrados'"></span>
     </div>
 
+    <!-- CUADRO VISUAL estilo Mundial -->
+    <div class="wcb-section">
+      <div class="wcb-title">🏆 El cuadro · camino a la final <span class="wcb-leg"><i class="wd in"></i>clasifica <i class="wd out"></i>fuera <i class="wd maybe"></i>en juego</span></div>
+      <div class="wcb-wrap">
+        <div class="wcb">
+          <template x-for="r in (ko27?ko27.rounds:[])" :key="'wc'+r.key">
+            <div class="wcb-col" :class="{'r-final':r.key==='final'}">
+              <div class="wcb-col-h" x-text="r.title"></div>
+              <div class="wcb-matches">
+                <template x-for="m in r.matches" :key="r.key+'wm'+m.n">
+                  <div class="wcb-m">
+                    <div class="wcb-box">
+                      <template x-if="r.seeded">
+                        <div>
+                          <div class="wcb-t" :class="m.a.st?('s-'+m.a.st.k):''"><span class="wcb-fl" x-text="m.a.flag"></span><span class="wcb-nm" x-text="m.a.es"></span></div>
+                          <div class="wcb-t" :class="m.b.st?('s-'+m.b.st.k):''"><span class="wcb-fl" x-text="m.b.flag"></span><span class="wcb-nm" x-text="m.b.es"></span></div>
+                        </div>
+                      </template>
+                      <template x-if="!r.seeded">
+                        <div>
+                          <div class="wcb-t ph" x-text="m.fa"></div>
+                          <div class="wcb-t ph" x-text="m.fb"></div>
+                        </div>
+                      </template>
+                    </div>
+                  </div>
+                </template>
+              </div>
+            </div>
+          </template>
+          <div class="wcb-col champ">
+            <div class="wcb-col-h">Campeón</div>
+            <div class="wcb-matches"><div class="wcb-m"><div class="wcb-trophy">🏆</div></div></div>
+          </div>
+        </div>
+      </div>
+      <p class="wcb-hint">Desliza para ver todo el cuadro →</p>
+    </div>
+
     <!-- cómo puntúa el bonus -->
     <div class="k27-scoring">
       <span class="k27-sc-h">⭐ Puntos BONUS <small>· la mitad, columna aparte</small></span>
@@ -969,18 +1008,18 @@
     <details class="k27-cmp" open>
       <summary>📊 Cómo puntúa cada cosa — comparado con tu predicción inicial</summary>
       <div class="k27-cmp-body">
-        <p class="tiny">Hay <b>dos predicciones distintas</b> que suman puntos por separado. La de <b>antes del Mundial</b> la hiciste a ciegas (vale más); la del <b>27 de junio</b> la harás con los cruces ya conocidos (vale la mitad y va en columna aparte). En las dos puntúas igual: <b>por cada equipo tuyo que llega a cada ronda</b>, no por acertar el rival.</p>
+        <p class="tiny">Hay <b>dos predicciones distintas</b> que suman puntos por separado. La de <b>antes del Mundial</b> la hiciste a ciegas (vale más); la del <b>28 de junio</b> la harás con los cruces ya conocidos (vale la mitad y va en columna aparte). En las dos puntúas igual: <b>por cada equipo tuyo que llega a cada ronda</b>, no por acertar el rival.</p>
 
         <div class="k27-keybox">
           <p class="k27-key-h">👥 Cuenta <u>CADA</u> equipo, no uno solo</p>
           <p>En cada ronda pones <b>varios</b> equipos (8 en octavos, <b>4 en semis</b>, 2 en la final…). <b>Cada uno que llegue suma por su cuenta</b> — clasificar, llegar a esa ronda o ganar.</p>
-          <p class="k27-key-ex">📌 Ejemplo: pones <b>4 equipos</b> en semis y llegan <b>3</b> → sumas <b>3 veces</b> (no una). Inicial = 3×<span x-text="settings.semis"></span> = <b x-text="(3*settings.semis)"></b> · 27-jun = 3×5 = <b>15</b>. Si llegaran los 4, ×4; si solo 1, ×1.</p>
+          <p class="k27-key-ex">📌 Ejemplo: pones <b>4 equipos</b> en semis y llegan <b>3</b> → sumas <b>3 veces</b> (no una). Inicial = 3×<span x-text="settings.semis"></span> = <b x-text="(3*settings.semis)"></b> · 28-jun = 3×5 = <b>15</b>. Si llegaran los 4, ×4; si solo 1, ×1.</p>
         </div>
 
         <div class="k27-table-wrap">
           <table class="k27-table">
             <thead>
-              <tr><th>Qué puntúa</th><th>🅰️ Inicial<small>antes del Mundial</small></th><th>🅱️ 27-jun<small>bonus</small></th></tr>
+              <tr><th>Qué puntúa</th><th>🅰️ Inicial<small>antes del Mundial</small></th><th>🅱️ 28-jun<small>bonus</small></th></tr>
             </thead>
             <tbody>
               <tr class="grp"><td colspan="3">Fase de grupos</td></tr>
@@ -1005,8 +1044,8 @@
           <li>👥 <b>Cada equipo cuenta por separado:</b> si clavas 2 de tus 4 semifinalistas, sumas 2; si clavas los 4, sumas 4. No es "uno", son todos los que aciertes.</li>
           <li>🔑 <b>No se acierta el cruce</b> (quién juega contra quién): se puntúa <b>a qué ronda llega</b> cada equipo que pones, da igual el rival y por dónde pase.</li>
           <li>➕ <b>Se acumula por equipo:</b> un equipo que pones de campeón y va ganando te da octavos+cuartos+semis+final+campeón en cada ronda que supera. Y eso, por cada equipo tuyo a la vez.</li>
-          <li>📊 <b>Por separado:</b> el 27-jun suma en su <b>propia columna</b>, pero cuenta para el total de la clasificación. Lo difícil (la inicial) sigue pesando el doble.</li>
-          <li>⚖️ <b>Ejemplo:</b> si pones a un equipo de semifinalista y llega, en la inicial son <b x-text="'+'+settings.semis"></b> (acumulando octavos y cuartos antes) y en el 27-jun <b>+5</b> (acumulando +2 y +4). La misma idea, la mitad de puntos.</li>
+          <li>📊 <b>Por separado:</b> el 28-jun suma en su <b>propia columna</b>, pero cuenta para el total de la clasificación. Lo difícil (la inicial) sigue pesando el doble.</li>
+          <li>⚖️ <b>Ejemplo:</b> si pones a un equipo de semifinalista y llega, en la inicial son <b x-text="'+'+settings.semis"></b> (acumulando octavos y cuartos antes) y en el 28-jun <b>+5</b> (acumulando +2 y +4). La misma idea, la mitad de puntos.</li>
         </ul>
       </div>
     </details>
@@ -1081,8 +1120,8 @@
     <template x-if="!ko27Editable">
       <template x-for="r in (ko27?ko27.rounds:[]).filter(x=>x.key===ko27Round)" :key="'rd'+r.key">
         <div>
-          <p class="k27-note" x-show="r.seeded">Cruces <b>provisionales</b> según cómo van los grupos ahora mismo. <span x-show="!(ko27&&ko27.ready)">Irán cambiando hasta el 27.</span> <span class="ok" x-show="ko27&&ko27.ready">✅ ya son los reales.</span></p>
-          <p class="k27-note" x-show="!r.seeded">Esta ronda se irá dibujando con <b>los ganadores que elijas</b> a partir del 27 de junio.</p>
+          <p class="k27-note" x-show="r.seeded">Cruces <b>provisionales</b> según cómo van los grupos ahora mismo. <span x-show="!(ko27&&ko27.ready)">Irán cambiando hasta el 28.</span> <span class="ok" x-show="ko27&&ko27.ready">✅ ya son los reales.</span></p>
+          <p class="k27-note" x-show="!r.seeded">Esta ronda se irá dibujando con <b>los ganadores que elijas</b> a partir del 28 de junio.</p>
           <div class="k27-list">
             <template x-for="m in r.matches" :key="r.key+'m'+m.n">
               <div class="k27-m" :class="{seeded:r.seeded}">
@@ -1125,7 +1164,7 @@
         <div class="sp-over-c"><span class="sp-emo">📊</span><b>Grupos</b><small>orden y quién clasifica</small></div>
         <div class="sp-over-c"><span class="sp-emo">🥉</span><b>Mejores terceros</b><small>los 8 que pasan</small></div>
         <div class="sp-over-c"><span class="sp-emo">🏆</span><b>Eliminatorias</b><small>tu cuadro inicial</small></div>
-        <div class="sp-over-c"><span class="sp-emo">🗓️</span><b>Bonus 27-jun</b><small>2º cuadro · la mitad</small></div>
+        <div class="sp-over-c"><span class="sp-emo">🗓️</span><b>Bonus 28-jun</b><small>2º cuadro · la mitad</small></div>
         <div class="sp-over-c"><span class="sp-emo">⭐</span><b>Especiales</b><small>pichichi, portero…</small></div>
       </div>
     </div>
@@ -1235,9 +1274,9 @@
       </div>
     </div>
 
-    <!-- 4. BONUS 27-jun -->
+    <!-- 4. BONUS 28-jun -->
     <div class="sp-block">
-      <h3 class="sp-h"><span class="sp-n">🗓️</span> 4. Cuadro del 27 de junio (bonus)</h3>
+      <h3 class="sp-h"><span class="sp-n">🗓️</span> 4. Cuadro del 28 de junio (bonus)</h3>
       <p class="sp-p">Cuando acaben los grupos montarás <b>otro cuadro</b> con los cruces ya conocidos. Puntúa <b>igual</b> (lo lejos que llega cada equipo), pero vale <b>la mitad</b> y suma en una <b>columna aparte</b>.</p>
       <div class="sp-pts">
         <div class="sp-pt"><span>octavos</span><span class="pp b">+2</span></div>
@@ -1273,7 +1312,7 @@
         <div class="vex-tot">Llegan 3 de tus 4 a cuartos → <b>12 pts</b> <span class="muted">(3 × 4)</span></div>
       </div>
 
-      <button class="sp-go" @click="openKo27()">Ver el apartado <b>🗓️ 27 jun</b> y su tabla comparativa →</button>
+      <button class="sp-go" @click="openKo27()">Ver el apartado <b>🗓️ 28 jun</b> y su tabla comparativa →</button>
     </div>
 
     <!-- 5. ESPECIALES -->
@@ -1747,10 +1786,10 @@
   </div>
 
   <!-- ====== Dependencias ====== -->
-  <script src="data.js?v=64"></script>
-  <script src="engine.js?v=64"></script>
+  <script src="data.js?v=65"></script>
+  <script src="engine.js?v=65"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
-  <script src="app.js?v=64"></script>
+  <script src="app.js?v=65"></script>
   <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.1/dist/cdn.min.js"></script>
 </body>
 </html>
