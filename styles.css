@@ -1422,21 +1422,15 @@ tr.clickrow.sel td{background:#e7f1ec}
 @media(min-width:760px){
   .wcb-stage{width:auto}
 }
-/* móvil estrecho: banderas (sin nombres) + centro compacto para que quepa TODO */
-@media(max-width:640px){
-  .wcb-nm{display:none}
-  .wcb-t{justify-content:center;gap:0;padding:4px 1px}
-  .wcb-fl{font-size:1.05rem}
-  .wcb-st{position:absolute;right:2px;width:5px;height:5px}
-  .wcb-t{position:relative}
-  .wcb-col-h span{font-size:.5rem;padding:3px 5px;letter-spacing:.02em}
-  .wcb-final .wcb-box{width:54px}
-  .wcb-final .wcb-t{font-size:.5rem}
-  .wcb-center .wcb-cup-ic{font-size:1.8rem}
-  .wcb-center .wcb-rays{width:64px;height:64px}
-  .wcb-cup-team{font-size:.56rem;max-width:64px}
-  .wcb-hint{display:none}
-  .wcb-hero-h{font-size:1.1rem}
+/* móvil: bracket con SCROLL horizontal pero LEGIBLE (banderas + nombres) */
+@media(max-width:760px){
+  .wcb-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;padding:10px 12px 14px}
+  .wcb-mirror{width:max-content;min-width:max-content}
+  .wcb-mirror .wcb-side,.wcb-mirror .wcb-center{flex:0 0 auto}
+  .wcb-mirror .wcb-col{flex:0 0 auto;width:128px}
+  .wcb-nm{display:block}
+  .wcb-hero-h{font-size:1.2rem}
+  .wcb-hint{display:block}
 }
 
 /* ===== LIMPIEZA: bracket nítido y ordenado ===== */
@@ -1488,16 +1482,3 @@ tr.clickrow.sel td{background:#e7f1ec}
 .wcb-final::before{content:"";position:absolute;left:-14px;top:50%;width:14px;height:2px;background:#f4c84a}
 .wcb-final::after{content:"";position:absolute;right:-14px;top:50%;width:14px;height:2px;background:#f4c84a}
 
-/* móvil: conector pequeño para que las banderas se vean */
-@media(max-width:640px){
-  .wcb-mirror .wcb-box{width:calc(100% - 9px)}
-  .wcb-side .wcb-col:not(:last-child) .wcb-m::after{right:4px;width:5px}
-  .wcb-side .wcb-col:not(:last-child) .wcb-m:nth-child(odd)::before{right:4px}
-  .wcb-side .wcb-col:not(:last-child) .wcb-m:nth-child(even)::before{right:4px}
-  .wcb-side .wcb-col:not(:first-child) .wcb-in{left:-5px;width:5px}
-  .wcb-side .wcb-col:last-child .wcb-m::after{right:-6px;width:6px}
-  .wcb-final::before{left:-6px;width:6px}
-  .wcb-final::after{right:-6px;width:6px}
-  .wcb-wrap{padding:8px 8px 14px}
-  .wcb-box{padding:3px}
-}
