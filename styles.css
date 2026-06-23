@@ -1381,3 +1381,25 @@ tr.clickrow.sel td{background:#e7f1ec}
 .wcb-center .wcb-cup{margin-top:2px}
 .wcb-center .wcb-rays{width:118px;height:118px}
 .wcb-center .wcb-cup-ic{font-size:3.4rem}
+
+/* ===== FIT-TO-WIDTH: el cuadro ocupa todo el ancho (sin scroll en escritorio) ===== */
+.wcb-mirror{display:flex;align-items:stretch;width:100%;min-width:0}
+.wcb-side{display:flex;align-items:stretch;flex:1;min-width:0}
+.wcb-center{flex:0 0 auto}
+.wcb-mirror .wcb-col{width:auto;flex:1;min-width:108px}
+.wcb-mirror .wcb-box{width:calc(100% - 24px)}
+/* conectores anclados a los BORDES de columna (no dependen del ancho) */
+.wcb-side .wcb-col .wcb-m::after{content:"";position:absolute;left:calc(100% - 24px);top:50%;width:24px;height:2px;background:linear-gradient(90deg,rgba(245,197,66,.95),rgba(245,197,66,.3));box-shadow:0 0 5px rgba(245,197,66,.5)}
+.wcb-side .wcb-col:not(:last-child) .wcb-m:nth-child(odd)::before{content:"";position:absolute;left:100%;top:50%;width:2px;height:50%;background:rgba(245,197,66,.6);box-shadow:0 0 5px rgba(245,197,66,.45)}
+.wcb-side .wcb-col:not(:last-child) .wcb-m:nth-child(even)::before{content:"";position:absolute;left:100%;bottom:50%;width:2px;height:50%;background:rgba(245,197,66,.6);box-shadow:0 0 5px rgba(245,197,66,.45)}
+.wcb-side .wcb-col:last-child .wcb-m::before{display:none}
+/* ESCRITORIO: romper el límite de 1080px y llenar la pantalla, sin scroll */
+@media(min-width:1000px){
+  .wcb-stage{width:94vw;max-width:1760px;margin-left:calc(50% - 47vw);margin-right:calc(50% - 47vw)}
+  .wcb-mirror .wcb-col{min-width:0}
+  .wcb-wrap{overflow-x:hidden}
+  .wcb-t{font-size:.82rem;padding:5px 6px}
+  .wcb-fl{font-size:1.15rem}
+  .wcb-box{padding:5px}
+  .wcb-hint{display:none}
+}
