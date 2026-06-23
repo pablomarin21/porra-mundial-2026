@@ -1403,3 +1403,37 @@ tr.clickrow.sel td{background:#e7f1ec}
   .wcb-box{padding:5px}
   .wcb-hint{display:none}
 }
+
+/* ===== GARANTÍA DE FIT TOTAL: el cuadro SIEMPRE entra, sin scroll horizontal ===== */
+.wcb-mirror{display:flex;width:100%;min-width:0}
+.wcb-side{display:flex;flex:1;min-width:0}
+.wcb-center{flex:0 0 auto}
+.wcb-mirror .wcb-col{width:auto;flex:1;min-width:0}
+.wcb-mirror .wcb-m{justify-content:flex-start}
+.wcb-mirror .wcb-box{width:80%}
+/* conectores en PORCENTAJE (escalan con el ancho de columna) */
+.wcb-side .wcb-col .wcb-m::after{left:80%;width:20%}
+.wcb-side .wcb-col:not(:last-child) .wcb-m:nth-child(odd)::before{left:100%}
+.wcb-side .wcb-col:not(:last-child) .wcb-m:nth-child(even)::before{left:100%}
+.wcb-side .wcb-col:last-child .wcb-m::before{display:none}
+.wcb-wrap{overflow-x:hidden}
+/* pantallas medianas/grandes: usar todo el ancho de la pantalla */
+@media(min-width:760px){
+  .wcb-stage{width:96vw;max-width:1760px;margin-left:calc(50% - 48vw);margin-right:calc(50% - 48vw)}
+}
+/* móvil estrecho: banderas (sin nombres) + centro compacto para que quepa TODO */
+@media(max-width:640px){
+  .wcb-nm{display:none}
+  .wcb-t{justify-content:center;gap:0;padding:4px 1px}
+  .wcb-fl{font-size:1.05rem}
+  .wcb-st{position:absolute;right:2px;width:5px;height:5px}
+  .wcb-t{position:relative}
+  .wcb-col-h span{font-size:.5rem;padding:3px 5px;letter-spacing:.02em}
+  .wcb-final .wcb-box{width:54px}
+  .wcb-final .wcb-t{font-size:.5rem}
+  .wcb-center .wcb-cup-ic{font-size:1.8rem}
+  .wcb-center .wcb-rays{width:64px;height:64px}
+  .wcb-cup-team{font-size:.56rem;max-width:64px}
+  .wcb-hint{display:none}
+  .wcb-hero-h{font-size:1.1rem}
+}
