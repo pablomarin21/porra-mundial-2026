@@ -1359,3 +1359,25 @@ tr.clickrow.sel td{background:#e7f1ec}
 @keyframes wcbPulse{0%,100%{transform:scale(1);opacity:1}50%{transform:scale(1.5);opacity:.6}}
 @keyframes wcbSpin{to{transform:rotate(360deg)}}
 @media(prefers-reduced-motion:reduce){.wcb-col,.wcb-hero-cup,.wcb-cup-ic,.wcb-rays,.d-maybe{animation:none}}
+
+/* ===== MIRROR: dos mitades convergiendo al trofeo central ===== */
+.wcb-mirror{display:flex;align-items:stretch;min-width:max-content}
+.wcb-side{display:flex;align-items:stretch}
+.wcb-side.right{transform:scaleX(-1)}
+.wcb-side.right .wcb-box,.wcb-side.right .wcb-col-h span{transform:scaleX(-1)}
+.wcb-col-h span{display:inline-block}
+.wcb-mirror .wcb-m{justify-content:flex-start}
+/* conectores por lado (anula los lineales antiguos) */
+.wcb-side .wcb-col .wcb-m::after{content:"";position:absolute;left:122px;top:50%;width:22px;height:2px;background:linear-gradient(90deg, rgba(245,197,66,.95), rgba(245,197,66,.3));box-shadow:0 0 5px rgba(245,197,66,.5)}
+.wcb-side .wcb-col:not(:last-child) .wcb-m:nth-child(odd)::before{content:"";position:absolute;left:144px;top:50%;width:2px;height:50%;background:rgba(245,197,66,.6);box-shadow:0 0 5px rgba(245,197,66,.45)}
+.wcb-side .wcb-col:not(:last-child) .wcb-m:nth-child(even)::before{content:"";position:absolute;left:144px;bottom:50%;width:2px;height:50%;background:rgba(245,197,66,.6);box-shadow:0 0 5px rgba(245,197,66,.45)}
+.wcb-side .wcb-col:last-child .wcb-m::before{display:none}
+/* CENTRO: final + copa */
+.wcb-center{display:flex;flex-direction:column;align-items:center;justify-content:center;flex:none;padding:0 2px;position:relative;z-index:1}
+.wcb-col-h.center span{background:linear-gradient(180deg,#ffe9a8,#f5c542);color:#0c4733;font-weight:900;font-size:.62rem;letter-spacing:.07em;text-transform:uppercase;padding:4px 14px;border-radius:99px;box-shadow:0 2px 8px rgba(0,0,0,.3)}
+.wcb-col-h.center{margin-bottom:10px;text-align:center}
+.wcb-final{display:flex;align-items:center;margin-bottom:12px;position:relative}
+.wcb-final .wcb-box{width:126px;box-shadow:0 6px 18px rgba(0,0,0,.45),0 0 0 1.5px rgba(245,197,66,.55)}
+.wcb-center .wcb-cup{margin-top:2px}
+.wcb-center .wcb-rays{width:118px;height:118px}
+.wcb-center .wcb-cup-ic{font-size:3.4rem}

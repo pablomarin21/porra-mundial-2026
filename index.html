@@ -13,7 +13,7 @@
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="Porra Mundial" />
-  <link rel="stylesheet" href="styles.css?v=66" />
+  <link rel="stylesheet" href="styles.css?v=67" />
 </head>
 <body x-data="porraApp()" x-init="init()" x-cloak>
 
@@ -968,44 +968,72 @@
         </div>
       </div>
       <div class="wcb-wrap">
-        <div class="wcb">
-          <template x-for="(r,ri) in (ko27?ko27.rounds:[])" :key="'wc'+r.key">
-            <div class="wcb-col" :class="{'r-final':r.key==='final'}" :style="'--ci:'+ri">
-              <div class="wcb-col-h"><span x-text="r.title"></span></div>
-              <div class="wcb-matches">
-                <template x-for="m in r.matches" :key="r.key+'wm'+m.n">
-                  <div class="wcb-m">
-                    <div class="wcb-box" :class="{seeded:r.seeded}">
-                      <template x-if="r.seeded">
-                        <div>
+        <div class="wcb wcb-mirror">
+          <!-- MITAD IZQUIERDA -->
+          <div class="wcb-side left">
+            <template x-for="(col,ci) in (ko27&&ko27.bracket?ko27.bracket.leftCols:[])" :key="'L'+col.key">
+              <div class="wcb-col" :style="'--ci:'+ci">
+                <div class="wcb-col-h"><span x-text="col.title"></span></div>
+                <div class="wcb-matches">
+                  <template x-for="m in col.matches" :key="'L'+col.key+m.n">
+                    <div class="wcb-m">
+                      <div class="wcb-box" :class="{seeded:col.seeded}">
+                        <template x-if="col.seeded"><div>
                           <div class="wcb-t" :class="m.a.st?('s-'+m.a.st.k):''"><span class="wcb-fl" x-text="m.a.flag"></span><span class="wcb-nm" x-text="m.a.es"></span><i class="wcb-st" x-show="m.a.st" :class="m.a.st?('d-'+m.a.st.k):''"></i></div>
                           <div class="wcb-t" :class="m.b.st?('s-'+m.b.st.k):''"><span class="wcb-fl" x-text="m.b.flag"></span><span class="wcb-nm" x-text="m.b.es"></span><i class="wcb-st" x-show="m.b.st" :class="m.b.st?('d-'+m.b.st.k):''"></i></div>
-                        </div>
-                      </template>
-                      <template x-if="!r.seeded">
-                        <div>
+                        </div></template>
+                        <template x-if="!col.seeded"><div>
                           <div class="wcb-t ph" x-text="m.fa"></div>
                           <div class="wcb-t ph" x-text="m.fb"></div>
-                        </div>
-                      </template>
+                        </div></template>
+                      </div>
                     </div>
-                  </div>
-                </template>
-              </div>
-            </div>
-          </template>
-          <div class="wcb-col champ" :style="'--ci:5'">
-            <div class="wcb-col-h">Campeón</div>
-            <div class="wcb-matches"><div class="wcb-m">
-              <div class="wcb-cup">
-                <div class="wcb-rays"></div>
-                <div class="wcb-cup-ic">🏆</div>
-                <div class="wcb-cup-team">
-                  <template x-if="myChampion2"><span><span class="wcb-fl" x-text="flag(myChampion2)"></span> <b x-text="es(myChampion2)"></b></span></template>
-                  <template x-if="!myChampion2"><span class="wcb-cup-q">¿Quién la levanta?</span></template>
+                  </template>
                 </div>
               </div>
-            </div></div>
+            </template>
+          </div>
+          <!-- CENTRO: final + trofeo -->
+          <div class="wcb-center">
+            <div class="wcb-col-h center"><span>Final</span></div>
+            <template x-for="m in (ko27&&ko27.bracket?ko27.bracket.finalCol.matches:[])" :key="'F'+m.n">
+              <div class="wcb-final"><div class="wcb-box"><div>
+                <div class="wcb-t ph" x-text="m.fa"></div>
+                <div class="wcb-t ph" x-text="m.fb"></div>
+              </div></div></div>
+            </template>
+            <div class="wcb-cup">
+              <div class="wcb-rays"></div>
+              <div class="wcb-cup-ic">🏆</div>
+              <div class="wcb-cup-team">
+                <template x-if="myChampion2"><span><span class="wcb-fl" x-text="flag(myChampion2)"></span> <b x-text="es(myChampion2)"></b></span></template>
+                <template x-if="!myChampion2"><span class="wcb-cup-q">¿Quién la levanta?</span></template>
+              </div>
+            </div>
+          </div>
+          <!-- MITAD DERECHA (espejo) -->
+          <div class="wcb-side right">
+            <template x-for="(col,ci) in (ko27&&ko27.bracket?ko27.bracket.rightCols:[])" :key="'R'+col.key">
+              <div class="wcb-col" :style="'--ci:'+ci">
+                <div class="wcb-col-h"><span x-text="col.title"></span></div>
+                <div class="wcb-matches">
+                  <template x-for="m in col.matches" :key="'R'+col.key+m.n">
+                    <div class="wcb-m">
+                      <div class="wcb-box" :class="{seeded:col.seeded}">
+                        <template x-if="col.seeded"><div>
+                          <div class="wcb-t" :class="m.a.st?('s-'+m.a.st.k):''"><span class="wcb-fl" x-text="m.a.flag"></span><span class="wcb-nm" x-text="m.a.es"></span><i class="wcb-st" x-show="m.a.st" :class="m.a.st?('d-'+m.a.st.k):''"></i></div>
+                          <div class="wcb-t" :class="m.b.st?('s-'+m.b.st.k):''"><span class="wcb-fl" x-text="m.b.flag"></span><span class="wcb-nm" x-text="m.b.es"></span><i class="wcb-st" x-show="m.b.st" :class="m.b.st?('d-'+m.b.st.k):''"></i></div>
+                        </div></template>
+                        <template x-if="!col.seeded"><div>
+                          <div class="wcb-t ph" x-text="m.fa"></div>
+                          <div class="wcb-t ph" x-text="m.fb"></div>
+                        </div></template>
+                      </div>
+                    </div>
+                  </template>
+                </div>
+              </div>
+            </template>
           </div>
         </div>
       </div>
@@ -1803,10 +1831,10 @@
   </div>
 
   <!-- ====== Dependencias ====== -->
-  <script src="data.js?v=66"></script>
-  <script src="engine.js?v=66"></script>
+  <script src="data.js?v=67"></script>
+  <script src="engine.js?v=67"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
-  <script src="app.js?v=66"></script>
+  <script src="app.js?v=67"></script>
   <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.1/dist/cdn.min.js"></script>
 </body>
 </html>

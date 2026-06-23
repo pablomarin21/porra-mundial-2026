@@ -1302,7 +1302,26 @@ window.porraApp = function () {
         { key: "final", title: "Final", sub: "2 → 🏆", seeded: false,
           matches: [{ n: 1, fa: "Gd. Semis #" + iSF[D.FINAL.a], fb: "Gd. Semis #" + iSF[D.FINAL.b] }] },
       ];
-      this.ko27 = { rounds, ready: kp.ready, complete: kp.complete, total: kp.total, nIn: kp.nIn, nOut: kp.nOut, nMaybe: kp.nMaybe };
+      // --- estructura ESPEJO (dos mitades reales del cuadro convergiendo al trofeo) ---
+      const byN = {}; rounds.forEach((r) => { byN[r.key] = {}; r.matches.forEach((m) => (byN[r.key][m.n] = m)); });
+      const pick = (key, ns) => ns.map((n) => byN[key][n]).filter(Boolean);
+      // orden visual (de cruces) verificado contra el bracket FIFA: izquierda alimenta SF1, derecha SF2
+      const left = {
+        r32: pick("r32", [2, 5, 1, 3, 11, 12, 9, 10]),   // 74,77,73,75,83,84,81,82
+        r16: pick("r16", [1, 2, 5, 6]),                  // 89,90,93,94
+        qf: pick("qf", [1, 2]),                          // 97,98
+        sf: pick("sf", [1]),                             // 101
+      };
+      const right = {
+        r32: pick("r32", [4, 6, 7, 8, 14, 16, 13, 15]),  // 76,78,79,80,86,88,85,87
+        r16: pick("r16", [3, 4, 7, 8]),                  // 91,92,95,96
+        qf: pick("qf", [3, 4]),                          // 99,100
+        sf: pick("sf", [2]),                             // 102
+      };
+      const meta = { r32: { title: "1/16", seeded: true }, r16: { title: "Octavos", seeded: false }, qf: { title: "Cuartos", seeded: false }, sf: { title: "Semis", seeded: false } };
+      const cols = (side) => ["r32", "r16", "qf", "sf"].map((k) => ({ key: k, title: meta[k].title, seeded: meta[k].seeded, matches: side[k] }));
+      const bracket = { leftCols: cols(left), rightCols: cols(right), finalCol: { key: "final", title: "Final", seeded: false, matches: byN.final[1] ? [byN.final[1]] : [] } };
+      this.ko27 = { rounds, bracket, ready: kp.ready, complete: kp.complete, total: kp.total, nIn: kp.nIn, nOut: kp.nOut, nMaybe: kp.nMaybe };
     },
     openKo27() { this.tab = "ko27"; this.selectedId = null; this.det = null; this.buildKo27(); this.loadBracket2(); },
 
