@@ -5,6 +5,7 @@
   --ink:#14201b; --muted:#6b7d75; --line:#e3ebe6; --bg:#f3f7f4;
   --ok:#1f9d57; --err:#d8453b; --warn:#e08a1e; --blue:#2b6cb0;
   --shadow:0 6px 24px rgba(11,61,46,.10); --r:14px;
+  --app-w:min(1560px, 95vw);
 }
 *{box-sizing:border-box}
 [x-cloak]{display:none!important}
@@ -28,14 +29,14 @@ input,select{font-family:inherit;font-size:16px}
     repeating-linear-gradient(90deg, rgba(255,255,255,.055) 0 26px, rgba(255,255,255,0) 26px 52px),
     linear-gradient(125deg, #0a3527, var(--green2) 60%, #0a3527);
   border-bottom:3px solid var(--gold)}
-.topbar-in{max-width:1080px;margin:0 auto;padding:10px 14px;display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.topbar-in{max-width:var(--app-w);margin:0 auto;padding:10px 14px;display:flex;align-items:center;gap:14px;flex-wrap:wrap}
 .brand{display:flex;align-items:center;gap:9px;color:#fff;text-decoration:none;font-size:1.12rem}
 .brand .ball{font-size:1.4rem}
 .brand b{color:var(--gold)}
 .tabs{display:flex;gap:4px;margin-left:auto;flex-wrap:wrap}
 .tabs button{background:rgba(255,255,255,.10);border:0;color:#fff;padding:8px 13px;border-radius:999px;font-size:.86rem;font-weight:600}
 .tabs button.active{background:var(--gold);color:var(--green)}
-.poolbar{max-width:1080px;margin:0 auto;padding:0 14px 10px;display:flex;gap:10px;align-items:center;flex-wrap:wrap;color:#dff0e8;font-size:.85rem}
+.poolbar{max-width:var(--app-w);margin:0 auto;padding:0 14px 10px;display:flex;gap:10px;align-items:center;flex-wrap:wrap;color:#dff0e8;font-size:.85rem}
 .code-chip{background:rgba(255,255,255,.12);padding:5px 11px;border-radius:999px;cursor:pointer}
 .code-chip b{color:var(--gold)}
 .lock-chip{padding:4px 10px;border-radius:999px;font-weight:600;font-size:.78rem}
@@ -43,7 +44,7 @@ input,select{font-family:inherit;font-size:16px}
 .lock-chip.closed{background:rgba(216,69,59,.25);color:#ffd3cf}
 
 /* ===== Layout ===== */
-.wrap{max-width:1080px;margin:0 auto;padding:18px 14px 60px}
+.wrap{max-width:var(--app-w);margin:0 auto;padding:18px 14px 60px}
 .card{background:#fff;border:1px solid var(--line);border-radius:var(--r);padding:18px;box-shadow:var(--shadow)}
 .card.slim{padding:15px}
 .card.narrow{max-width:420px;margin:30px auto}
@@ -1267,7 +1268,7 @@ tr.clickrow.sel td{background:#e7f1ec}
 .notif-chip:disabled{opacity:.6}
 
 /* banner de activar avisos (un toque) */
-.notif-banner{max-width:1080px;margin:10px auto 0;padding:11px 14px;display:flex;align-items:center;gap:12px;background:linear-gradient(135deg,#fff7e6,#fdecd0);border:1px solid #f0d79a;border-radius:14px;box-shadow:0 2px 8px rgba(0,0,0,.06)}
+.notif-banner{max-width:var(--app-w);margin:10px auto 0;padding:11px 14px;display:flex;align-items:center;gap:12px;background:linear-gradient(135deg,#fff7e6,#fdecd0);border:1px solid #f0d79a;border-radius:14px;box-shadow:0 2px 8px rgba(0,0,0,.06)}
 .nb-ic{font-size:1.6rem;flex:none}
 .nb-body{flex:1;min-width:0}
 .nb-body b{display:block;color:#26323b;font-size:.95rem}
@@ -1395,7 +1396,7 @@ tr.clickrow.sel td{background:#e7f1ec}
 .wcb-side .wcb-col:last-child .wcb-m::before{display:none}
 /* ESCRITORIO: romper el límite de 1080px y llenar la pantalla, sin scroll */
 @media(min-width:1000px){
-  .wcb-stage{width:94vw;max-width:1760px;margin-left:calc(50% - 47vw);margin-right:calc(50% - 47vw)}
+  .wcb-stage{width:auto}
   .wcb-mirror .wcb-col{min-width:0}
   .wcb-wrap{overflow-x:hidden}
   .wcb-t{font-size:.82rem;padding:5px 6px}
@@ -1419,7 +1420,7 @@ tr.clickrow.sel td{background:#e7f1ec}
 .wcb-wrap{overflow-x:hidden}
 /* pantallas medianas/grandes: usar todo el ancho de la pantalla */
 @media(min-width:760px){
-  .wcb-stage{width:96vw;max-width:1760px;margin-left:calc(50% - 48vw);margin-right:calc(50% - 48vw)}
+  .wcb-stage{width:auto}
 }
 /* móvil estrecho: banderas (sin nombres) + centro compacto para que quepa TODO */
 @media(max-width:640px){
@@ -1453,3 +1454,18 @@ tr.clickrow.sel td{background:#e7f1ec}
 .wcb-t{font-weight:700}
 /* el centro: la final también con esqueleto limpio */
 .wcb-final .wcb-skel{width:54%}
+
+/* ===== APROVECHAR EL ANCHO en escritorio (toda la app amplia) ===== */
+@media(min-width:980px){
+  .wrap{padding-left:24px;padding-right:24px}
+  /* fichas del parte en 2 columnas */
+  .parte-players{grid-template-columns:1fr 1fr;gap:11px}
+  /* clasificación: más aire */
+  /* tabla comparativa de puntuación: centrar y limitar para legibilidad */
+  .k27-table{max-width:900px}
+  /* apartado puntuación: bloques en 2 columnas para no desperdiciar */
+  .scoring-page .sp-block{break-inside:avoid}
+}
+@media(min-width:1300px){
+  .parte-players{grid-template-columns:1fr 1fr 1fr}
+}
