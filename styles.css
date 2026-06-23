@@ -1437,3 +1437,19 @@ tr.clickrow.sel td{background:#e7f1ec}
   .wcb-hint{display:none}
   .wcb-hero-h{font-size:1.1rem}
 }
+
+/* ===== LIMPIEZA: bracket nítido y ordenado ===== */
+/* casillas vacías limpias (sin texto técnico) */
+.wcb-t.ph{justify-content:center;padding:6px 8px;min-height:13px}
+.wcb-skel{display:block;width:64%;height:6px;border-radius:99px;background:#dfe5e2}
+/* conectores NÍTIDOS: línea sólida dorada, sin desenfoque */
+.wcb-side .wcb-col .wcb-m::after{background:#f4c84a !important;box-shadow:none !important;height:2px}
+.wcb-side .wcb-col .wcb-m::before{background:#f4c84a !important;box-shadow:none !important;width:2px}
+.wcb-col.r-final .wcb-m::after{background:#f4c84a !important;box-shadow:none !important}
+/* césped más sutil para no ensuciar */
+.wcb-stage::before{opacity:.5}
+/* cajas: misma altura y bordes limpios */
+.wcb-box{box-shadow:0 2px 8px rgba(0,0,0,.28)}
+.wcb-t{font-weight:700}
+/* el centro: la final también con esqueleto limpio */
+.wcb-final .wcb-skel{width:54%}

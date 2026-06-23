@@ -13,7 +13,7 @@
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="Porra Mundial" />
-  <link rel="stylesheet" href="styles.css?v=69" />
+  <link rel="stylesheet" href="styles.css?v=70" />
 </head>
 <body x-data="porraApp()" x-init="init()" x-cloak>
 
@@ -983,8 +983,8 @@
                           <div class="wcb-t" :class="m.b.st?('s-'+m.b.st.k):''"><span class="wcb-fl" x-text="m.b.flag"></span><span class="wcb-nm" x-text="m.b.es"></span><i class="wcb-st" x-show="m.b.st" :class="m.b.st?('d-'+m.b.st.k):''"></i></div>
                         </div></template>
                         <template x-if="!col.seeded"><div>
-                          <div class="wcb-t ph" x-text="m.fa"></div>
-                          <div class="wcb-t ph" x-text="m.fb"></div>
+                          <div class="wcb-t ph"><span class="wcb-skel"></span></div>
+                          <div class="wcb-t ph"><span class="wcb-skel"></span></div>
                         </div></template>
                       </div>
                     </div>
@@ -998,8 +998,8 @@
             <div class="wcb-col-h center"><span>Final</span></div>
             <template x-for="m in (ko27&&ko27.bracket?ko27.bracket.finalCol.matches:[])" :key="'F'+m.n">
               <div class="wcb-final"><div class="wcb-box"><div>
-                <div class="wcb-t ph" x-text="m.fa"></div>
-                <div class="wcb-t ph" x-text="m.fb"></div>
+                <div class="wcb-t ph"><span class="wcb-skel"></span></div>
+                <div class="wcb-t ph"><span class="wcb-skel"></span></div>
               </div></div></div>
             </template>
             <div class="wcb-cup">
@@ -1025,8 +1025,8 @@
                           <div class="wcb-t" :class="m.b.st?('s-'+m.b.st.k):''"><span class="wcb-fl" x-text="m.b.flag"></span><span class="wcb-nm" x-text="m.b.es"></span><i class="wcb-st" x-show="m.b.st" :class="m.b.st?('d-'+m.b.st.k):''"></i></div>
                         </div></template>
                         <template x-if="!col.seeded"><div>
-                          <div class="wcb-t ph" x-text="m.fa"></div>
-                          <div class="wcb-t ph" x-text="m.fb"></div>
+                          <div class="wcb-t ph"><span class="wcb-skel"></span></div>
+                          <div class="wcb-t ph"><span class="wcb-skel"></span></div>
                         </div></template>
                       </div>
                     </div>
@@ -1831,10 +1831,10 @@
   </div>
 
   <!-- ====== Dependencias ====== -->
-  <script src="data.js?v=69"></script>
-  <script src="engine.js?v=69"></script>
+  <script src="data.js?v=70"></script>
+  <script src="engine.js?v=70"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
-  <script src="app.js?v=69"></script>
+  <script src="app.js?v=70"></script>
   <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.1/dist/cdn.min.js"></script>
 </body>
 </html>
