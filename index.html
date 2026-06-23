@@ -13,7 +13,7 @@
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="Porra Mundial" />
-  <link rel="stylesheet" href="styles.css?v=63" />
+  <link rel="stylesheet" href="styles.css?v=64" />
 </head>
 <body x-data="porraApp()" x-init="init()" x-cloak>
 
@@ -947,10 +947,10 @@
       <div class="k27-lock-l">
         <span class="k27-lock-ic" x-text="ko27Editable?'🟢':'🔒'"></span>
         <div>
-          <b x-text="ko27Editable?'¡Abierto! Monta tu camino a la final':'Se abre el 27 de junio'"></b>
-          <small x-show="!ko27Editable && ko27DaysLeft>0" x-text="'Faltan '+ko27DaysLeft+' día'+(ko27DaysLeft===1?'':'s')+' · al acabar la fase de grupos'"></small>
+          <b x-text="ko27Editable?'¡Abierto! Monta tu camino a la final':'Se abre al acabar los grupos'"></b>
+          <small x-show="!ko27Editable && ko27DaysLeft>0" x-text="'Faltan '+ko27DaysLeft+' día'+(ko27DaysLeft===1?'':'s')+' · los grupos acaban la madrugada del 28 (España)'"></small>
           <small x-show="!ko27Editable && ko27DaysLeft<=0">en cuanto terminen todos los grupos</small>
-          <small x-show="ko27Editable">Elige los ganadores antes del primer 1/16 (28-jun). Puedes editar hasta entonces.</small>
+          <small x-show="ko27Editable">Elige los ganadores antes del <b>primer 1/16</b> (28-jun, 21:00 España). Puedes editar hasta entonces.</small>
         </div>
       </div>
       <span class="k27-prog" x-text="(ko27?ko27.complete:0)+'/'+(ko27?ko27.total:12)+' grupos cerrados'"></span>
@@ -1747,10 +1747,10 @@
   </div>
 
   <!-- ====== Dependencias ====== -->
-  <script src="data.js?v=63"></script>
-  <script src="engine.js?v=63"></script>
+  <script src="data.js?v=64"></script>
+  <script src="engine.js?v=64"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
-  <script src="app.js?v=63"></script>
+  <script src="app.js?v=64"></script>
   <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.1/dist/cdn.min.js"></script>
 </body>
 </html>

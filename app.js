@@ -1310,7 +1310,7 @@ window.porraApp = function () {
     get ko27Editable() {
       if (!this.me || !this.me.id) return false;
       if (!this.ko27 || !this.ko27.ready) return false;
-      try { return new Date() < new Date("2026-06-28T16:00:00"); } catch (e) { return true; }
+      try { return new Date() < new Date("2026-06-28T18:45:00Z"); } catch (e) { return true; }
     },
     loadBracket2() {
       const e = this.myEntry;
