@@ -13,7 +13,7 @@
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="Porra Mundial" />
-  <link rel="stylesheet" href="styles.css?v=75" />
+  <link rel="stylesheet" href="styles.css?v=76" />
 </head>
 <body x-data="porraApp()" x-init="init()" x-cloak>
 
@@ -664,8 +664,23 @@
 
         <div class="expl-state">
           <div class="expl-h">📅 Cómo van los grupos</div>
+          <p class="expl-livenote" x-show="explain && explain.hasLive">🔴 La <b>tabla en directo</b> incluye los partidos <b>en juego</b>. Esos puntos del orden <b>se confirman cuando los 4 equipos terminan la jornada</b> (por eso aún no cuentan).</p>
           <template x-for="g in (explain ? explain.groups : [])" :key="'eg'+g.L">
-            <div class="expl-g" :class="{off:!g.started}"><b x-text="'Grupo '+g.L"></b> · <span x-text="g.estado"></span><span class="muted" x-show="g.detalle" x-text="' — '+g.detalle"></span></div>
+            <div class="expl-g" :class="{off:!g.started, haslive:!!g.live}">
+              <div><b x-text="'Grupo '+g.L"></b> · <span x-text="g.estado"></span><span class="muted" x-show="g.detalle" x-text="' — '+g.detalle"></span></div>
+              <template x-if="g.live">
+                <div class="expl-live">
+                  <div class="el-h">🔴 EN DIRECTO
+                    <template x-for="(gm,gi) in g.live.games" :key="'elg'+g.L+gi"><span class="el-game" x-text="gm.txt+(gm.min?' · '+gm.min:'')"></span></template>
+                  </div>
+                  <div class="el-tbl">
+                    <template x-for="(row,ri) in g.live.table" :key="'elt'+g.L+ri">
+                      <div class="el-row" :class="{q:row.pos<=2}"><span class="el-pos" x-text="row.pos+'º'"></span><span class="el-fl" x-text="row.flag"></span><span class="el-tm" x-text="row.es"></span><span class="el-pj muted" x-text="'PJ'+row.pj"></span><span class="el-gd muted" x-text="(row.gd>0?'+':'')+row.gd"></span><span class="el-pt" x-text="row.pts"></span></div>
+                    </template>
+                  </div>
+                </div>
+              </template>
+            </div>
           </template>
         </div>
 
@@ -1854,10 +1869,10 @@
   </div>
 
   <!-- ====== Dependencias ====== -->
-  <script src="data.js?v=75"></script>
-  <script src="engine.js?v=75"></script>
+  <script src="data.js?v=76"></script>
+  <script src="engine.js?v=76"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
-  <script src="app.js?v=75"></script>
+  <script src="app.js?v=76"></script>
   <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.1/dist/cdn.min.js"></script>
 </body>
 </html>

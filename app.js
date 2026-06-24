@@ -544,13 +544,23 @@ window.porraApp = function () {
           estado = "✅ terminado"; started = true;
           detalle = order.map((t, i) => (i + 1) + "º " + es(t)).join(" · ");
         } else if (K >= 1 && order) {
-          estado = "🔴 puntúa jornada " + K + (K > 1 ? "s 1-" + K : "") + " (" + played + "/6)"; started = true;
+          estado = (K > 1 ? "🔴 puntúan jornadas 1-" + K : "🔴 puntúa jornada 1") + " (" + played + "/6)"; started = true;
           const ri = oc.groupRank[L];
           detalle = order.map((t, i) => (i + 1) + "º " + es(t) + (ri && ri[i] && ri[i].firm ? "" : "?")).join(" · ");
         } else if (played > 0) {
           estado = "⏳ jornada 1 incompleta (" + played + "/6) — aún no puntúa (faltan equipos por jugar)";
         }
-        return { L, estado, detalle, started };
+        // capa EN DIRECTO: tabla que incluye los partidos en juego (solo para mostrar; no puntúa aún)
+        let live = null;
+        const ls = oc.liveStandingsByGroup && oc.liveStandingsByGroup[L];
+        if (ls) {
+          const games = D.GROUP_FIXTURES.filter((f) => f.group === L && oc.liveByCode && oc.liveByCode[f.code]).map((f) => {
+            const r = oc.liveByCode[f.code];
+            return { txt: es(f.home) + " " + r.home_score + "–" + r.away_score + " " + es(f.away), min: r.status || "" };
+          });
+          live = { table: ls.map((x, i) => ({ pos: i + 1, es: es(x.team), flag: D.flag(x.team), pts: x.pts, gd: x.gd, pj: x.pj })), games };
+        }
+        return { L, estado, detalle, started, live };
       });
       const byId = {}; this.entries.forEach((e) => { byId[e.id] = e; });
       const people = (this.ranked || []).map((r) => {
@@ -566,7 +576,7 @@ window.porraApp = function () {
         if (ex.total) cats.push("Especiales " + ex.total);
         return { id: r.id, name: (e.first_name + " " + e.last_name).trim(), total: bd.total + ex.total, summary: cats.join("  ·  ") || "Aún sin puntos", bits: this._explainBits(e.picks, oc, S, bd, ex) };
       }).filter(Boolean);
-      return { groups, people };
+      return { groups, people, hasLive: groups.some((g) => g.live) };
     },
     _explainBits(picks, oc, S, bd, ex) {
       const es = (t) => D.es(t); const bits = [];

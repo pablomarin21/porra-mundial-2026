@@ -547,6 +547,19 @@ tr.clickrow.sel td{background:#e7f1ec}
 .expl-g{font-size:.82rem;padding:3px 0;border-bottom:1px dashed var(--line)}
 .expl-g:last-child{border-bottom:0}
 .expl-g.off{opacity:.5}
+.expl-g.haslive{padding-bottom:7px}
+.expl-livenote{font-size:.74rem;line-height:1.4;color:#9a3412;background:#fff4ed;border:1px solid #fcd9c2;border-radius:8px;padding:6px 9px;margin:4px 0 8px}
+.expl-live{margin-top:6px;border:1px solid #f4c7c7;background:#fff6f6;border-radius:9px;padding:6px 8px}
+.el-h{font-size:.74rem;font-weight:800;color:#c0392b;display:flex;flex-wrap:wrap;gap:4px 10px;align-items:center;margin-bottom:5px}
+.el-game{font-weight:700;color:#333;background:#fff;border:1px solid #f0d3d3;border-radius:6px;padding:1px 7px;font-size:.74rem}
+.el-tbl{display:flex;flex-direction:column;gap:2px}
+.el-row{display:grid;grid-template-columns:24px 20px 1fr auto auto 30px;align-items:center;gap:6px;font-size:.8rem;padding:2px 4px;border-radius:6px}
+.el-row.q{background:#eef8f1}
+.el-pos{font-weight:800;color:#555;text-align:center}
+.el-fl{text-align:center}
+.el-tm{font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.el-pj,.el-gd{font-size:.72rem;text-align:right}
+.el-pt{font-weight:900;color:var(--green);text-align:right}
 .expl-person{background:#fff;border:1px solid var(--line);border-radius:10px;margin-top:7px;overflow:hidden}
 .expl-person>summary{list-style:none;cursor:pointer;display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:10px 12px;font-size:.9rem}
 .expl-person>summary::-webkit-details-marker{display:none}

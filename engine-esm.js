@@ -398,6 +398,7 @@ const ENGINE=(function(DATA){
     const pairToFx = {};
     for (const fx of DATA.GROUP_FIXTURES) pairToFx[[fx.home, fx.away].slice().sort().join("|")] = fx;
     const groupMap = {};
+    const liveExtra = {};   // partidos de grupo EN JUEGO (solo para mostrar; no puntúan)
     const ko = { octavos: new Set(), cuartos: new Set(), semis: new Set(), final: new Set(), champion: null };
     for (const ev of (events || [])) {
       const comp = ev.competitions && ev.competitions[0]; if (!comp) continue;
@@ -406,7 +407,9 @@ const ENGINE=(function(DATA){
       const B = cs.find((c) => c.homeAway === "away") || cs[1];
       const tA = DATA.espnCanon(A.team && A.team.displayName), tB = DATA.espnCanon(B.team && B.team.displayName);
       if (!tA || !tB) continue; // placeholder / payload incompleto: equipos sin decidir todavía
-      const completed = !!(ev.status && ev.status.type && ev.status.type.completed);
+      const stype = (ev.status && ev.status.type) || {};
+      const completed = !!stype.completed;
+      const inPlay = stype.state === "in";
       const date = (ev.date || "").slice(0, 10);
       const sA = parseInt(A.score, 10), sB = parseInt(B.score, 10);
       const koWin = DATA.KO_WINDOWS.find((w) => date >= w.from && date <= w.to);
@@ -415,6 +418,9 @@ const ENGINE=(function(DATA){
         if (completed && !isNaN(sA) && !isNaN(sB)) {
           const home = fx.home === tA ? sA : sB, away = fx.home === tA ? sB : sA;
           groupMap[fx.code] = { played: true, home_score: home, away_score: away };
+        } else if (inPlay && !isNaN(sA) && !isNaN(sB)) {
+          const home = fx.home === tA ? sA : sB, away = fx.home === tA ? sB : sA;
+          liveExtra[fx.code] = { played: true, home_score: home, away_score: away, _live: true, status: stype.shortDetail || stype.detail || stype.description || "" };
         }
       } else if (koWin && completed) {
         let w = A.winner ? tA : (B.winner ? tB : (!isNaN(sA) && !isNaN(sB) ? (sA > sB ? tA : (sB > sA ? tB : null)) : null));
@@ -444,6 +450,20 @@ const ENGINE=(function(DATA){
     };
     oc.extrasActual = extrasActual || {};
     oc.groupMap = groupMap;
+    // ---- capa EN DIRECTO (solo para MOSTRAR): tabla que incluye los partidos en juego.
+    //      NO afecta a la puntuación (eso sigue por jornadas COMPLETAS via groupOrder). ----
+    oc.liveByCode = liveExtra;
+    oc.liveStandingsByGroup = {};
+    oc.liveGroups = {};
+    if (Object.keys(liveExtra).length) {
+      const liveMap = Object.assign({}, groupMap, liveExtra);
+      for (const L of LETTERS) {
+        if (fixturesOf(L).some((f) => liveExtra[f.code])) {
+          oc.liveStandingsByGroup[L] = groupStandings(L, liveMap, false, null);
+          oc.liveGroups[L] = true;
+        }
+      }
+    }
     return oc;
   }
 
