@@ -13,7 +13,7 @@
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="Porra Mundial" />
-  <link rel="stylesheet" href="styles.css?v=74" />
+  <link rel="stylesheet" href="styles.css?v=75" />
 </head>
 <body x-data="porraApp()" x-init="init()" x-cloak>
 
@@ -845,6 +845,8 @@
 
             <!-- resumen compacto (plegado) -->
             <div class="ppl-quick" x-show="!open" @click="open=true">
+              <span class="ppl-q jc" x-show="parte && parte.jcHas && (p.jcUpN || p.jcDownN)" :class="p.jcNet<0?'bad':'good'" x-text="'🗓️ J'+(parte?parte.jcTo:'')+': '+(p.jcNet>=0?'+':'')+p.jcNet"></span>
+              <span class="ppl-q bad" x-show="parte && parte.jcHas && p.jcDownN" x-text="'▼ '+p.jcDownSum+' en grupos'"></span>
               <span class="ppl-q champ" x-show="p.champ" x-text="'🏅 '+p.champ"></span>
               <span class="ppl-q good" x-show="p.nBien" x-text="'✅ '+p.nBien+' a favor'"></span>
               <span class="ppl-q bad" x-show="p.nMal" x-text="'❌ '+p.nMal+' en contra'"></span>
@@ -854,6 +856,27 @@
             <!-- detalle desplegable -->
             <div class="ppl-detail" x-show="open" x-cloak>
               <div class="ppl-evo" x-show="p.trajTxt">📈 <span x-text="p.trajTxt"></span></div>
+
+              <!-- CAMBIOS de la última jornada: subiste / bajaste, con el motivo -->
+              <div class="ppl-jc" x-show="parte && parte.jcHas && (p.jcUpN || p.jcDownN)">
+                <div class="ppl-jc-h">🗓️ Qué cambió al cerrar la <b>jornada <span x-text="parte?parte.jcTo:''"></span></b>
+                  <span class="ppl-jc-net" :class="p.jcNet<0?'down':'up'" x-text="(p.jcNet>=0?'+':'')+p.jcNet+' pts'"></span>
+                </div>
+                <div class="ppl-jc-cols">
+                  <div class="ppl-jc-col up" x-show="p.jcUpN">
+                    <div class="ppl-jc-ch" x-text="'📈 Te subió (+'+p.jcUpSum+')'"></div>
+                    <template x-for="(u,ui) in p.jcUps" :key="'ju'+p.pos+ui"><div class="ppl-jc-li" x-text="u"></div></template>
+                    <div class="ppl-jc-more" x-show="p.jcUpMore" x-text="'+ '+p.jcUpMore+' aciertos más'"></div>
+                  </div>
+                  <div class="ppl-jc-col down" x-show="p.jcDownN">
+                    <div class="ppl-jc-ch" x-text="'📉 Te bajó ('+p.jcDownSum+')'"></div>
+                    <template x-for="(d,di) in p.jcDowns" :key="'jd'+p.pos+di"><div class="ppl-jc-li" x-text="d"></div></template>
+                    <div class="ppl-jc-why">Pasa porque el orden del grupo se recalcula cada jornada: un punto provisional se quita si la tabla cambia (se vuelve fijo al acabar el grupo).</div>
+                  </div>
+                </div>
+                <div class="ppl-jc-clean" x-show="!p.jcDownN">📉 No perdiste ni un punto esta jornada 👏</div>
+              </div>
+
               <div class="ppl-dossier">
                 <div class="ppl-d" x-show="p.champ">🏅 Campeón: <b x-text="p.champ"></b><span class="muted" x-show="p.champQ!=null" x-text="' · '+pct(p.champQ)+' de clasificar'"></span></div>
                 <div class="ppl-d" x-show="p.bestGroup">🎯 Su mejor grupo: <b x-text="p.bestGroup?('Grupo '+p.bestGroup.L+' (+'+p.bestGroup.pts+')'):''"></b> <span class="muted" x-text="p.bestGroup?(p.bestGroup.complete?'fijo':'provisional'):''"></span></div>
@@ -1831,10 +1854,10 @@
   </div>
 
   <!-- ====== Dependencias ====== -->
-  <script src="data.js?v=74"></script>
-  <script src="engine.js?v=74"></script>
+  <script src="data.js?v=75"></script>
+  <script src="engine.js?v=75"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
-  <script src="app.js?v=74"></script>
+  <script src="app.js?v=75"></script>
   <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.1/dist/cdn.min.js"></script>
 </body>
 </html>

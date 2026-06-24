@@ -1471,6 +1471,7 @@ window.porraApp = function () {
       const qp = (t) => { const c = chances[t]; return c ? c.qualify : null; };
       const byId = {}; (this.entries || []).forEach((e) => (byId[e.id] = e));
       const H = this.buildParteHistory(oc, S);
+      const JC = this.buildJornadaChanges(oc, S);
       const players = real.map((r, i) => {
         const e = byId[r.id]; const picks = e && e.picks;
         let gd = { seguro: 0, provisional: 0, groups: [] }, dp = null, ex = { total: 0 };
@@ -1564,10 +1565,16 @@ window.porraApp = function () {
         let trend = "=";
         if (t.length >= 2) { const a = t[t.length - 2], b = t[t.length - 1]; trend = b.pos < a.pos ? "up" : b.pos > a.pos ? "down" : (b.pts > a.pts ? "up" : b.pts < a.pts ? "down" : "="); }
         const best24 = t.length >= 2 ? (t[0].pos - t[t.length - 1].pos) : 0;
+        // cambios de la última jornada cerrada (qué sumó / qué restó)
+        const jc = (JC.byId && JC.byId[r.id]) || { net: 0, ups: [], downs: [], upSum: 0, downSum: 0 };
+        const jcUps = jc.ups.slice(0, 8).map((x) => "+" + x.pts + "  " + x.txt);
+        const jcDowns = jc.downs.map((x) => x.pts + "  " + x.txt);
         return { pos: i + 1, name: this._shortName(r), pts: r.points, prov: gd.provisional, seguro: gd.seguro,
           isMe: !!(this.me && r.id === this.me.id), champ: champ ? D.es(champ) : null, champQ,
           gapTxt, bestGroup, finalists, bets, exTotal: ex.total, trajTxt, trend, climb: best24,
           _hat: ex.hattrick > 0, _doble: ex.dobleRoja > 0,
+          jcNet: jc.net, jcUpSum: jc.upSum, jcDownSum: jc.downSum, jcUps, jcDowns,
+          jcUpMore: Math.max(0, jc.ups.length - 8), jcUpN: jc.ups.length, jcDownN: jc.downs.length,
           bien: bien, mal: mal, nBien: bien.length, nMal: mal.length };
       });
       const leader = real[0], second = real[1], last = real[real.length - 1];
@@ -1596,6 +1603,7 @@ window.porraApp = function () {
         total: real.length, second: second ? this._shortName(second) : null, totalProv, players,
         head, top3, champPop, spread, specials, inPodio,
         leaders: H.leaders, mover: H.mover, faller: H.faller,
+        jcHas: JC.has, jcFrom: JC.prev, jcTo: JC.J,
       };
     },
     // HISTORIA: re-puntúa la clasificación al final de cada jornada (reconstruida de los resultados).
@@ -1623,6 +1631,45 @@ window.porraApp = function () {
         if (-d > worstDrop) { worstDrop = -d; faller = { name: this._shortName(r), from: t[0].pos, to: t[t.length - 1].pos }; }
       } });
       return { traj, leaders, J, mover, faller };
+    },
+    // CAMBIOS de la última jornada cerrada (J-1 → J): qué SUMÓ y qué RESTÓ cada jugador, con el motivo
+    // concreto (qué equipo se confirmó o se movió). Mismo modelo de puntuación que _groupDetail.
+    buildJornadaChanges(oc, S) {
+      const J = this.tournamentMatchday();
+      const res = { J, prev: J - 1, has: J >= 2, byId: {} };
+      if (J < 2) return res;
+      const gm = (oc && oc.groupMap) || this.results || {};
+      const subUpTo = (j) => { const s = {}; for (const fx of D.GROUP_FIXTURES) { if (fx.md <= j) { const x = gm[fx.code]; if (x && x.played && x.home_score != null) s[fx.code] = x; } } return s; };
+      let oa, ob;
+      try { oa = Eng.liveOutcome(subUpTo(J - 1)); ob = Eng.liveOutcome(subUpTo(J)); } catch (e) { return res; }
+      const gk = [S.g1, S.g2, S.g3, (S.g4 || 0)]; const lbl = ["1º", "2º", "3º", "4º"];
+      const real = (this.ranked || []).filter((r) => !this.isGuest(r));
+      const byId = {}; (this.entries || []).forEach((e) => (byId[e.id] = e));
+      for (const r of real) {
+        const e = byId[r.id]; const picks = e && e.picks;
+        const ups = [], downs = [];
+        if (picks && picks.groups) for (const L of D.GROUP_LETTERS) {
+          const pred = picks.groups[L]; if (!pred || pred.length !== 4) continue;
+          const a1 = oa.groupOrder[L], a2 = ob.groupOrder[L]; if (!a2) continue;
+          const ri1 = oa.groupRank && oa.groupRank[L], ri2 = ob.groupRank && ob.groupRank[L];
+          const f1 = (i) => !ri1 || (ri1[i] && ri1[i].firm), f2 = (i) => !ri2 || (ri2[i] && ri2[i].firm);
+          const dT = (act, ri, t) => { const idx = act ? act.indexOf(t) : -1; return idx < 0 ? false : (ri ? !!(ri[idx] && ri[idx].worstRank <= 1) : idx <= 1); };
+          for (let i = 0; i < 4; i++) { const t = pred[i];
+            const s1 = !!(a1 && t === a1[i] && f1(i)), s2 = !!(t === a2[i] && f2(i));
+            if (s2 && !s1) ups.push({ pts: gk[i], txt: D.es(t) + " confirmó el " + lbl[i] + " del grupo " + L });
+            else if (s1 && !s2) { const rp = a2.indexOf(t); downs.push({ pts: -gk[i], txt: D.es(t) + " ya no va " + lbl[i] + " del grupo " + L + (rp >= 0 ? " (ahora " + lbl[rp] + ")" : "") }); }
+          }
+          for (const k of [0, 1]) { const t = pred[k];
+            const q1 = dT(a1, ri1, t), q2 = dT(a2, ri2, t);
+            if (q2 && !q1) ups.push({ pts: S.qual, txt: D.es(t) + " clasifica (grupo " + L + ")" });
+            else if (q1 && !q2) downs.push({ pts: -S.qual, txt: D.es(t) + " deja de clasificar (grupo " + L + ")" });
+          }
+        }
+        ups.sort((a, b) => b.pts - a.pts);
+        const net = ups.reduce((a, x) => a + x.pts, 0) + downs.reduce((a, x) => a + x.pts, 0);
+        res.byId[r.id] = { net, ups, downs, upSum: ups.reduce((a, x) => a + x.pts, 0), downSum: downs.reduce((a, x) => a + x.pts, 0) };
+      }
+      return res;
     },
     // Briefing "qué ha cambiado desde tu última visita": posiciones y puntos (sobre participantes reales).
     computeBriefing() {
