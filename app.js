@@ -263,7 +263,7 @@ window.porraApp = function () {
       this.pushSupported = ("serviceWorker" in navigator) && ("PushManager" in window) && ("Notification" in window);
       if (!this.pushSupported) return;
       try {
-        const reg = await navigator.serviceWorker.register("sw.js?v=78");
+        const reg = await navigator.serviceWorker.register("sw.js?v=79");
         const sub = await reg.pushManager.getSubscription();
         this.pushOn = !!sub;
         if (!this.pushOn && !localStorage.getItem("porra_notif_dismissed")) {
@@ -1230,7 +1230,7 @@ window.porraApp = function () {
         pts += qual;
         const actual = act.map((t, i) => ({ es: es(t), flag: flag(t), firm: firm(i) }));
         if (complete) seguro += pts; else provisional += pts;
-        out.push({ L, state: complete ? "done" : "live", played, pts, qual, qualNames, rows, actual, complete });
+        out.push({ L, state: complete ? "done" : "live", played, pts, qual, qualNames, rows, actual, complete, live: this.liveGroupGames(L) });
       }
       return { groups: out, seguro, provisional };
     },
@@ -1260,7 +1260,22 @@ window.porraApp = function () {
     koWinner(match) { return this.liveBr.winnerOf[match] || null; },
     get koAdminList() { return KO_META; },
 
-    liveTable(L) { return (this.outcome && this.outcome.standingsByGroup && this.outcome.standingsByGroup[L]) || Eng.groupStandings(L, this.results, false, null); },
+    // Tabla de grupo para MOSTRAR: prioriza la versión EN DIRECTO (incluye partidos en juego);
+    // si no, la de jornadas completas. (La puntuación NO usa esto — sigue por groupOrder.)
+    liveTable(L) {
+      const oc = this.outcome;
+      return (oc && oc.liveStandingsByGroup && oc.liveStandingsByGroup[L])
+          || (oc && oc.standingsByGroup && oc.standingsByGroup[L])
+          || Eng.groupStandings(L, this._resMap, false, null);
+    },
+    isLiveGroup(L) { const oc = this.outcome; return !!(oc && oc.liveGroups && oc.liveGroups[L]); },
+    liveGroupGames(L) {
+      const oc = this.outcome; if (!oc || !oc.liveByCode) return [];
+      return D.GROUP_FIXTURES.filter((f) => f.group === L && oc.liveByCode[f.code]).map((f) => {
+        const r = oc.liveByCode[f.code];
+        return { home: D.es(f.home), away: D.es(f.away), hFlag: D.flag(f.home), aFlag: D.flag(f.away), hs: r.home_score, as: r.away_score, status: r.status || "" };
+      });
+    },
 
     // Resultados REALES para los cálculos: grupos vienen de oc.groupMap (ESPN); KO de this.results.
     // OJO: this.results (DB) suele venir VACÍO con el board del servidor — usar SIEMPRE esto.

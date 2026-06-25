@@ -96,6 +96,13 @@ input:focus,select:focus{outline:none;border-color:var(--green2)}
 .groups-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(248px,1fr));gap:12px}
 .group-card{background:#fbfdfc;border:1px solid var(--line);border-radius:12px;padding:10px 12px;margin-bottom:12px}
 .group-title{font-weight:800;color:var(--green);margin-bottom:6px;font-size:.95rem;letter-spacing:.3px}
+.gcard2.live{border-color:#f0c8c8;box-shadow:0 0 0 1px #f6d7d7 inset}
+.gt-live{display:inline-flex;flex-wrap:wrap;align-items:center;gap:5px 8px;margin-left:8px;font-size:.72rem;font-weight:800;color:#c0392b;letter-spacing:0}
+.gt-sc{background:#fff;border:1px solid #f0d3d3;border-radius:6px;padding:1px 7px;font-weight:700;color:#333}
+.gt-sc small{color:#c0392b;font-weight:800}
+.dg-live{display:flex;flex-wrap:wrap;align-items:center;gap:5px 8px;font-size:.74rem;font-weight:800;color:#c0392b;background:#fff6f6;border:1px solid #f4c7c7;border-radius:8px;padding:4px 8px;margin-bottom:6px}
+.dg-lsc{background:#fff;border:1px solid #f0d3d3;border-radius:6px;padding:1px 7px;font-weight:700;color:#333}
+.dg-lsc small{color:#c0392b}
 .rankrow{display:flex;align-items:center;gap:8px;padding:7px 6px;border-radius:9px;border:1px solid transparent}
 .rankrow.qual{background:#eafaf0}
 .rankrow.third{background:#fff7e3}

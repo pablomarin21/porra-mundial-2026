@@ -13,7 +13,7 @@
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="Porra Mundial" />
-  <link rel="stylesheet" href="styles.css?v=78" />
+  <link rel="stylesheet" href="styles.css?v=79" />
 </head>
 <body x-data="porraApp()" x-init="init()" x-cloak>
 
@@ -753,6 +753,11 @@
               <template x-for="g in det.groupDetail.groups" :key="'dg'+g.L">
                 <div class="dg-card" :class="g.state">
                   <div class="dg-top"><b x-text="'Grupo '+g.L"></b><span class="dg-state" x-text="g.state==='done'?'✅ terminado':(g.state==='live'?('🔴 '+g.played+'/6'):'⏳ jornada incompleta')"></span><span class="dg-pts" x-show="g.state!=='waiting'" x-text="'+'+g.pts"></span></div>
+                  <template x-if="g.live && g.live.length">
+                    <div class="dg-live">🔴 EN DIRECTO
+                      <template x-for="(gm,gi) in g.live" :key="'dgl'+g.L+gi"><span class="dg-lsc"><span class="flag" x-text="gm.hFlag"></span> <b x-text="gm.hs+'–'+gm.as"></b> <span class="flag" x-text="gm.aFlag"></span><small x-show="gm.status" x-text="' '+gm.status"></small></span></template>
+                    </div>
+                  </template>
                   <template x-if="g.state!=='waiting'">
                     <div class="dg-body">
                       <div class="dg-row"><span class="dg-lab">Tú</span><div class="dg-cells"><template x-for="(r,i) in g.rows" :key="'tu'+g.L+i"><span class="dg-cell" :class="{hit:r.hit}"><span class="dg-pos" x-text="(i+1)+'º'"></span><span class="flag" x-text="r.flag"></span><span class="dg-nm" x-text="r.es"></span><span class="dg-p" x-show="r.hit" x-text="'+'+r.pts"></span></span></template></div></div>
@@ -1519,10 +1524,18 @@
 
     <!-- 📊 GRUPOS: tabla en vivo + prob. de clasificar + lo que pusisteis -->
     <div x-show="rTab==='groups'" class="rgroups2">
-      <p class="muted tiny">Tabla en vivo + <b>probabilidad de clasificar</b> de cada selección (simulación del resto de la fase) + lo que predijo cada uno. <span x-show="teamProbsSims">· <b x-text="teamProbsSims.toLocaleString('es')"></b> simulaciones</span></p>
+      <p class="muted tiny">Tabla <b>EN DIRECTO</b> (incluye los partidos <b>en juego</b>) + <b>probabilidad de clasificar</b> de cada selección (simulación del resto de la fase) + lo que predijo cada uno. <span x-show="teamProbsSims">· <b x-text="teamProbsSims.toLocaleString('es')"></b> simulaciones</span></p>
       <template x-for="L in letters" :key="'g2'+L">
-        <div class="group-card gcard2">
-          <div class="group-title">Grupo <span x-text="L"></span></div>
+        <div class="group-card gcard2" :class="{live:isLiveGroup(L)}">
+          <div class="group-title">Grupo <span x-text="L"></span>
+            <template x-if="isLiveGroup(L)">
+              <span class="gt-live">🔴 EN DIRECTO
+                <template x-for="(gm,gi) in liveGroupGames(L)" :key="'gtl'+L+gi">
+                  <span class="gt-sc"><span class="flag" x-text="gm.hFlag"></span> <b x-text="gm.hs+'–'+gm.as"></b> <span class="flag" x-text="gm.aFlag"></span><small x-show="gm.status" x-text="' '+gm.status"></small></span>
+                </template>
+              </span>
+            </template>
+          </div>
           <table class="mini grp">
             <thead><tr><th></th><th>PJ</th><th>Pts</th><th>DG</th><th>Clasif.</th></tr></thead>
             <tbody>
@@ -1869,10 +1882,10 @@
   </div>
 
   <!-- ====== Dependencias ====== -->
-  <script src="data.js?v=78"></script>
-  <script src="engine.js?v=78"></script>
+  <script src="data.js?v=79"></script>
+  <script src="engine.js?v=79"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
-  <script src="app.js?v=78"></script>
+  <script src="app.js?v=79"></script>
   <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.1/dist/cdn.min.js"></script>
 </body>
 </html>
