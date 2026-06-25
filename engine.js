@@ -457,6 +457,7 @@
       for (const L of LETTERS) {
         if (fixturesOf(L).some((f) => liveExtra[f.code])) {
           oc.liveStandingsByGroup[L] = groupStandings(L, liveMap, false, null);
+          oc.liveStandingsByGroup[L]._complete = false;   // tabla SOLO display: nunca "grupo cerrado" (blindaje)
           oc.liveGroups[L] = true;
         }
       }

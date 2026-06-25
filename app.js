@@ -218,7 +218,7 @@ window.porraApp = function () {
       for (const L of D.GROUP_LETTERS) {
         const fx = D.GROUP_FIXTURES.filter((f) => f.group === L);
         let k = 0;
-        for (let m = 1; m <= 3; m++) { const games = fx.filter((f) => f.md === m); const done = games.length > 0 && games.every((f) => { const r = gm[f.code]; return r && r.played && r.home_score != null; }); if (done) k = m; else break; }
+        for (let m = 1; m <= 3; m++) { const games = fx.filter((f) => f.md === m); const done = games.length > 0 && games.every((f) => { const r = gm[f.code]; return r && r.played && r.home_score != null && r.away_score != null; }); if (done) k = m; else break; }
         minK = Math.min(minK, k);
       }
       return minK;
@@ -263,7 +263,7 @@ window.porraApp = function () {
       this.pushSupported = ("serviceWorker" in navigator) && ("PushManager" in window) && ("Notification" in window);
       if (!this.pushSupported) return;
       try {
-        const reg = await navigator.serviceWorker.register("sw.js");
+        const reg = await navigator.serviceWorker.register("sw.js?v=77");
         const sub = await reg.pushManager.getSubscription();
         this.pushOn = !!sub;
         if (!this.pushOn && !localStorage.getItem("porra_notif_dismissed")) {
@@ -488,13 +488,17 @@ window.porraApp = function () {
     // ---------- datos en vivo (ESPN, sin clave, CORS abierto) ----------
     async fetchEspn(force) {
       if (!force && Date.now() - this.espnAt < 40000 && this.espnEvents.length) { this.computeLive(); return; }
+      if (this._espnInFlight) return this._espnInFlight;   // ya hay una petición en curso: reutilízala (no dupliques)
       this.liveBusy = true;
-      try {
-        const r = await fetch("https://site.api.espn.com/apis/site/v2/sports/soccer/fifa.world/scoreboard?dates=20260611-20260719&limit=200");
-        const j = await r.json();
-        if (j && j.events) { this.espnEvents = j.events; this.espnAt = Date.now(); }
-      } catch (e) { /* mantener datos previos si falla */ }
-      finally { this.liveBusy = false; this.computeLive(); }
+      this._espnInFlight = (async () => {
+        try {
+          const r = await fetch("https://site.api.espn.com/apis/site/v2/sports/soccer/fifa.world/scoreboard?dates=20260611-20260719&limit=200");
+          const j = await r.json();
+          if (j && j.events) { this.espnEvents = j.events; this.espnAt = Date.now(); }
+        } catch (e) { /* mantener datos previos si falla */ }
+        finally { this.liveBusy = false; this._espnInFlight = null; this.computeLive(); }
+      })();
+      return this._espnInFlight;
     },
     computeLive() {
       this.outcome = Eng.outcomeFromEspn(this.espnEvents, this.results, this.extrasActual);
@@ -1626,7 +1630,7 @@ window.porraApp = function () {
       const leaders = [];
       for (let j = 1; j <= J; j++) {
         const sub = {};
-        for (const fx of D.GROUP_FIXTURES) { if (fx.md <= j) { const x = gm[fx.code]; if (x && x.played && x.home_score != null) sub[fx.code] = x; } }
+        for (const fx of D.GROUP_FIXTURES) { if (fx.md <= j) { const x = gm[fx.code]; if (x && x.played && x.home_score != null && x.away_score != null) sub[fx.code] = x; } }
         let hoc; try { hoc = Eng.liveOutcome(sub); } catch (e) { continue; }
         const sc = real.map((r) => { const e = byId[r.id]; let p = 0; if (e && e.picks) { try { p = Eng.scoreEntry(Eng.derivePicks(e.picks), hoc, S) + Eng.scoreExtras(e.picks.extras, this.extrasActual, S).total; } catch (x) {} } return { id: r.id, pts: p }; });
         sc.sort((a, b) => b.pts - a.pts);
@@ -1649,7 +1653,7 @@ window.porraApp = function () {
       const res = { J, prev: J - 1, has: J >= 2, byId: {} };
       if (J < 2) return res;
       const gm = (oc && oc.groupMap) || this.results || {};
-      const subUpTo = (j) => { const s = {}; for (const fx of D.GROUP_FIXTURES) { if (fx.md <= j) { const x = gm[fx.code]; if (x && x.played && x.home_score != null) s[fx.code] = x; } } return s; };
+      const subUpTo = (j) => { const s = {}; for (const fx of D.GROUP_FIXTURES) { if (fx.md <= j) { const x = gm[fx.code]; if (x && x.played && x.home_score != null && x.away_score != null) s[fx.code] = x; } } return s; };
       let oa, ob;
       try { oa = Eng.liveOutcome(subUpTo(J - 1)); ob = Eng.liveOutcome(subUpTo(J)); } catch (e) { return res; }
       const gk = [S.g1, S.g2, S.g3, (S.g4 || 0)]; const lbl = ["1º", "2º", "3º", "4º"];
@@ -1721,7 +1725,7 @@ window.porraApp = function () {
       const mcEntries = this.entries.filter((e) => e.picks).map((e) => ({ id: e.id, picks: Eng.derivePicks(e.picks), extraPts: Eng.scoreExtras(e.picks.extras, this.extrasActual, S).total }));
       if (!mcEntries.length) return this.toast("No hay quinielas guardadas todavía.", "warn");
       this.simN = mcEntries.length > 60 ? 1500 : mcEntries.length > 30 ? 2500 : 4000;
-      const simResults = (this.outcome && this.outcome.groupMap) ? this.outcome.groupMap : this.results;
+      const simResults = this._resMap;   // grupos (ESPN) + ganadores KO ya jugados → no re-aleatorizar lo decidido
       this.probBusy = true;
       setTimeout(() => {
         try {
