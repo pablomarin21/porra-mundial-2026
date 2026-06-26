@@ -263,7 +263,7 @@ window.porraApp = function () {
       this.pushSupported = ("serviceWorker" in navigator) && ("PushManager" in window) && ("Notification" in window);
       if (!this.pushSupported) return;
       try {
-        const reg = await navigator.serviceWorker.register("sw.js?v=79");
+        const reg = await navigator.serviceWorker.register("sw.js?v=80");
         const sub = await reg.pushManager.getSubscription();
         this.pushOn = !!sub;
         if (!this.pushOn && !localStorage.getItem("porra_notif_dismissed")) {
@@ -1298,8 +1298,24 @@ window.porraApp = function () {
         if (c.qualify <= 0.0001) return { k: "out", q: c.qualify };
         return { k: "maybe", q: c.qualify };
       };
-      const cell = (t) => ({ team: t, es: t ? D.es(t) : "?", flag: t ? D.flag(t) : "", st: statusOf(t) });
-      const cruces = D.R32.map((m, i) => { const tm = teams ? teams[m.match] : { a: null, b: null }; return { n: i + 1, a: cell(tm.a), b: cell(tm.b) }; });
+      const allComplete = complete === D.GROUP_LETTERS.length;
+      // Un equipo SOLO se coloca en su hueco del cuadro cuando está CONFIRMADO ahí:
+      //  - 1º (W-X) y 2º (RU-X): en cuanto su grupo CIERRA (posición definitiva).
+      //  - mejor 3º (3rd): cuando han cerrado TODOS los grupos (el reparto de terceros depende
+      //    de QUÉ 8 grupos aportan tercero, y eso no se fija hasta el final).
+      const confirmedTeam = (code, t) => {
+        if (!t) return null;
+        if (code === "3rd") return allComplete ? t : null;
+        const g = code.split("-")[1];
+        return (standings[g] && standings[g]._complete) ? t : null;
+      };
+      const slotLabel = (code) => code === "3rd" ? "Mejor 3º" : ((code[0] === "W" ? "1º " : "2º ") + code.split("-")[1]);
+      const cell = (code, t0) => {
+        const t = confirmedTeam(code, t0);
+        if (t) return { team: t, es: D.es(t), flag: D.flag(t), st: statusOf(t), pending: false };
+        return { team: null, es: slotLabel(code), flag: "", st: null, pending: true };   // hueco a la espera
+      };
+      const cruces = D.R32.map((m, i) => { const tm = teams ? teams[m.match] : { a: null, b: null }; return { n: i + 1, a: cell(m.a, tm.a), b: cell(m.b, tm.b) }; });
       let nIn = 0, nOut = 0, nMaybe = 0;
       for (const t of [].concat(...D.GROUP_LETTERS.map((L) => D.GROUPS[L]))) { const s = statusOf(t); if (s.k === "in") nIn++; else if (s.k === "out") nOut++; else nMaybe++; }
       this.koPreview = { cruces, complete, total: D.GROUP_LETTERS.length, nIn, nOut, nMaybe, ready: complete === D.GROUP_LETTERS.length };

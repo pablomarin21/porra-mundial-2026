@@ -13,7 +13,7 @@
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="Porra Mundial" />
-  <link rel="stylesheet" href="styles.css?v=79" />
+  <link rel="stylesheet" href="styles.css?v=80" />
 </head>
 <body x-data="porraApp()" x-init="init()" x-cloak>
 
@@ -1022,8 +1022,8 @@
                     <div class="wcb-m"><i class="wcb-in"></i>
                       <div class="wcb-box" :class="{seeded:col.seeded}">
                         <template x-if="col.seeded"><div>
-                          <div class="wcb-t" :class="m.a.st?('s-'+m.a.st.k):''"><span class="wcb-fl" x-text="m.a.flag"></span><span class="wcb-nm" x-text="m.a.es"></span><i class="wcb-st" x-show="m.a.st" :class="m.a.st?('d-'+m.a.st.k):''"></i></div>
-                          <div class="wcb-t" :class="m.b.st?('s-'+m.b.st.k):''"><span class="wcb-fl" x-text="m.b.flag"></span><span class="wcb-nm" x-text="m.b.es"></span><i class="wcb-st" x-show="m.b.st" :class="m.b.st?('d-'+m.b.st.k):''"></i></div>
+                          <div class="wcb-t" :class="m.a.pending?'pending':(m.a.st?('s-'+m.a.st.k):'')"><span class="wcb-fl" x-text="m.a.flag"></span><span class="wcb-nm" x-text="m.a.es"></span><i class="wcb-st" x-show="m.a.st" :class="m.a.st?('d-'+m.a.st.k):''"></i></div>
+                          <div class="wcb-t" :class="m.b.pending?'pending':(m.b.st?('s-'+m.b.st.k):'')"><span class="wcb-fl" x-text="m.b.flag"></span><span class="wcb-nm" x-text="m.b.es"></span><i class="wcb-st" x-show="m.b.st" :class="m.b.st?('d-'+m.b.st.k):''"></i></div>
                         </div></template>
                         <template x-if="!col.seeded"><div>
                           <div class="wcb-t ph"><span class="wcb-skel"></span></div>
@@ -1064,8 +1064,8 @@
                     <div class="wcb-m"><i class="wcb-in"></i>
                       <div class="wcb-box" :class="{seeded:col.seeded}">
                         <template x-if="col.seeded"><div>
-                          <div class="wcb-t" :class="m.a.st?('s-'+m.a.st.k):''"><span class="wcb-fl" x-text="m.a.flag"></span><span class="wcb-nm" x-text="m.a.es"></span><i class="wcb-st" x-show="m.a.st" :class="m.a.st?('d-'+m.a.st.k):''"></i></div>
-                          <div class="wcb-t" :class="m.b.st?('s-'+m.b.st.k):''"><span class="wcb-fl" x-text="m.b.flag"></span><span class="wcb-nm" x-text="m.b.es"></span><i class="wcb-st" x-show="m.b.st" :class="m.b.st?('d-'+m.b.st.k):''"></i></div>
+                          <div class="wcb-t" :class="m.a.pending?'pending':(m.a.st?('s-'+m.a.st.k):'')"><span class="wcb-fl" x-text="m.a.flag"></span><span class="wcb-nm" x-text="m.a.es"></span><i class="wcb-st" x-show="m.a.st" :class="m.a.st?('d-'+m.a.st.k):''"></i></div>
+                          <div class="wcb-t" :class="m.b.pending?'pending':(m.b.st?('s-'+m.b.st.k):'')"><span class="wcb-fl" x-text="m.b.flag"></span><span class="wcb-nm" x-text="m.b.es"></span><i class="wcb-st" x-show="m.b.st" :class="m.b.st?('d-'+m.b.st.k):''"></i></div>
                         </div></template>
                         <template x-if="!col.seeded"><div>
                           <div class="wcb-t ph"><span class="wcb-skel"></span></div>
@@ -1882,10 +1882,10 @@
   </div>
 
   <!-- ====== Dependencias ====== -->
-  <script src="data.js?v=79"></script>
-  <script src="engine.js?v=79"></script>
+  <script src="data.js?v=80"></script>
+  <script src="engine.js?v=80"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
-  <script src="app.js?v=79"></script>
+  <script src="app.js?v=80"></script>
   <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.1/dist/cdn.min.js"></script>
 </body>
 </html>

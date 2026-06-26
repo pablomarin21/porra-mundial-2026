@@ -1376,6 +1376,8 @@ tr.clickrow.sel td{background:#e7f1ec}
 .wcb-t.s-in{background:linear-gradient(90deg, rgba(55,210,126,.18), transparent);color:#15803d;font-weight:900}
 .wcb-t.s-out{opacity:.4;text-decoration:line-through}
 .wcb-t.ph{justify-content:center;color:#9aa6a0;font-style:italic;font-size:.64rem;font-weight:600}
+.wcb-t.pending{color:#9aa6a0;font-style:italic;font-weight:600;opacity:.85}
+.wcb-t.pending .wcb-nm{font-size:.66rem}
 
 /* CONECTORES dorados con glow */
 .wcb-col:not(.champ):not(.r-final) .wcb-m::after{content:"";position:absolute;left:122px;top:50%;width:22px;height:2px;
