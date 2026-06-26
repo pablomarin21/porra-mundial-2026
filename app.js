@@ -263,7 +263,7 @@ window.porraApp = function () {
       this.pushSupported = ("serviceWorker" in navigator) && ("PushManager" in window) && ("Notification" in window);
       if (!this.pushSupported) return;
       try {
-        const reg = await navigator.serviceWorker.register("sw.js?v=80");
+        const reg = await navigator.serviceWorker.register("sw.js?v=81");
         const sub = await reg.pushManager.getSubscription();
         this.pushOn = !!sub;
         if (!this.pushOn && !localStorage.getItem("porra_notif_dismissed")) {

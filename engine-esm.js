@@ -359,8 +359,11 @@ const ENGINE=(function(DATA){
         }
       }
     }
+    // TERCEROS EN DIRECTO: en cuanto TODOS los grupos llevan ≥2 jornadas completas, se evalúan los
+    // 8 mejores terceros de forma PROVISIONAL (con la tabla de ahora). Firmes al cerrarse todos.
     let qualifiedThirdTeams = null;
-    if (allComplete) qualifiedThirdTeams = new Set(computeQualifiers(standingsByGroup).qualifiedThirdTeams);
+    const enoughForThirds = LETTERS.every((L) => (groupScored[L] || 0) >= 2);
+    if (allComplete || enoughForThirds) qualifiedThirdTeams = new Set(computeQualifiers(standingsByGroup).qualifiedThirdTeams);
 
     // reached: directamente de los ganadores registrados en eliminatorias
     const wOf = (n) => { const r = resultsMap[n] || resultsMap[String(n)]; return r && r.played && r.winner ? r.winner : null; };
@@ -372,7 +375,7 @@ const ENGINE=(function(DATA){
 
     return {
       complete: false, allGroupsComplete: allComplete, groupOrder, groupRank, groupScored, standingsByGroup,
-      qualifiedThirdTeams,
+      qualifiedThirdTeams, qualifiedThirdsFirm: allComplete,
       reached: { octavos, cuartos, semis, final: finalists, champion },
     };
   }
