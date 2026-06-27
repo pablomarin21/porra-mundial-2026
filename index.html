@@ -13,7 +13,7 @@
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="Porra Mundial" />
-  <link rel="stylesheet" href="styles.css?v=81" />
+  <link rel="stylesheet" href="styles.css?v=82" />
 </head>
 <body x-data="porraApp()" x-init="init()" x-cloak>
 
@@ -990,10 +990,10 @@
       <div class="k27-lock-l">
         <span class="k27-lock-ic" x-text="ko27Editable?'🟢':'🔒'"></span>
         <div>
-          <b x-text="ko27Editable?'¡Abierto! Monta tu camino a la final':'Se abre al acabar los grupos'"></b>
-          <small x-show="!ko27Editable && ko27DaysLeft>0" x-text="'Faltan '+ko27DaysLeft+' día'+(ko27DaysLeft===1?'':'s')+' · los grupos acaban la madrugada del 28 (España)'"></small>
-          <small x-show="!ko27Editable && ko27DaysLeft<=0">en cuanto terminen todos los grupos</small>
-          <small x-show="ko27Editable">Elige los ganadores antes del <b>primer 1/16</b> (28-jun, 21:00 España). Puedes editar hasta entonces.</small>
+          <b x-text="ko27Editable?'¡Abierto! Monta tu camino a la final':'Se abre en cuanto se decida el primer cruce'"></b>
+          <small x-show="!ko27Editable && ko27DaysLeft>0" x-text="'Faltan '+ko27DaysLeft+' día'+(ko27DaysLeft===1?'':'s')+' · se va abriendo según se decidan los cruces'"></small>
+          <small x-show="!ko27Editable && ko27DaysLeft<=0">en cuanto se decida el primer cruce</small>
+          <small x-show="ko27Editable">Ya puedes elegir los cruces <b>decididos</b> (<span x-text="ko27PlayableCount"></span> de 16); el resto se desbloquea según cierran los grupos. Edita hasta el <b>primer 1/16</b> (28-jun, 21:00 España).</small>
         </div>
       </div>
       <span class="k27-prog" x-text="(ko27?ko27.complete:0)+'/'+(ko27?ko27.total:12)+' grupos cerrados'"></span>
@@ -1180,14 +1180,14 @@
             <div class="k27-em">
               <span class="k27-mn" x-text="'#'+m.n"></span>
               <div class="k27-epick">
-                <button class="k27-opt" :class="{sel:m.pick && m.pick===m.a.team}" :disabled="!m.a.team" @click="pickWinner2(m.match, m.a.team)">
+                <button class="k27-opt" :class="{sel:m.pick && m.pick===m.a.team, pend:!m.a.team}" :disabled="!m.a.team" @click="pickWinner2(m.match, m.a.team)">
                   <template x-if="m.a.team"><span><span class="k27-fl" x-text="m.a.flag"></span> <span class="k27-nm" x-text="m.a.es"></span></span></template>
-                  <template x-if="!m.a.team"><span class="muted">Ganador anterior</span></template>
+                  <template x-if="!m.a.team"><span class="muted" x-text="m.a.label || 'Ganador anterior'"></span></template>
                 </button>
                 <span class="k27-vs">vs</span>
-                <button class="k27-opt" :class="{sel:m.pick && m.pick===m.b.team}" :disabled="!m.b.team" @click="pickWinner2(m.match, m.b.team)">
+                <button class="k27-opt" :class="{sel:m.pick && m.pick===m.b.team, pend:!m.b.team}" :disabled="!m.b.team" @click="pickWinner2(m.match, m.b.team)">
                   <template x-if="m.b.team"><span><span class="k27-fl" x-text="m.b.flag"></span> <span class="k27-nm" x-text="m.b.es"></span></span></template>
-                  <template x-if="!m.b.team"><span class="muted">Ganador anterior</span></template>
+                  <template x-if="!m.b.team"><span class="muted" x-text="m.b.label || 'Ganador anterior'"></span></template>
                 </button>
               </div>
             </div>
@@ -1882,10 +1882,10 @@
   </div>
 
   <!-- ====== Dependencias ====== -->
-  <script src="data.js?v=81"></script>
-  <script src="engine.js?v=81"></script>
+  <script src="data.js?v=82"></script>
+  <script src="engine.js?v=82"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
-  <script src="app.js?v=81"></script>
+  <script src="app.js?v=82"></script>
   <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.1/dist/cdn.min.js"></script>
 </body>
 </html>

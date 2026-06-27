@@ -1019,6 +1019,7 @@ tr.clickrow.sel td{background:#e7f1ec}
 .k27-opt{display:flex;align-items:center;justify-content:center;gap:5px;background:#fff;border:1.5px solid var(--line);border-radius:10px;padding:9px 8px;cursor:pointer;font-size:.84rem;font-weight:600;color:#26323b;min-height:42px;transition:.12s;text-align:center}
 .k27-opt:active{transform:scale(.98)}
 .k27-opt:disabled{opacity:.55;cursor:not-allowed;font-style:italic}
+.k27-opt.pend{border-style:dashed;background:#fafbfc;color:#9aa6a0}
 .k27-opt.sel{border-color:var(--green);background:#e8f6ee;color:var(--green);font-weight:800;box-shadow:inset 0 0 0 1px var(--green)}
 .k27-opt .k27-fl{font-size:1.1rem}
 .k27-save{margin-top:12px}

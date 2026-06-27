@@ -263,7 +263,7 @@ window.porraApp = function () {
       this.pushSupported = ("serviceWorker" in navigator) && ("PushManager" in window) && ("Notification" in window);
       if (!this.pushSupported) return;
       try {
-        const reg = await navigator.serviceWorker.register("sw.js?v=81");
+        const reg = await navigator.serviceWorker.register("sw.js?v=82");
         const sub = await reg.pushManager.getSubscription();
         this.pushOn = !!sub;
         if (!this.pushOn && !localStorage.getItem("porra_notif_dismissed")) {
@@ -1372,9 +1372,9 @@ window.porraApp = function () {
 
     // ¿se puede rellenar ya? grupos terminados + dentro de plazo + estás dentro de la porra
     get ko27Editable() {
-      if (!this.me || !this.me.id) return false;
-      if (!this.ko27 || !this.ko27.ready) return false;
-      try { return new Date() < new Date("2026-06-28T18:45:00Z"); } catch (e) { return true; }
+      if (!this.me || !this.me.id || !this.ko27) return false;
+      try { if (new Date() >= new Date("2026-06-28T18:45:00Z")) return false; } catch (e) {}
+      return this.ko27PlayableCount > 0;   // abierto en cuanto hay al menos un cruce de 1/16 decidido
     },
     loadBracket2() {
       const e = this.myEntry;
@@ -1386,18 +1386,26 @@ window.porraApp = function () {
       const RES = this._resMap;
       const standings = {};
       for (const L of D.GROUP_LETTERS) standings[L] = Eng.groupStandings(L, RES, false, null);
+      const allComplete = D.GROUP_LETTERS.every((L) => standings[L]._complete);
       let teams = null;
       try { teams = Eng.buildR32Teams(Eng.computeQualifiers(standings)).teams; } catch (e) { teams = null; }
-      const tbm = {}; for (const m of D.R32) tbm[m.match] = teams ? teams[m.match] : { a: null, b: null };
+      // Solo se puede elegir un cruce de 1/16 cuando AMBOS equipos están CONFIRMADOS:
+      // 1º/2º cuando su grupo cierra; mejor 3º cuando cierran TODOS los grupos.
+      const conf = (code, t) => { if (!t) return null; if (code === "3rd") return allComplete ? t : null; const g = code.split("-")[1]; return (standings[g] && standings[g]._complete) ? t : null; };
+      const slotLabel = (code) => code === "3rd" ? "Mejor 3º" : ((code[0] === "W" ? "1º " : "2º ") + code.split("-")[1]);
+      const tbm = {}, labelOf = {};
+      for (const m of D.R32) { const tm = teams ? teams[m.match] : { a: null, b: null }; tbm[m.match] = { a: conf(m.a, tm.a), b: conf(m.b, tm.b) }; labelOf[m.match] = { a: slotLabel(m.a), b: slotLabel(m.b) }; }
       const b = this.bracket2; const winnerOf = {};
       const valid = (mNum) => { const pair = tbm[mNum]; const w = b[mNum]; if (w && pair && (w === pair.a || w === pair.b)) return w; if (w !== undefined) delete b[mNum]; return null; };
       for (const m of D.R32) winnerOf[m.match] = valid(m.match);
       for (const list of [D.R16, D.QF, D.SF, [D.FINAL]]) for (const m of list) { tbm[m.match] = { a: winnerOf[m.a] || null, b: winnerOf[m.b] || null }; winnerOf[m.match] = valid(m.match); }
-      const cell = (t) => ({ team: t, es: t ? D.es(t) : null, flag: t ? D.flag(t) : "" });
+      const cell = (t, label) => ({ team: t, es: t ? D.es(t) : null, flag: t ? D.flag(t) : "", label: label || null });
       const defs = [{ key: "r32", title: "1/16", list: D.R32 }, { key: "r16", title: "Octavos", list: D.R16 }, { key: "qf", title: "Cuartos", list: D.QF }, { key: "sf", title: "Semis", list: D.SF }, { key: "final", title: "Final", list: [D.FINAL] }];
-      this._cols2 = defs.map((d) => ({ key: d.key, title: d.title, matches: d.list.map((m, i) => ({ n: i + 1, match: m.match, a: cell(tbm[m.match].a), b: cell(tbm[m.match].b), pick: this.bracket2[m.match] || null })) }));
+      this._cols2 = defs.map((d) => ({ key: d.key, title: d.title, matches: d.list.map((m, i) => ({ n: i + 1, match: m.match, a: cell(tbm[m.match].a, d.key === "r32" ? labelOf[m.match].a : null), b: cell(tbm[m.match].b, d.key === "r32" ? labelOf[m.match].b : null), pick: this.bracket2[m.match] || null })) }));
       this._champion2 = winnerOf[D.FINAL.match] || null;
     },
+    // nº de cruces de 1/16 con AMBOS equipos ya decididos (listos para predecir)
+    get ko27PlayableCount() { const r = (this._cols2 || []).find((c) => c.key === "r32"); return r ? r.matches.filter((m) => m.a.team && m.b.team).length : 0; },
     get bracketCols2() { return this._cols2; },
     get activeCol2() { return (this._cols2 || []).find((c) => c.key === this.ko27Round) || null; },
     get myChampion2() { return this._champion2; },
