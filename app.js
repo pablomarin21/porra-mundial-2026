@@ -263,7 +263,7 @@ window.porraApp = function () {
       this.pushSupported = ("serviceWorker" in navigator) && ("PushManager" in window) && ("Notification" in window);
       if (!this.pushSupported) return;
       try {
-        const reg = await navigator.serviceWorker.register("sw.js?v=90");
+        const reg = await navigator.serviceWorker.register("sw.js?v=91");
         const sub = await reg.pushManager.getSubscription();
         this.pushOn = !!sub;
         // pide los avisos SOLA y de forma PERSISTENTE: si no los tiene, el banner vuelve en cada
@@ -1299,6 +1299,15 @@ window.porraApp = function () {
     // OJO: this.results (DB) suele venir VACÍO con el board del servidor — usar SIEMPRE esto.
     get _resMap() { const gm = (this.outcome && this.outcome.groupMap) || {}; return Object.assign({}, this.results || {}, gm); },
 
+    // ¿es PRÁCTICAMENTE SEGURO que el equipo `t` acaba en ese puesto (1º para W-, 2º para RU-)?
+    // Umbral 99,5% sobre la simulación (teamProbs). Permite adelantar cruces casi decididos
+    // (p.ej. Argentina 1ª de su grupo) sin esperar a que el grupo cierre del todo, sin errar.
+    _almostCertain(code, t) {
+      const p = t && this.teamProbs && this.teamProbs[t]; if (!p || p.first == null || p.top2 == null) return false;
+      if (code[0] === "W") return p.first >= 0.995;
+      if (code[0] === "R") return (p.top2 - p.first) >= 0.995;
+      return false;
+    },
     // ---------- Vista previa del cuadro post-grupos (BONUS) — SOLO admin, SOLO lectura ----------
     buildKoPreview() {
       const RES = this._resMap;
@@ -1309,6 +1318,7 @@ window.porraApp = function () {
       try { teams = Eng.buildR32Teams(Eng.computeQualifiers(standings)).teams; } catch (e) { teams = null; }
       let chances = {};
       try { chances = Eng.monteCarloTeams(RES, 3000).byTeam; } catch (e) { chances = {}; }
+      this.teamProbs = chances; this.teamProbsSims = 3000;   // disponibles para rebuild2 (confirmación por probabilidad)
       const statusOf = (t) => {
         if (!t) return null;
         const c = chances[t]; if (!c) return { k: "maybe", q: null };
@@ -1325,7 +1335,8 @@ window.porraApp = function () {
         if (!t) return null;
         if (code === "3rd") return allComplete ? t : null;
         const g = code.split("-")[1];
-        return (standings[g] && standings[g]._complete) ? t : null;
+        if (standings[g] && standings[g]._complete) return t;     // grupo cerrado
+        return this._almostCertain(code, t) ? t : null;           // o prácticamente seguro (≥99,5%)
       };
       const slotLabel = (code) => code === "3rd" ? "Mejor 3º" : ((code[0] === "W" ? "1º " : "2º ") + code.split("-")[1]);
       const cell = (code, t0) => {
@@ -1417,7 +1428,7 @@ window.porraApp = function () {
       try { teams = Eng.buildR32Teams(Eng.computeQualifiers(standings)).teams; } catch (e) { teams = null; }
       // Solo se puede elegir un cruce de 1/16 cuando AMBOS equipos están CONFIRMADOS:
       // 1º/2º cuando su grupo cierra; mejor 3º cuando cierran TODOS los grupos.
-      const conf = (code, t) => { if (!t) return null; if (code === "3rd") return allComplete ? t : null; const g = code.split("-")[1]; return (standings[g] && standings[g]._complete) ? t : null; };
+      const conf = (code, t) => { if (!t) return null; if (code === "3rd") return allComplete ? t : null; const g = code.split("-")[1]; if (standings[g] && standings[g]._complete) return t; return this._almostCertain(code, t) ? t : null; };
       const slotLabel = (code) => code === "3rd" ? "Mejor 3º" : ((code[0] === "W" ? "1º " : "2º ") + code.split("-")[1]);
       const tbm = {}, labelOf = {};
       for (const m of D.R32) { const tm = teams ? teams[m.match] : { a: null, b: null }; tbm[m.match] = { a: conf(m.a, tm.a), b: conf(m.b, tm.b) }; labelOf[m.match] = { a: slotLabel(m.a), b: slotLabel(m.b) }; }
