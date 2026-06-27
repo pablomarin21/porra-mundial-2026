@@ -1015,6 +1015,9 @@ tr.clickrow.sel td{background:#e7f1ec}
 .k27-prog2{background:#eef4f0;border-radius:20px;padding:4px 11px;font-size:.76rem;font-weight:800;color:var(--green)}
 .k27-champ2{background:#fff8e9;border:1px solid #f0d79a;border-radius:20px;padding:4px 11px;font-size:.8rem;font-weight:700;color:#a9741a}
 .k27-em{display:grid;grid-template-columns:26px 1fr;align-items:center;gap:7px;margin-bottom:7px}
+.k27-em.locked{opacity:.72}
+.k27-em.locked .k27-epick{filter:grayscale(.2)}
+.k27-lk{font-size:.95rem;line-height:1}
 .k27-epick{display:grid;grid-template-columns:1fr 24px 1fr;align-items:stretch;gap:5px}
 .k27-opt{display:flex;align-items:center;justify-content:center;gap:5px;background:#fff;border:1.5px solid var(--line);border-radius:10px;padding:9px 8px;cursor:pointer;font-size:.84rem;font-weight:600;color:#26323b;min-height:42px;transition:.12s;text-align:center}
 .k27-opt:active{transform:scale(.98)}

@@ -13,7 +13,7 @@
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="Porra Mundial" />
-  <link rel="stylesheet" href="styles.css?v=82" />
+  <link rel="stylesheet" href="styles.css?v=83" />
 </head>
 <body x-data="porraApp()" x-init="init()" x-cloak>
 
@@ -1174,11 +1174,11 @@
           <span class="k27-prog2" x-text="bracket2Picked+'/31 elegidos'"></span>
           <span class="k27-champ2" x-show="myChampion2"><span x-text="flag(myChampion2)"></span> <b x-text="es(myChampion2)"></b> 🏆</span>
         </div>
-        <p class="k27-note">Toca al equipo que crees que <b>gana</b> cada cruce; el ganador pasa solo a la siguiente ronda. Cuando termines (o por el camino), <b>guarda</b>.</p>
+        <p class="k27-note">Toca al equipo que crees que <b>gana</b> cada cruce; el ganador pasa solo a la siguiente ronda. Los cruces con <b>🔒</b> aún no tienen los dos equipos decididos — <b>se desbloquean solos</b> según cierran los grupos. <span x-show="ko27Round==='r32'"><b x-text="ko27PlayableCount"></b> de 16 ya desbloqueados.</span> Guarda cuando quieras (puedes seguir luego).</p>
         <div class="k27-list" x-show="activeCol2">
           <template x-for="m in (activeCol2?activeCol2.matches:[])" :key="'e'+(activeCol2?activeCol2.key:'')+m.match">
-            <div class="k27-em">
-              <span class="k27-mn" x-text="'#'+m.n"></span>
+            <div class="k27-em" :class="{locked: !(m.a.team && m.b.team)}">
+              <span class="k27-mn"><span x-show="m.a.team && m.b.team" x-text="'#'+m.n"></span><span class="k27-lk" x-show="!(m.a.team && m.b.team)" title="Se desbloquea cuando se decidan los dos equipos">🔒</span></span>
               <div class="k27-epick">
                 <button class="k27-opt" :class="{sel:m.pick && m.pick===m.a.team, pend:!m.a.team}" :disabled="!m.a.team" @click="pickWinner2(m.match, m.a.team)">
                   <template x-if="m.a.team"><span><span class="k27-fl" x-text="m.a.flag"></span> <span class="k27-nm" x-text="m.a.es"></span></span></template>
@@ -1882,10 +1882,10 @@
   </div>
 
   <!-- ====== Dependencias ====== -->
-  <script src="data.js?v=82"></script>
-  <script src="engine.js?v=82"></script>
+  <script src="data.js?v=83"></script>
+  <script src="engine.js?v=83"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
-  <script src="app.js?v=82"></script>
+  <script src="app.js?v=83"></script>
   <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.1/dist/cdn.min.js"></script>
 </body>
 </html>
