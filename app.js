@@ -263,7 +263,7 @@ window.porraApp = function () {
       this.pushSupported = ("serviceWorker" in navigator) && ("PushManager" in window) && ("Notification" in window);
       if (!this.pushSupported) return;
       try {
-        const reg = await navigator.serviceWorker.register("sw.js?v=87");
+        const reg = await navigator.serviceWorker.register("sw.js?v=88");
         const sub = await reg.pushManager.getSubscription();
         this.pushOn = !!sub;
         if (!this.pushOn && !localStorage.getItem("porra_notif_dismissed")) {
@@ -471,8 +471,16 @@ window.porraApp = function () {
       this._espnTimer = setInterval(() => { if (!this.pool) return; if (this.tab === "leaderboard") this.loadBoard(); else if (this.tab === "results" || this.tab === "goals") this.fetchEspn(false); }, 60000);
       // Al volver a la pestaña/app, refresca al instante (clasificación siempre al día con lo que se está jugando).
       document.addEventListener("visibilitychange", () => { if (!document.hidden && this.pool) { if (this.tab === "leaderboard") this.loadBoard(); else if (this.tab === "results" || this.tab === "goals") this.fetchEspn(false); } });
-      const code = new URLSearchParams(location.search).get("porra");
-      if (code) await this.loadPool(code);
+      const params = new URLSearchParams(location.search);
+      const code = params.get("porra");
+      const go = params.get("go");                       // deep-link (p.ej. desde una notificación)
+      if (code) {
+        await this.loadPool(code);
+        if (go === "ko27" && this.view === "pool") {      // abrir directo el apartado 28 de junio
+          try { await this.fetchEspn(true); } catch (e) {}
+          try { this.openKo27(); } catch (e) {}
+        }
+      }
     },
 
     // ---------- cierre automático ----------
