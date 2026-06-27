@@ -1382,6 +1382,25 @@ tr.clickrow.sel td{background:#e7f1ec}
 .wcb-t.ph{justify-content:center;color:#9aa6a0;font-style:italic;font-size:.64rem;font-weight:600}
 .wcb-t.pending{color:#9aa6a0;font-style:italic;font-weight:600;opacity:.85}
 .wcb-t.pending .wcb-nm{font-size:.66rem}
+/* celdas INTERACTIVAS del cuadro editable */
+.wcb-t.can{cursor:pointer}
+.wcb-t.can:hover{background:rgba(46,194,122,.16)}
+.wcb-t.can:active{transform:scale(.96)}
+.wcb-t.pick{background:linear-gradient(90deg, rgba(46,194,122,.5), rgba(46,194,122,.14));color:#0b3d2e;font-weight:900;box-shadow:inset 0 0 0 1.6px #2ec27a}
+.wcb-t.dim{opacity:.34}
+.wcb-t.lock{color:#9aa6a0;font-style:italic;font-weight:600;font-size:.62rem;justify-content:center}
+.wcb-tt{display:flex;align-items:center;gap:5px;width:100%}
+.wcb-pk{margin-left:auto;color:#159e57;font-weight:900;flex:none}
+.wcb-pend{display:inline-flex;align-items:center;gap:3px}
+/* barra de guardado + avisos (arriba del cuadro) */
+.k27-savebar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;background:#0e2b22;border:1px solid #1f6b4d;border-radius:12px;padding:9px 13px;margin:6px 0 8px}
+.k27-sb-prog{font-weight:800;color:#eafff4}
+.k27-sb-status{font-size:.8rem;color:#bfe7d3}
+.k27-sb-status.ok{color:#37d27e;font-weight:800}
+.k27-sb-btn{margin-left:auto;background:linear-gradient(180deg,#37d27e,#1f9e57);color:#06231a;border:none;border-radius:9px;padding:9px 18px;font-weight:900;cursor:pointer}
+.k27-sb-btn:disabled{opacity:.6;cursor:default}
+.k27-clickhint{font-size:.82rem;color:#d7f3e6;background:rgba(46,194,122,.1);border:1px solid rgba(46,194,122,.32);border-radius:10px;padding:8px 11px;margin:0 0 10px;line-height:1.4}
+.k27-clickhint.warn{color:#ffdcb5;background:rgba(224,161,6,.13);border-color:rgba(224,161,6,.42)}
 
 /* CONECTORES dorados con glow */
 .wcb-col:not(.champ):not(.r-final) .wcb-m::after{content:"";position:absolute;left:122px;top:50%;width:22px;height:2px;

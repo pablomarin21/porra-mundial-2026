@@ -9,7 +9,7 @@
   <!-- Auto-actualizador: si hay una versión nueva publicada, recarga sola (evita caché vieja) -->
   <script>
   (function () {
-    var CUR = 84;   // versión de este index.html
+    var CUR = 85;   // versión de este index.html
     try {
       fetch("ver.txt?t=" + Date.now(), { cache: "no-store" })
         .then(function (r) { return r.ok ? r.text() : ""; })
@@ -35,7 +35,7 @@
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="Porra Mundial" />
-  <link rel="stylesheet" href="styles.css?v=84" />
+  <link rel="stylesheet" href="styles.css?v=85" />
 </head>
 <body x-data="porraApp()" x-init="init()" x-cloak>
 
@@ -1021,7 +1021,16 @@
       <span class="k27-prog" x-text="(ko27?ko27.complete:0)+'/'+(ko27?ko27.total:12)+' grupos cerrados'"></span>
     </div>
 
-    <!-- CUADRO VISUAL espectacular estilo Mundial -->
+    <!-- Barra de guardado + instrucción (ARRIBA del cuadro) -->
+    <div class="k27-savebar" x-show="ko27Editable">
+      <span class="k27-sb-prog">🏟️ <b x-text="bracket2Picked"></b>/31 elegidos</span>
+      <span class="k27-sb-status" :class="{ok:ko27Saved}" x-text="ko27Busy?'Guardando…':(ko27Saved?'✅ Guardado':'✎ sin guardar')"></span>
+      <button class="k27-sb-btn" :disabled="ko27Busy" @click="saveBracket2(false)">💾 Guardar</button>
+    </div>
+    <p class="k27-clickhint" x-show="ko27Editable">👆 Toca al equipo que crees que <b>gana</b> cada cruce — avanza solo y se <b>guarda automáticamente</b>. Los <b>🔒</b> se abren en cuanto se deciden sus equipos.</p>
+    <p class="k27-clickhint warn" x-show="!ko27Editable && (!me || !me.id)">⚠️ Para montar tu cuadro, primero <b>entra con tu nombre</b> (pestaña <b>«Mi Porra»</b>). Luego vuelve aquí y toca a los ganadores.</p>
+
+    <!-- CUADRO VISUAL INTERACTIVO estilo Mundial -->
     <div class="wcb-stage">
       <div class="wcb-hero">
         <div class="wcb-hero-glow"></div>
@@ -1029,28 +1038,30 @@
         <div class="wcb-hero-txt">
           <div class="wcb-hero-sub">MUNDIAL 2026 · 🇨🇦 🇺🇸 🇲🇽</div>
           <div class="wcb-hero-h">Camino a la Final</div>
-          <div class="wcb-hero-leg"><i class="wd in"></i>clasifica <i class="wd out"></i>fuera <i class="wd maybe"></i>en juego</div>
+          <div class="wcb-hero-leg"><span x-show="ko27Editable">👆 toca al ganador</span><span x-show="!ko27Editable">🔒 entra para elegir</span></div>
         </div>
       </div>
       <div class="wcb-wrap">
         <div class="wcb wcb-mirror">
           <!-- MITAD IZQUIERDA -->
           <div class="wcb-side left">
-            <template x-for="(col,ci) in (ko27&&ko27.bracket?ko27.bracket.leftCols:[])" :key="'L'+col.key">
+            <template x-for="(col,ci) in mirror2.leftCols" :key="'L'+col.key">
               <div class="wcb-col" :style="'--ci:'+ci">
                 <div class="wcb-col-h"><span x-text="col.title"></span></div>
                 <div class="wcb-matches">
-                  <template x-for="m in col.matches" :key="'L'+col.key+m.n">
+                  <template x-for="m in col.matches" :key="'L'+col.key+m.n+(m.pick||'_')">
                     <div class="wcb-m"><i class="wcb-in"></i>
-                      <div class="wcb-box" :class="{seeded:col.seeded}">
-                        <template x-if="col.seeded"><div>
-                          <div class="wcb-t" :class="m.a.pending?'pending':(m.a.st?('s-'+m.a.st.k):'')"><span class="wcb-fl" x-text="m.a.flag"></span><span class="wcb-nm" x-text="m.a.es"></span><i class="wcb-st" x-show="m.a.st" :class="m.a.st?('d-'+m.a.st.k):''"></i></div>
-                          <div class="wcb-t" :class="m.b.pending?'pending':(m.b.st?('s-'+m.b.st.k):'')"><span class="wcb-fl" x-text="m.b.flag"></span><span class="wcb-nm" x-text="m.b.es"></span><i class="wcb-st" x-show="m.b.st" :class="m.b.st?('d-'+m.b.st.k):''"></i></div>
-                        </div></template>
-                        <template x-if="!col.seeded"><div>
-                          <div class="wcb-t ph"><span class="wcb-skel"></span></div>
-                          <div class="wcb-t ph"><span class="wcb-skel"></span></div>
-                        </div></template>
+                      <div class="wcb-box">
+                        <div class="wcb-t" :class="{ pick: m.a.team && m.pick===m.a.team, dim: m.pick && m.a.team && m.pick!==m.a.team, lock: !m.a.team && m.a.label, can: ko27Editable && m.a.team && m.b.team }" @click="ko27Editable && m.a.team && m.b.team && pickWinner2(m.match, m.a.team)">
+                          <template x-if="m.a.team"><span class="wcb-tt"><span class="wcb-fl" x-text="m.a.flag"></span><span class="wcb-nm" x-text="m.a.es"></span><i class="wcb-pk" x-show="m.pick===m.a.team">✓</i></span></template>
+                          <template x-if="!m.a.team && m.a.label"><span class="wcb-pend">🔒 <span x-text="m.a.label"></span></span></template>
+                          <template x-if="!m.a.team && !m.a.label"><span class="wcb-skel"></span></template>
+                        </div>
+                        <div class="wcb-t" :class="{ pick: m.b.team && m.pick===m.b.team, dim: m.pick && m.b.team && m.pick!==m.b.team, lock: !m.b.team && m.b.label, can: ko27Editable && m.a.team && m.b.team }" @click="ko27Editable && m.a.team && m.b.team && pickWinner2(m.match, m.b.team)">
+                          <template x-if="m.b.team"><span class="wcb-tt"><span class="wcb-fl" x-text="m.b.flag"></span><span class="wcb-nm" x-text="m.b.es"></span><i class="wcb-pk" x-show="m.pick===m.b.team">✓</i></span></template>
+                          <template x-if="!m.b.team && m.b.label"><span class="wcb-pend">🔒 <span x-text="m.b.label"></span></span></template>
+                          <template x-if="!m.b.team && !m.b.label"><span class="wcb-skel"></span></template>
+                        </div>
                       </div>
                     </div>
                   </template>
@@ -1061,11 +1072,17 @@
           <!-- CENTRO: final + trofeo -->
           <div class="wcb-center">
             <div class="wcb-col-h center"><span>Final</span></div>
-            <template x-for="m in (ko27&&ko27.bracket?ko27.bracket.finalCol.matches:[])" :key="'F'+m.n">
-              <div class="wcb-final"><div class="wcb-box"><div>
-                <div class="wcb-t ph"><span class="wcb-skel"></span></div>
-                <div class="wcb-t ph"><span class="wcb-skel"></span></div>
-              </div></div></div>
+            <template x-if="mirror2.finalMatch">
+              <div class="wcb-final"><div class="wcb-box">
+                <div class="wcb-t" :class="{ pick: mirror2.finalMatch.a.team && mirror2.finalMatch.pick===mirror2.finalMatch.a.team, dim: mirror2.finalMatch.pick && mirror2.finalMatch.a.team && mirror2.finalMatch.pick!==mirror2.finalMatch.a.team, can: ko27Editable && mirror2.finalMatch.a.team }" @click="ko27Editable && mirror2.finalMatch.a.team && pickWinner2(mirror2.finalMatch.match, mirror2.finalMatch.a.team)">
+                  <template x-if="mirror2.finalMatch.a.team"><span class="wcb-tt"><span class="wcb-fl" x-text="mirror2.finalMatch.a.flag"></span><span class="wcb-nm" x-text="mirror2.finalMatch.a.es"></span><i class="wcb-pk" x-show="mirror2.finalMatch.pick===mirror2.finalMatch.a.team">✓</i></span></template>
+                  <template x-if="!mirror2.finalMatch.a.team"><span class="wcb-skel"></span></template>
+                </div>
+                <div class="wcb-t" :class="{ pick: mirror2.finalMatch.b.team && mirror2.finalMatch.pick===mirror2.finalMatch.b.team, dim: mirror2.finalMatch.pick && mirror2.finalMatch.b.team && mirror2.finalMatch.pick!==mirror2.finalMatch.b.team, can: ko27Editable && mirror2.finalMatch.b.team }" @click="ko27Editable && mirror2.finalMatch.b.team && pickWinner2(mirror2.finalMatch.match, mirror2.finalMatch.b.team)">
+                  <template x-if="mirror2.finalMatch.b.team"><span class="wcb-tt"><span class="wcb-fl" x-text="mirror2.finalMatch.b.flag"></span><span class="wcb-nm" x-text="mirror2.finalMatch.b.es"></span><i class="wcb-pk" x-show="mirror2.finalMatch.pick===mirror2.finalMatch.b.team">✓</i></span></template>
+                  <template x-if="!mirror2.finalMatch.b.team"><span class="wcb-skel"></span></template>
+                </div>
+              </div></div>
             </template>
             <div class="wcb-cup">
               <div class="wcb-rays"></div>
@@ -1078,21 +1095,23 @@
           </div>
           <!-- MITAD DERECHA (espejo) -->
           <div class="wcb-side right">
-            <template x-for="(col,ci) in (ko27&&ko27.bracket?ko27.bracket.rightCols:[])" :key="'R'+col.key">
+            <template x-for="(col,ci) in mirror2.rightCols" :key="'R'+col.key">
               <div class="wcb-col" :style="'--ci:'+ci">
                 <div class="wcb-col-h"><span x-text="col.title"></span></div>
                 <div class="wcb-matches">
-                  <template x-for="m in col.matches" :key="'R'+col.key+m.n">
+                  <template x-for="m in col.matches" :key="'R'+col.key+m.n+(m.pick||'_')">
                     <div class="wcb-m"><i class="wcb-in"></i>
-                      <div class="wcb-box" :class="{seeded:col.seeded}">
-                        <template x-if="col.seeded"><div>
-                          <div class="wcb-t" :class="m.a.pending?'pending':(m.a.st?('s-'+m.a.st.k):'')"><span class="wcb-fl" x-text="m.a.flag"></span><span class="wcb-nm" x-text="m.a.es"></span><i class="wcb-st" x-show="m.a.st" :class="m.a.st?('d-'+m.a.st.k):''"></i></div>
-                          <div class="wcb-t" :class="m.b.pending?'pending':(m.b.st?('s-'+m.b.st.k):'')"><span class="wcb-fl" x-text="m.b.flag"></span><span class="wcb-nm" x-text="m.b.es"></span><i class="wcb-st" x-show="m.b.st" :class="m.b.st?('d-'+m.b.st.k):''"></i></div>
-                        </div></template>
-                        <template x-if="!col.seeded"><div>
-                          <div class="wcb-t ph"><span class="wcb-skel"></span></div>
-                          <div class="wcb-t ph"><span class="wcb-skel"></span></div>
-                        </div></template>
+                      <div class="wcb-box">
+                        <div class="wcb-t" :class="{ pick: m.a.team && m.pick===m.a.team, dim: m.pick && m.a.team && m.pick!==m.a.team, lock: !m.a.team && m.a.label, can: ko27Editable && m.a.team && m.b.team }" @click="ko27Editable && m.a.team && m.b.team && pickWinner2(m.match, m.a.team)">
+                          <template x-if="m.a.team"><span class="wcb-tt"><span class="wcb-fl" x-text="m.a.flag"></span><span class="wcb-nm" x-text="m.a.es"></span><i class="wcb-pk" x-show="m.pick===m.a.team">✓</i></span></template>
+                          <template x-if="!m.a.team && m.a.label"><span class="wcb-pend">🔒 <span x-text="m.a.label"></span></span></template>
+                          <template x-if="!m.a.team && !m.a.label"><span class="wcb-skel"></span></template>
+                        </div>
+                        <div class="wcb-t" :class="{ pick: m.b.team && m.pick===m.b.team, dim: m.pick && m.b.team && m.pick!==m.b.team, lock: !m.b.team && m.b.label, can: ko27Editable && m.a.team && m.b.team }" @click="ko27Editable && m.a.team && m.b.team && pickWinner2(m.match, m.b.team)">
+                          <template x-if="m.b.team"><span class="wcb-tt"><span class="wcb-fl" x-text="m.b.flag"></span><span class="wcb-nm" x-text="m.b.es"></span><i class="wcb-pk" x-show="m.pick===m.b.team">✓</i></span></template>
+                          <template x-if="!m.b.team && m.b.label"><span class="wcb-pend">🔒 <span x-text="m.b.label"></span></span></template>
+                          <template x-if="!m.b.team && !m.b.label"><span class="wcb-skel"></span></template>
+                        </div>
                       </div>
                     </div>
                   </template>
@@ -1174,90 +1193,6 @@
       <div class="vpath-scn"><span class="vdot a"></span>Cae en semis → <b>11 pts</b> · <span class="vdot b" style="margin-left:6px"></span>Gana el Mundial → <b>32 pts</b></div>
     </div>
 
-    <!-- selector de ronda -->
-    <div class="k27-rounds">
-      <template x-for="r in (ko27?ko27.rounds:[])" :key="r.key">
-        <button class="k27-rbtn" :class="{active: ko27Round===r.key}" @click="ko27Round=r.key">
-          <b x-text="r.title"></b><small x-text="r.sub"></small>
-        </button>
-      </template>
-      <span class="k27-rbtn champ" :class="{done: ko27 && ko27.ready}">🏆<small>campeón</small></span>
-    </div>
-
-    <!-- leyenda de estados (solo en 1/16) -->
-    <div class="k27-legend" x-show="ko27Round==='r32' && !ko27Editable">
-      <span class="kps in">✅ clasificado</span><span class="kps out">❌ eliminado</span><span class="kps maybe">⏳ en juego</span>
-    </div>
-
-    <!-- ===== EDITABLE: ya abierto (grupos terminados + en plazo) — elige ganadores ===== -->
-    <template x-if="ko27Editable">
-      <div class="k27-edit">
-        <div class="k27-edit-bar">
-          <span class="k27-prog2" x-text="bracket2Picked+'/31 elegidos'"></span>
-          <span class="k27-champ2" x-show="myChampion2"><span x-text="flag(myChampion2)"></span> <b x-text="es(myChampion2)"></b> 🏆</span>
-        </div>
-        <p class="k27-note">Toca al equipo que crees que <b>gana</b> cada cruce; el ganador pasa solo a la siguiente ronda. Los cruces con <b>🔒</b> aún no tienen los dos equipos decididos — <b>se desbloquean solos</b> según cierran los grupos. <span x-show="ko27Round==='r32'"><b x-text="ko27PlayableCount"></b> de 16 ya desbloqueados.</span> Guarda cuando quieras (puedes seguir luego).</p>
-        <div class="k27-list" x-show="activeCol2">
-          <template x-for="m in (activeCol2?activeCol2.matches:[])" :key="'e'+(activeCol2?activeCol2.key:'')+m.match">
-            <div class="k27-em" :class="{locked: !(m.a.team && m.b.team)}">
-              <span class="k27-mn"><span x-show="m.a.team && m.b.team" x-text="'#'+m.n"></span><span class="k27-lk" x-show="!(m.a.team && m.b.team)" title="Se desbloquea cuando se decidan los dos equipos">🔒</span></span>
-              <div class="k27-epick">
-                <button class="k27-opt" :class="{sel:m.pick && m.pick===m.a.team, pend:!m.a.team}" :disabled="!m.a.team" @click="pickWinner2(m.match, m.a.team)">
-                  <template x-if="m.a.team"><span><span class="k27-fl" x-text="m.a.flag"></span> <span class="k27-nm" x-text="m.a.es"></span></span></template>
-                  <template x-if="!m.a.team"><span class="muted" x-text="m.a.label || 'Ganador anterior'"></span></template>
-                </button>
-                <span class="k27-vs">vs</span>
-                <button class="k27-opt" :class="{sel:m.pick && m.pick===m.b.team, pend:!m.b.team}" :disabled="!m.b.team" @click="pickWinner2(m.match, m.b.team)">
-                  <template x-if="m.b.team"><span><span class="k27-fl" x-text="m.b.flag"></span> <span class="k27-nm" x-text="m.b.es"></span></span></template>
-                  <template x-if="!m.b.team"><span class="muted" x-text="m.b.label || 'Ganador anterior'"></span></template>
-                </button>
-              </div>
-            </div>
-          </template>
-        </div>
-        <div class="k27-save">
-          <button class="btn primary block" :disabled="ko27Busy" @click="saveBracket2()">
-            <span x-show="!ko27Busy" x-text="ko27Saved?'✅ Guardado · volver a guardar':(bracket2Done?'💾 Guardar mi camino completo':'💾 Guardar (puedes seguir luego)')"></span>
-            <span x-show="ko27Busy">Guardando…</span>
-          </button>
-          <p class="tiny muted" x-show="!bracket2Done">Te faltan <b x-text="31-bracket2Picked"></b> cruces. Puedes guardar e ir completando hasta que empiecen los 1/16.</p>
-          <p class="tiny ok" x-show="bracket2Done && ko27Saved">✅ Camino completo y guardado. ¡Suerte!</p>
-        </div>
-      </div>
-    </template>
-
-    <!-- ===== READ-ONLY: vista previa provisional (antes de abrirse) ===== -->
-    <template x-if="!ko27Editable">
-      <template x-for="r in (ko27?ko27.rounds:[]).filter(x=>x.key===ko27Round)" :key="'rd'+r.key">
-        <div>
-          <p class="k27-note" x-show="r.seeded">Cruces <b>provisionales</b> según cómo van los grupos ahora mismo. <span x-show="!(ko27&&ko27.ready)">Irán cambiando hasta el 28.</span> <span class="ok" x-show="ko27&&ko27.ready">✅ ya son los reales.</span></p>
-          <p class="k27-note" x-show="!r.seeded">Esta ronda se irá dibujando con <b>los ganadores que elijas</b> a partir del 28 de junio.</p>
-          <div class="k27-list">
-            <template x-for="m in r.matches" :key="r.key+'m'+m.n">
-              <div class="k27-m" :class="{seeded:r.seeded}">
-                <span class="k27-mn" x-text="'#'+m.n"></span>
-                <template x-if="r.seeded">
-                  <div class="k27-teams">
-                    <span class="k27-t" :class="m.a.st?('s-'+m.a.st.k):''"><span class="k27-fl" x-text="m.a.flag"></span> <span class="k27-nm" x-text="m.a.es"></span><span class="k27-b" x-show="m.a.st" x-text="m.a.st?({in:'✅',out:'❌',maybe:'⏳'}[m.a.st.k]):''"></span></span>
-                    <span class="k27-vs">vs</span>
-                    <span class="k27-t" :class="m.b.st?('s-'+m.b.st.k):''"><span class="k27-fl" x-text="m.b.flag"></span> <span class="k27-nm" x-text="m.b.es"></span><span class="k27-b" x-show="m.b.st" x-text="m.b.st?({in:'✅',out:'❌',maybe:'⏳'}[m.b.st.k]):''"></span></span>
-                  </div>
-                </template>
-                <template x-if="!r.seeded">
-                  <div class="k27-teams ph">
-                    <span class="k27-t ph" x-text="m.fa"></span>
-                    <span class="k27-vs">vs</span>
-                    <span class="k27-t ph" x-text="m.fb"></span>
-                  </div>
-                </template>
-              </div>
-            </template>
-          </div>
-        </div>
-      </template>
-    </template>
-
-    <p class="tiny muted" style="text-align:center;margin-top:14px" x-show="!ko27Editable">Cuando se abra, elegirás el ganador de cada cruce y se irá construyendo tu camino hasta levantar la copa 🏆.</p>
   </section>
 
   <!-- ===================== ¿CÓMO SE PUNTÚA? (apartado completo) ===================== -->
@@ -1904,10 +1839,10 @@
   </div>
 
   <!-- ====== Dependencias ====== -->
-  <script src="data.js?v=84"></script>
-  <script src="engine.js?v=84"></script>
+  <script src="data.js?v=85"></script>
+  <script src="engine.js?v=85"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
-  <script src="app.js?v=84"></script>
+  <script src="app.js?v=85"></script>
   <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.1/dist/cdn.min.js"></script>
 </body>
 </html>

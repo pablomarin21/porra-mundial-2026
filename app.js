@@ -93,7 +93,7 @@ window.porraApp = function () {
     // datos
     entries: [], ranked: [], results: {}, rEdit: defaultREdit(), koEdit: defaultKoEdit(), liveBr: { teamsByMatch: {}, winnerOf: {}, complete: false },
     koPreview: null, koPreviewShow: false, ko27: null, ko27Round: "r32",
-    bracket2: {}, _cols2: [], _champion2: null, ko27Busy: false, ko27Saved: false,
+    bracket2: {}, _cols2: [], _mirror2: null, _champion2: null, ko27Busy: false, ko27Saved: false,
     // admin
     adminOk: false, adminPin: "", settings: Object.assign({}, D.DEFAULT_SCORING),
     scoreKeys: [
@@ -263,7 +263,7 @@ window.porraApp = function () {
       this.pushSupported = ("serviceWorker" in navigator) && ("PushManager" in window) && ("Notification" in window);
       if (!this.pushSupported) return;
       try {
-        const reg = await navigator.serviceWorker.register("sw.js?v=84");
+        const reg = await navigator.serviceWorker.register("sw.js?v=85");
         const sub = await reg.pushManager.getSubscription();
         this.pushOn = !!sub;
         if (!this.pushOn && !localStorage.getItem("porra_notif_dismissed")) {
@@ -1403,10 +1403,24 @@ window.porraApp = function () {
       const defs = [{ key: "r32", title: "1/16", list: D.R32 }, { key: "r16", title: "Octavos", list: D.R16 }, { key: "qf", title: "Cuartos", list: D.QF }, { key: "sf", title: "Semis", list: D.SF }, { key: "final", title: "Final", list: [D.FINAL] }];
       this._cols2 = defs.map((d) => ({ key: d.key, title: d.title, matches: d.list.map((m, i) => ({ n: i + 1, match: m.match, a: cell(tbm[m.match].a, d.key === "r32" ? labelOf[m.match].a : null), b: cell(tbm[m.match].b, d.key === "r32" ? labelOf[m.match].b : null), pick: this.bracket2[m.match] || null })) }));
       this._champion2 = winnerOf[D.FINAL.match] || null;
+      this._mirror2 = this._buildMirror2(this._cols2);          // cuadro visual interactivo (estable)
     },
     // nº de cruces de 1/16 con AMBOS equipos ya decididos (listos para predecir)
     get ko27PlayableCount() { const r = (this._cols2 || []).find((c) => c.key === "r32"); return r ? r.matches.filter((m) => m.a.team && m.b.team).length : 0; },
     get bracketCols2() { return this._cols2; },
+    // Espejo (izquierda/derecha → trofeo) — propiedad ESTABLE recomputada en rebuild2.
+    // (Un getter que devuelve objetos nuevos en cada acceso rompe la reactividad de Alpine.)
+    get mirror2() { return this._mirror2 || { leftCols: [], rightCols: [], finalMatch: null }; },
+    _buildMirror2(cols) {
+      const byN = {}; (cols || []).forEach((c) => { byN[c.key] = {}; c.matches.forEach((m) => (byN[c.key][m.n] = m)); });
+      const pick = (key, ns) => ns.map((n) => (byN[key] || {})[n]).filter(Boolean);
+      const L = { r32: pick("r32", [2, 5, 1, 3, 11, 12, 9, 10]), r16: pick("r16", [1, 2, 5, 6]), qf: pick("qf", [1, 2]), sf: pick("sf", [1]) };
+      const R = { r32: pick("r32", [4, 6, 7, 8, 14, 16, 13, 15]), r16: pick("r16", [3, 4, 7, 8]), qf: pick("qf", [3, 4]), sf: pick("sf", [2]) };
+      const meta = { r32: "1/16", r16: "Octavos", qf: "Cuartos", sf: "Semis" };
+      const colsOf = (side) => ["r32", "r16", "qf", "sf"].map((k) => ({ key: k, title: meta[k], matches: side[k] }));
+      const fin = (byN.final || {})[1];
+      return { leftCols: colsOf(L), rightCols: colsOf(R), finalMatch: fin || null };
+    },
     get activeCol2() { return (this._cols2 || []).find((c) => c.key === this.ko27Round) || null; },
     get myChampion2() { return this._champion2; },
     get bracket2Picked() { let n = 0; for (const m of [...D.R32, ...D.R16, ...D.QF, ...D.SF, D.FINAL]) if (this.bracket2[m.match]) n++; return n; },
@@ -1414,18 +1428,20 @@ window.porraApp = function () {
     pickWinner2(match, team) {
       if (!team || !this.ko27Editable) return;
       this.bracket2[match] = team; this.ko27Saved = false; this.rebuild2();
-      const order = ["r32", "r16", "qf", "sf", "final"]; const idx = order.indexOf(this.ko27Round);
-      const col = this._cols2[idx];
-      if (col && idx < order.length - 1 && col.matches.every((m) => this.bracket2[m.match])) this.ko27Round = order[idx + 1];
+      this._autoSave2();                                  // guarda solo en cuanto tocas algo
     },
-    async saveBracket2() {
+    _autoSave2() {
+      clearTimeout(this._save2Timer);
+      this._save2Timer = setTimeout(() => { this.saveBracket2(true); }, 700);   // debounce → 1 guardado
+    },
+    async saveBracket2(silent) {
       if (!this.ko27Editable || !this.me.id || this.ko27Busy) return;
       this.ko27Busy = true;
       try {
         await this.rpc("porra_set_bracket2", { p_code: this.pool.code, p_participant_id: this.me.id, p_bracket2: this.bracket2 });
         const e = this.myEntry; if (e) { e.picks = e.picks || {}; e.picks.bracket2 = Object.assign({}, this.bracket2); }
         this.ko27Saved = true;
-        this.toast("✅ ¡Camino guardado! Sumarás los puntos bonus según avance el cuadro.");
+        if (!silent) this.toast("✅ ¡Camino guardado! Sumarás los puntos bonus según avance el cuadro.");
         if (this.recomputeRanking) this.recomputeRanking();
       } catch (err) { this.toast(this.errMsg ? this.errMsg(err) : "No se pudo guardar", "err"); }
       finally { this.ko27Busy = false; }
