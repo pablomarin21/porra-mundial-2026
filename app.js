@@ -263,7 +263,7 @@ window.porraApp = function () {
       this.pushSupported = ("serviceWorker" in navigator) && ("PushManager" in window) && ("Notification" in window);
       if (!this.pushSupported) return;
       try {
-        const reg = await navigator.serviceWorker.register("sw.js?v=89");
+        const reg = await navigator.serviceWorker.register("sw.js?v=90");
         const sub = await reg.pushManager.getSubscription();
         this.pushOn = !!sub;
         // pide los avisos SOLA y de forma PERSISTENTE: si no los tiene, el banner vuelve en cada
@@ -845,8 +845,16 @@ window.porraApp = function () {
         await this.loadResults();
         await this.loadEntries();
         this.loadAvatars();
+        // Si el CUADRO DEL 28-JUN está abierto y aún NO lo has empezado, entras DIRECTO ahí
+        // (para que nadie se lo pierda). Si ya lo empezaste, entras a la Clasificación.
+        if (this.me.id) { try {
+          const e = this.myEntry; const n = (e && e.picks && e.picks.bracket2) ? Object.keys(e.picks.bracket2).length : 0;
+          let finOpen = true; try { finOpen = Date.now() < new Date(D.KO_KICKOFF[104]).getTime() - 3600000; } catch (x) {}
+          if (n === 0 && finOpen) this.tab = "ko27";
+        } catch (x) {} }
         this.fetchEspn(true);
         if (this.tab === "leaderboard") this.loadBoard();
+        else if (this.tab === "ko27") { try { await this.fetchEspn(true); this.openKo27(); } catch (e) {} }
       } catch (e) { this.toast(this.errMsg(e), "err"); } finally { this.busy = false; }
     },
     // ---------- fotos de perfil (avatares) ----------

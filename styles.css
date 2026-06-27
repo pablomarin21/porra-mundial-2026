@@ -36,6 +36,8 @@ input,select{font-family:inherit;font-size:16px}
 .tabs{display:flex;gap:4px;margin-left:auto;flex-wrap:wrap}
 .tabs button{background:rgba(255,255,255,.10);border:0;color:#fff;padding:8px 13px;border-radius:999px;font-size:.86rem;font-weight:600}
 .tabs button.active{background:var(--gold);color:var(--green)}
+.tabs button.tab-hot{background:linear-gradient(180deg,#ffd34d,#f0a500);color:#3a2a00;font-weight:900;box-shadow:0 0 0 2px rgba(255,211,77,.35)}
+.tabs button.tab-hot.active{background:var(--gold);color:var(--green)}
 .poolbar{max-width:var(--app-w);margin:0 auto;padding:0 14px 10px;display:flex;gap:10px;align-items:center;flex-wrap:wrap;color:#dff0e8;font-size:.85rem}
 .code-chip{background:rgba(255,255,255,.12);padding:5px 11px;border-radius:999px;cursor:pointer}
 .code-chip b{color:var(--gold)}
