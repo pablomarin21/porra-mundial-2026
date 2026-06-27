@@ -211,10 +211,23 @@ window.PORRA_DATA = (function () {
     { reached: "champion", from: "2026-07-19", to: "2026-07-19" },// gana la final → campeón
   ];
 
+  // --- Hora de saque OFICIAL de cada partido de eliminatorias (UTC), derivada de ESPN/FIFA.
+  //     Se usa para el candado por partido del 2º cuadro: cada pick se cierra 1h antes. ---
+  const KO_KICKOFF = {
+    73: "2026-06-28T19:00Z", 74: "2026-06-29T20:30Z", 75: "2026-06-30T01:00Z", 76: "2026-06-29T17:00Z",
+    77: "2026-06-30T21:00Z", 78: "2026-06-30T17:00Z", 79: "2026-07-01T01:00Z", 80: "2026-07-01T16:00Z",
+    81: "2026-07-02T00:00Z", 82: "2026-07-01T20:00Z", 83: "2026-07-02T23:00Z", 84: "2026-07-02T19:00Z",
+    85: "2026-07-03T03:00Z", 86: "2026-07-03T22:00Z", 87: "2026-07-04T01:30Z", 88: "2026-07-03T18:00Z",
+    89: "2026-07-04T21:00Z", 90: "2026-07-04T17:00Z", 91: "2026-07-05T20:00Z", 92: "2026-07-06T00:00Z",
+    93: "2026-07-06T19:00Z", 94: "2026-07-07T00:00Z", 95: "2026-07-07T16:00Z", 96: "2026-07-07T20:00Z",
+    97: "2026-07-09T20:00Z", 98: "2026-07-10T19:00Z", 99: "2026-07-11T21:00Z", 100: "2026-07-12T01:00Z",
+    101: "2026-07-14T19:00Z", 102: "2026-07-15T19:00Z", 104: "2026-07-19T19:00Z",
+  };
+
   return {
     GROUPS, GROUP_LETTERS, TEAM_INFO, ELO, GROUP_FIXTURES,
     R32, THIRD_SLOTS, R16, QF, SF, FINAL, SCHEDULE, DEFAULT_SCORING,
-    LOCK_AT_DEFAULT, SIDE_BETS, ESPN_NAME, espnCanon, KO_WINDOWS, TEAM_SET,
+    LOCK_AT_DEFAULT, SIDE_BETS, ESPN_NAME, espnCanon, KO_WINDOWS, KO_KICKOFF, TEAM_SET,
     es: (t) => (TEAM_INFO[t] ? TEAM_INFO[t].es : t),
     flag: (t) => (TEAM_INFO[t] ? TEAM_INFO[t].flag : "🏳️"),
   };

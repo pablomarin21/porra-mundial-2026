@@ -263,7 +263,7 @@ window.porraApp = function () {
       this.pushSupported = ("serviceWorker" in navigator) && ("PushManager" in window) && ("Notification" in window);
       if (!this.pushSupported) return;
       try {
-        const reg = await navigator.serviceWorker.register("sw.js?v=85");
+        const reg = await navigator.serviceWorker.register("sw.js?v=86");
         const sub = await reg.pushManager.getSubscription();
         this.pushOn = !!sub;
         if (!this.pushOn && !localStorage.getItem("porra_notif_dismissed")) {
@@ -1370,12 +1370,20 @@ window.porraApp = function () {
     },
     openKo27() { this.tab = "ko27"; this.selectedId = null; this.det = null; this.buildKo27(); this.loadBracket2(); },
 
-    // ¿se puede rellenar ya? grupos terminados + dentro de plazo + estás dentro de la porra
+    // ¿está abierto el 2º cuadro? estás identificado + aún no ha empezado la final (cada cruce
+    // tiene además su propio candado: 1h antes de SU partido).
     get ko27Editable() {
       if (!this.me || !this.me.id || !this.ko27) return false;
-      try { if (new Date() >= new Date("2026-06-28T18:45:00Z")) return false; } catch (e) {}
-      return this.ko27PlayableCount > 0;   // abierto en cuanto hay al menos un cruce de 1/16 decidido
+      try { const fin = D.KO_KICKOFF[104]; if (fin && Date.now() >= new Date(fin).getTime() - 3600000) return false; } catch (e) {}
+      return true;
     },
+    matchKickoff(match) { const t = D.KO_KICKOFF && D.KO_KICKOFF[match]; return t ? new Date(t).getTime() : null; },
+    // un cruce se puede tocar hasta 1 HORA antes de su partido
+    matchEditable(match) { const k = this.matchKickoff(match); return k == null ? true : (Date.now() < k - 3600000); },
+    // ¿se puede elegir este cruce? identificado + ambos equipos decididos + aún no cerrado por hora
+    canPick2(m) { return !!(this.me && this.me.id) && !!(m && m.a && m.a.team && m.b && m.b.team) && this.matchEditable(m.match); },
+    // texto del candado de un cruce (cuándo se cierra, hora de España)
+    matchLockTxt(match) { const k = this.matchKickoff(match); if (k == null) return ""; try { return this.madridTime(new Date(k - 3600000).toISOString()); } catch (e) { return ""; } },
     loadBracket2() {
       const e = this.myEntry;
       this.bracket2 = (e && e.picks && e.picks.bracket2) ? Object.assign({}, e.picks.bracket2) : (this.bracket2 || {});

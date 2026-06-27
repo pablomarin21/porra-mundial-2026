@@ -9,7 +9,7 @@
   <!-- Auto-actualizador: si hay una versión nueva publicada, recarga sola (evita caché vieja) -->
   <script>
   (function () {
-    var CUR = 85;   // versión de este index.html
+    var CUR = 86;   // versión de este index.html
     try {
       fetch("ver.txt?t=" + Date.now(), { cache: "no-store" })
         .then(function (r) { return r.ok ? r.text() : ""; })
@@ -35,7 +35,7 @@
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="Porra Mundial" />
-  <link rel="stylesheet" href="styles.css?v=85" />
+  <link rel="stylesheet" href="styles.css?v=86" />
 </head>
 <body x-data="porraApp()" x-init="init()" x-cloak>
 
@@ -1024,10 +1024,9 @@
     <!-- Barra de guardado + instrucción (ARRIBA del cuadro) -->
     <div class="k27-savebar" x-show="ko27Editable">
       <span class="k27-sb-prog">🏟️ <b x-text="bracket2Picked"></b>/31 elegidos</span>
-      <span class="k27-sb-status" :class="{ok:ko27Saved}" x-text="ko27Busy?'Guardando…':(ko27Saved?'✅ Guardado':'✎ sin guardar')"></span>
-      <button class="k27-sb-btn" :disabled="ko27Busy" @click="saveBracket2(false)">💾 Guardar</button>
+      <span class="k27-sb-status" :class="{ok:ko27Saved}" x-text="ko27Busy?'Guardando…':(ko27Saved?'✅ Guardado automáticamente':'✎ se guarda solo')"></span>
     </div>
-    <p class="k27-clickhint" x-show="ko27Editable">👆 Toca al equipo que crees que <b>gana</b> cada cruce — avanza solo y se <b>guarda automáticamente</b>. Los <b>🔒</b> se abren en cuanto se deciden sus equipos.</p>
+    <p class="k27-clickhint" x-show="ko27Editable">👆 Toca al equipo que crees que <b>gana</b> cada cruce — avanza solo y se <b>guarda automáticamente</b> (no hay botón). Cada cruce lo puedes cambiar <b>hasta 1 hora antes de su partido</b>; después queda 🔒. Los grises se abren cuando se deciden sus equipos.</p>
     <p class="k27-clickhint warn" x-show="!ko27Editable && (!me || !me.id)">⚠️ Para montar tu cuadro, primero <b>entra con tu nombre</b> (pestaña <b>«Mi Porra»</b>). Luego vuelve aquí y toca a los ganadores.</p>
 
     <!-- CUADRO VISUAL INTERACTIVO estilo Mundial -->
@@ -1052,12 +1051,12 @@
                   <template x-for="m in col.matches" :key="'L'+col.key+m.n+(m.pick||'_')">
                     <div class="wcb-m"><i class="wcb-in"></i>
                       <div class="wcb-box">
-                        <div class="wcb-t" :class="{ pick: m.a.team && m.pick===m.a.team, dim: m.pick && m.a.team && m.pick!==m.a.team, lock: !m.a.team && m.a.label, can: ko27Editable && m.a.team && m.b.team }" @click="ko27Editable && m.a.team && m.b.team && pickWinner2(m.match, m.a.team)">
+                        <div class="wcb-t" :class="{ pick: m.a.team && m.pick===m.a.team, dim: m.pick && m.a.team && m.pick!==m.a.team, lock: !m.a.team && m.a.label, can: canPick2(m), tl: m.a.team && m.b.team && !matchEditable(m.match) }" @click="canPick2(m) && pickWinner2(m.match, m.a.team)">
                           <template x-if="m.a.team"><span class="wcb-tt"><span class="wcb-fl" x-text="m.a.flag"></span><span class="wcb-nm" x-text="m.a.es"></span><i class="wcb-pk" x-show="m.pick===m.a.team">✓</i></span></template>
                           <template x-if="!m.a.team && m.a.label"><span class="wcb-pend">🔒 <span x-text="m.a.label"></span></span></template>
                           <template x-if="!m.a.team && !m.a.label"><span class="wcb-skel"></span></template>
                         </div>
-                        <div class="wcb-t" :class="{ pick: m.b.team && m.pick===m.b.team, dim: m.pick && m.b.team && m.pick!==m.b.team, lock: !m.b.team && m.b.label, can: ko27Editable && m.a.team && m.b.team }" @click="ko27Editable && m.a.team && m.b.team && pickWinner2(m.match, m.b.team)">
+                        <div class="wcb-t" :class="{ pick: m.b.team && m.pick===m.b.team, dim: m.pick && m.b.team && m.pick!==m.b.team, lock: !m.b.team && m.b.label, can: canPick2(m), tl: m.a.team && m.b.team && !matchEditable(m.match) }" @click="canPick2(m) && pickWinner2(m.match, m.b.team)">
                           <template x-if="m.b.team"><span class="wcb-tt"><span class="wcb-fl" x-text="m.b.flag"></span><span class="wcb-nm" x-text="m.b.es"></span><i class="wcb-pk" x-show="m.pick===m.b.team">✓</i></span></template>
                           <template x-if="!m.b.team && m.b.label"><span class="wcb-pend">🔒 <span x-text="m.b.label"></span></span></template>
                           <template x-if="!m.b.team && !m.b.label"><span class="wcb-skel"></span></template>
@@ -1074,11 +1073,11 @@
             <div class="wcb-col-h center"><span>Final</span></div>
             <template x-if="mirror2.finalMatch">
               <div class="wcb-final"><div class="wcb-box">
-                <div class="wcb-t" :class="{ pick: mirror2.finalMatch.a.team && mirror2.finalMatch.pick===mirror2.finalMatch.a.team, dim: mirror2.finalMatch.pick && mirror2.finalMatch.a.team && mirror2.finalMatch.pick!==mirror2.finalMatch.a.team, can: ko27Editable && mirror2.finalMatch.a.team }" @click="ko27Editable && mirror2.finalMatch.a.team && pickWinner2(mirror2.finalMatch.match, mirror2.finalMatch.a.team)">
+                <div class="wcb-t" :class="{ pick: mirror2.finalMatch.a.team && mirror2.finalMatch.pick===mirror2.finalMatch.a.team, dim: mirror2.finalMatch.pick && mirror2.finalMatch.a.team && mirror2.finalMatch.pick!==mirror2.finalMatch.a.team, can: canPick2(mirror2.finalMatch) }" @click="canPick2(mirror2.finalMatch) && pickWinner2(mirror2.finalMatch.match, mirror2.finalMatch.a.team)">
                   <template x-if="mirror2.finalMatch.a.team"><span class="wcb-tt"><span class="wcb-fl" x-text="mirror2.finalMatch.a.flag"></span><span class="wcb-nm" x-text="mirror2.finalMatch.a.es"></span><i class="wcb-pk" x-show="mirror2.finalMatch.pick===mirror2.finalMatch.a.team">✓</i></span></template>
                   <template x-if="!mirror2.finalMatch.a.team"><span class="wcb-skel"></span></template>
                 </div>
-                <div class="wcb-t" :class="{ pick: mirror2.finalMatch.b.team && mirror2.finalMatch.pick===mirror2.finalMatch.b.team, dim: mirror2.finalMatch.pick && mirror2.finalMatch.b.team && mirror2.finalMatch.pick!==mirror2.finalMatch.b.team, can: ko27Editable && mirror2.finalMatch.b.team }" @click="ko27Editable && mirror2.finalMatch.b.team && pickWinner2(mirror2.finalMatch.match, mirror2.finalMatch.b.team)">
+                <div class="wcb-t" :class="{ pick: mirror2.finalMatch.b.team && mirror2.finalMatch.pick===mirror2.finalMatch.b.team, dim: mirror2.finalMatch.pick && mirror2.finalMatch.b.team && mirror2.finalMatch.pick!==mirror2.finalMatch.b.team, can: canPick2(mirror2.finalMatch) }" @click="canPick2(mirror2.finalMatch) && pickWinner2(mirror2.finalMatch.match, mirror2.finalMatch.b.team)">
                   <template x-if="mirror2.finalMatch.b.team"><span class="wcb-tt"><span class="wcb-fl" x-text="mirror2.finalMatch.b.flag"></span><span class="wcb-nm" x-text="mirror2.finalMatch.b.es"></span><i class="wcb-pk" x-show="mirror2.finalMatch.pick===mirror2.finalMatch.b.team">✓</i></span></template>
                   <template x-if="!mirror2.finalMatch.b.team"><span class="wcb-skel"></span></template>
                 </div>
@@ -1102,12 +1101,12 @@
                   <template x-for="m in col.matches" :key="'R'+col.key+m.n+(m.pick||'_')">
                     <div class="wcb-m"><i class="wcb-in"></i>
                       <div class="wcb-box">
-                        <div class="wcb-t" :class="{ pick: m.a.team && m.pick===m.a.team, dim: m.pick && m.a.team && m.pick!==m.a.team, lock: !m.a.team && m.a.label, can: ko27Editable && m.a.team && m.b.team }" @click="ko27Editable && m.a.team && m.b.team && pickWinner2(m.match, m.a.team)">
+                        <div class="wcb-t" :class="{ pick: m.a.team && m.pick===m.a.team, dim: m.pick && m.a.team && m.pick!==m.a.team, lock: !m.a.team && m.a.label, can: canPick2(m), tl: m.a.team && m.b.team && !matchEditable(m.match) }" @click="canPick2(m) && pickWinner2(m.match, m.a.team)">
                           <template x-if="m.a.team"><span class="wcb-tt"><span class="wcb-fl" x-text="m.a.flag"></span><span class="wcb-nm" x-text="m.a.es"></span><i class="wcb-pk" x-show="m.pick===m.a.team">✓</i></span></template>
                           <template x-if="!m.a.team && m.a.label"><span class="wcb-pend">🔒 <span x-text="m.a.label"></span></span></template>
                           <template x-if="!m.a.team && !m.a.label"><span class="wcb-skel"></span></template>
                         </div>
-                        <div class="wcb-t" :class="{ pick: m.b.team && m.pick===m.b.team, dim: m.pick && m.b.team && m.pick!==m.b.team, lock: !m.b.team && m.b.label, can: ko27Editable && m.a.team && m.b.team }" @click="ko27Editable && m.a.team && m.b.team && pickWinner2(m.match, m.b.team)">
+                        <div class="wcb-t" :class="{ pick: m.b.team && m.pick===m.b.team, dim: m.pick && m.b.team && m.pick!==m.b.team, lock: !m.b.team && m.b.label, can: canPick2(m), tl: m.a.team && m.b.team && !matchEditable(m.match) }" @click="canPick2(m) && pickWinner2(m.match, m.b.team)">
                           <template x-if="m.b.team"><span class="wcb-tt"><span class="wcb-fl" x-text="m.b.flag"></span><span class="wcb-nm" x-text="m.b.es"></span><i class="wcb-pk" x-show="m.pick===m.b.team">✓</i></span></template>
                           <template x-if="!m.b.team && m.b.label"><span class="wcb-pend">🔒 <span x-text="m.b.label"></span></span></template>
                           <template x-if="!m.b.team && !m.b.label"><span class="wcb-skel"></span></template>
@@ -1839,10 +1838,10 @@
   </div>
 
   <!-- ====== Dependencias ====== -->
-  <script src="data.js?v=85"></script>
-  <script src="engine.js?v=85"></script>
+  <script src="data.js?v=86"></script>
+  <script src="engine.js?v=86"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
-  <script src="app.js?v=85"></script>
+  <script src="app.js?v=86"></script>
   <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.1/dist/cdn.min.js"></script>
 </body>
 </html>

@@ -1388,6 +1388,8 @@ tr.clickrow.sel td{background:#e7f1ec}
 .wcb-t.can:active{transform:scale(.96)}
 .wcb-t.pick{background:linear-gradient(90deg, rgba(46,194,122,.5), rgba(46,194,122,.14));color:#0b3d2e;font-weight:900;box-shadow:inset 0 0 0 1.6px #2ec27a}
 .wcb-t.dim{opacity:.34}
+.wcb-t.tl{cursor:default}
+.wcb-t.tl::after{content:"🔒";font-size:.6rem;margin-left:3px;opacity:.6;flex:none}
 .wcb-t.lock{color:#9aa6a0;font-style:italic;font-weight:600;font-size:.62rem;justify-content:center}
 .wcb-tt{display:flex;align-items:center;gap:5px;width:100%}
 .wcb-pk{margin-left:auto;color:#159e57;font-weight:900;flex:none}
