@@ -72,7 +72,7 @@ window.porraApp = function () {
   return {
     // navegación
     view: "home", tab: "play", step: 1, rTab: "cal", aTab: "groups", calFilter: "all", brRound: 0, avatarMap: {}, avatarBusy: false, lightbox: null, photoCache: {},
-    teamProbs: {}, teamProbsSims: 0, scorers: [], assisters: [], porteros: [], _matchCache: {}, assistsLoading: false, assistsLoaded: false, porteroDraft: "", porteroSaving: false,
+    teamProbs: {}, teamProbsSims: 0, thirdSlotProbs: {}, scorers: [], assisters: [], porteros: [], _matchCache: {}, assistsLoading: false, assistsLoaded: false, porteroDraft: "", porteroSaving: false,
     phase: "welcome", gIdx: 0, chosenNew: false, confirmClaim: null, claimFromName: false,
     wmode: "choose", entriesLoaded: false,
     // estado porra / jugador
@@ -263,7 +263,7 @@ window.porraApp = function () {
       this.pushSupported = ("serviceWorker" in navigator) && ("PushManager" in window) && ("Notification" in window);
       if (!this.pushSupported) return;
       try {
-        const reg = await navigator.serviceWorker.register("sw.js?v=91");
+        const reg = await navigator.serviceWorker.register("sw.js?v=92");
         const sub = await reg.pushManager.getSubscription();
         this.pushOn = !!sub;
         // pide los avisos SOLA y de forma PERSISTENTE: si no los tiene, el banner vuelve en cada
@@ -1308,6 +1308,12 @@ window.porraApp = function () {
       if (code[0] === "R") return (p.top2 - p.first) >= 0.995;
       return false;
     },
+    // ¿está ya decidido el hueco de "mejor 3º" del partido `mn`? Sí cuando un grupo YA CERRADO
+    // cae en ese hueco con ≥99,5% (su 3º es definitivo y el reparto oficial ahí es estable).
+    _thirdSlotConfirmed(mn, standings) {
+      const sp = this.thirdSlotProbs && this.thirdSlotProbs[mn];
+      return !!(sp && sp.p >= 0.995 && sp.group && standings[sp.group] && standings[sp.group]._complete);
+    },
     // ---------- Vista previa del cuadro post-grupos (BONUS) — SOLO admin, SOLO lectura ----------
     buildKoPreview() {
       const RES = this._resMap;
@@ -1316,9 +1322,27 @@ window.porraApp = function () {
       const complete = D.GROUP_LETTERS.filter((L) => standings[L]._complete).length;
       let teams = null;
       try { teams = Eng.buildR32Teams(Eng.computeQualifiers(standings)).teams; } catch (e) { teams = null; }
-      let chances = {};
-      try { chances = Eng.monteCarloTeams(RES, 3000).byTeam; } catch (e) { chances = {}; }
-      this.teamProbs = chances; this.teamProbsSims = 3000;   // disponibles para rebuild2 (confirmación por probabilidad)
+      // Monte Carlo: probabilidades por equipo (qualify/first/top2) + reparto de los huecos de 3º
+      // (con qué grupo cae cada hueco, según la tabla oficial). Para confirmar lo prácticamente seguro.
+      let chances = {}, thirdSlotProbs = {};
+      try {
+        const teamsAll = [].concat(...D.GROUP_LETTERS.map((L) => D.GROUPS[L]));
+        const acc = {}; teamsAll.forEach((t) => (acc[t] = { qualify: 0, first: 0, top2: 0 }));
+        const SL = [74, 77, 79, 80, 81, 82, 85, 87]; const tly = {}; SL.forEach((s) => (tly[s] = {}));
+        const N = 3000;
+        for (let i = 0; i < N; i++) {
+          const std2 = {}; for (const L of D.GROUP_LETTERS) std2[L] = Eng.groupStandings(L, RES, true, Math.random);
+          const q2 = Eng.computeQualifiers(std2);
+          for (const L of D.GROUP_LETTERS) { const s = std2[L]; acc[s[0].team].first++; acc[s[0].team].top2++; acc[s[1].team].top2++; }
+          const qset = new Set([].concat(Object.values(q2.winners), Object.values(q2.runnersUp), q2.qualifiedThirdTeams));
+          qset.forEach((t) => { if (acc[t]) acc[t].qualify++; });
+          const a2 = Eng.thirdMatching((q2.qualifiedThirdGroups || []).slice());
+          for (const s of SL) { const g = a2[s]; if (g) tly[s][g] = (tly[s][g] || 0) + 1; }
+        }
+        teamsAll.forEach((t) => (chances[t] = { qualify: acc[t].qualify / N, first: acc[t].first / N, top2: acc[t].top2 / N }));
+        for (const s of SL) { let bg = null, bn = 0; for (const g in tly[s]) if (tly[s][g] > bn) { bn = tly[s][g]; bg = g; } thirdSlotProbs[s] = { group: bg, p: bn / N }; }
+      } catch (e) { chances = {}; thirdSlotProbs = {}; }
+      this.teamProbs = chances; this.teamProbsSims = 3000; this.thirdSlotProbs = thirdSlotProbs;
       const statusOf = (t) => {
         if (!t) return null;
         const c = chances[t]; if (!c) return { k: "maybe", q: null };
@@ -1331,20 +1355,20 @@ window.porraApp = function () {
       //  - 1º (W-X) y 2º (RU-X): en cuanto su grupo CIERRA (posición definitiva).
       //  - mejor 3º (3rd): cuando han cerrado TODOS los grupos (el reparto de terceros depende
       //    de QUÉ 8 grupos aportan tercero, y eso no se fija hasta el final).
-      const confirmedTeam = (code, t) => {
+      const confirmedTeam = (code, t, mn) => {
         if (!t) return null;
-        if (code === "3rd") return allComplete ? t : null;
+        if (code === "3rd") return (allComplete || this._thirdSlotConfirmed(mn, standings)) ? t : null;
         const g = code.split("-")[1];
         if (standings[g] && standings[g]._complete) return t;     // grupo cerrado
         return this._almostCertain(code, t) ? t : null;           // o prácticamente seguro (≥99,5%)
       };
       const slotLabel = (code) => code === "3rd" ? "Mejor 3º" : ((code[0] === "W" ? "1º " : "2º ") + code.split("-")[1]);
-      const cell = (code, t0) => {
-        const t = confirmedTeam(code, t0);
+      const cell = (code, t0, mn) => {
+        const t = confirmedTeam(code, t0, mn);
         if (t) return { team: t, es: D.es(t), flag: D.flag(t), st: statusOf(t), pending: false };
         return { team: null, es: slotLabel(code), flag: "", st: null, pending: true };   // hueco a la espera
       };
-      const cruces = D.R32.map((m, i) => { const tm = teams ? teams[m.match] : { a: null, b: null }; return { n: i + 1, a: cell(m.a, tm.a), b: cell(m.b, tm.b) }; });
+      const cruces = D.R32.map((m, i) => { const tm = teams ? teams[m.match] : { a: null, b: null }; return { n: i + 1, a: cell(m.a, tm.a, m.match), b: cell(m.b, tm.b, m.match) }; });
       let nIn = 0, nOut = 0, nMaybe = 0;
       for (const t of [].concat(...D.GROUP_LETTERS.map((L) => D.GROUPS[L]))) { const s = statusOf(t); if (s.k === "in") nIn++; else if (s.k === "out") nOut++; else nMaybe++; }
       this.koPreview = { cruces, complete, total: D.GROUP_LETTERS.length, nIn, nOut, nMaybe, ready: complete === D.GROUP_LETTERS.length };
@@ -1428,10 +1452,10 @@ window.porraApp = function () {
       try { teams = Eng.buildR32Teams(Eng.computeQualifiers(standings)).teams; } catch (e) { teams = null; }
       // Solo se puede elegir un cruce de 1/16 cuando AMBOS equipos están CONFIRMADOS:
       // 1º/2º cuando su grupo cierra; mejor 3º cuando cierran TODOS los grupos.
-      const conf = (code, t) => { if (!t) return null; if (code === "3rd") return allComplete ? t : null; const g = code.split("-")[1]; if (standings[g] && standings[g]._complete) return t; return this._almostCertain(code, t) ? t : null; };
+      const conf = (code, t, mn) => { if (!t) return null; if (code === "3rd") return (allComplete || this._thirdSlotConfirmed(mn, standings)) ? t : null; const g = code.split("-")[1]; if (standings[g] && standings[g]._complete) return t; return this._almostCertain(code, t) ? t : null; };
       const slotLabel = (code) => code === "3rd" ? "Mejor 3º" : ((code[0] === "W" ? "1º " : "2º ") + code.split("-")[1]);
       const tbm = {}, labelOf = {};
-      for (const m of D.R32) { const tm = teams ? teams[m.match] : { a: null, b: null }; tbm[m.match] = { a: conf(m.a, tm.a), b: conf(m.b, tm.b) }; labelOf[m.match] = { a: slotLabel(m.a), b: slotLabel(m.b) }; }
+      for (const m of D.R32) { const tm = teams ? teams[m.match] : { a: null, b: null }; tbm[m.match] = { a: conf(m.a, tm.a, m.match), b: conf(m.b, tm.b, m.match) }; labelOf[m.match] = { a: slotLabel(m.a), b: slotLabel(m.b) }; }
       // fuente de los picks: el tuyo (editable) o el de otro jugador (copia, solo lectura)
       const b = this.viewingSelf2 ? this.bracket2 : Object.assign({}, this._viewedBracket2());
       const winnerOf = {};
