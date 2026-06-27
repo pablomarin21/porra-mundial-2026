@@ -263,15 +263,17 @@ window.porraApp = function () {
       this.pushSupported = ("serviceWorker" in navigator) && ("PushManager" in window) && ("Notification" in window);
       if (!this.pushSupported) return;
       try {
-        const reg = await navigator.serviceWorker.register("sw.js?v=88");
+        const reg = await navigator.serviceWorker.register("sw.js?v=89");
         const sub = await reg.pushManager.getSubscription();
         this.pushOn = !!sub;
-        if (!this.pushOn && !localStorage.getItem("porra_notif_dismissed")) {
-          setTimeout(() => { if (!this.pushOn) this.showNotifBanner = true; }, 3000);
+        // pide los avisos SOLA y de forma PERSISTENTE: si no los tiene, el banner vuelve en cada
+        // visita (descartar solo lo oculta esta sesión) hasta que los active.
+        if (!this.pushOn && !sessionStorage.getItem("porra_notif_dismissed")) {
+          setTimeout(() => { if (!this.pushOn) this.showNotifBanner = true; }, 2500);
         }
       } catch (e) { this.pushSupported = false; }
     },
-    dismissNotifBanner() { this.showNotifBanner = false; try { localStorage.setItem("porra_notif_dismissed", "1"); } catch (e) {} },
+    dismissNotifBanner() { this.showNotifBanner = false; try { sessionStorage.setItem("porra_notif_dismissed", "1"); } catch (e) {} },
     async activateFromBanner() { await this.togglePush(); if (this.pushOn) this.showNotifBanner = false; },
     async togglePush() {
       if (!this.pushSupported || this.pushBusy) return;
