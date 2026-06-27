@@ -263,7 +263,7 @@ window.porraApp = function () {
       this.pushSupported = ("serviceWorker" in navigator) && ("PushManager" in window) && ("Notification" in window);
       if (!this.pushSupported) return;
       try {
-        const reg = await navigator.serviceWorker.register("sw.js?v=92");
+        const reg = await navigator.serviceWorker.register("sw.js?v=93");
         const sub = await reg.pushManager.getSubscription();
         this.pushOn = !!sub;
         // pide los avisos SOLA y de forma PERSISTENTE: si no los tiene, el banner vuelve en cada
@@ -1299,20 +1299,21 @@ window.porraApp = function () {
     // OJO: this.results (DB) suele venir VACÍO con el board del servidor — usar SIEMPRE esto.
     get _resMap() { const gm = (this.outcome && this.outcome.groupMap) || {}; return Object.assign({}, this.results || {}, gm); },
 
-    // ¿es PRÁCTICAMENTE SEGURO que el equipo `t` acaba en ese puesto (1º para W-, 2º para RU-)?
-    // Umbral 99,5% sobre la simulación (teamProbs). Permite adelantar cruces casi decididos
-    // (p.ej. Argentina 1ª de su grupo) sin esperar a que el grupo cierre del todo, sin errar.
+    // Solo confirmamos lo que es 100% (en la simulación, 1.0 = todos los escenarios coinciden).
     _almostCertain(code, t) {
       const p = t && this.teamProbs && this.teamProbs[t]; if (!p || p.first == null || p.top2 == null) return false;
-      if (code[0] === "W") return p.first >= 0.995;
-      if (code[0] === "R") return (p.top2 - p.first) >= 0.995;
+      if (code[0] === "W") return p.first >= 1;
+      if (code[0] === "R") return (p.top2 - p.first) >= 1;
       return false;
     },
+    // EXCEPCIÓN manual (decisión del admin): el ganador de estos grupos se adelanta aunque no sea
+    // 100% matemático. Ahora: grupo J = Argentina (~99,97%, prácticamente hecho).
+    _forceWinner(g) { return ["J"].indexOf(g) >= 0; },
     // ¿está ya decidido el hueco de "mejor 3º" del partido `mn`? Sí cuando un grupo YA CERRADO
-    // cae en ese hueco con ≥99,5% (su 3º es definitivo y el reparto oficial ahí es estable).
+    // cae en ese hueco al 100% (su 3º es definitivo y el reparto oficial ahí es invariable).
     _thirdSlotConfirmed(mn, standings) {
       const sp = this.thirdSlotProbs && this.thirdSlotProbs[mn];
-      return !!(sp && sp.p >= 0.995 && sp.group && standings[sp.group] && standings[sp.group]._complete);
+      return !!(sp && sp.p >= 1 && sp.group && standings[sp.group] && standings[sp.group]._complete);
     },
     // ---------- Vista previa del cuadro post-grupos (BONUS) — SOLO admin, SOLO lectura ----------
     buildKoPreview() {
@@ -1359,8 +1360,9 @@ window.porraApp = function () {
         if (!t) return null;
         if (code === "3rd") return (allComplete || this._thirdSlotConfirmed(mn, standings)) ? t : null;
         const g = code.split("-")[1];
-        if (standings[g] && standings[g]._complete) return t;     // grupo cerrado
-        return this._almostCertain(code, t) ? t : null;           // o prácticamente seguro (≥99,5%)
+        if (standings[g] && standings[g]._complete) return t;     // grupo cerrado (100%)
+        if (code[0] === "W" && this._forceWinner(g)) return t;     // excepción admin (Argentina, grupo J)
+        return this._almostCertain(code, t) ? t : null;           // o 100% en la simulación
       };
       const slotLabel = (code) => code === "3rd" ? "Mejor 3º" : ((code[0] === "W" ? "1º " : "2º ") + code.split("-")[1]);
       const cell = (code, t0, mn) => {
@@ -1452,7 +1454,7 @@ window.porraApp = function () {
       try { teams = Eng.buildR32Teams(Eng.computeQualifiers(standings)).teams; } catch (e) { teams = null; }
       // Solo se puede elegir un cruce de 1/16 cuando AMBOS equipos están CONFIRMADOS:
       // 1º/2º cuando su grupo cierra; mejor 3º cuando cierran TODOS los grupos.
-      const conf = (code, t, mn) => { if (!t) return null; if (code === "3rd") return (allComplete || this._thirdSlotConfirmed(mn, standings)) ? t : null; const g = code.split("-")[1]; if (standings[g] && standings[g]._complete) return t; return this._almostCertain(code, t) ? t : null; };
+      const conf = (code, t, mn) => { if (!t) return null; if (code === "3rd") return (allComplete || this._thirdSlotConfirmed(mn, standings)) ? t : null; const g = code.split("-")[1]; if (standings[g] && standings[g]._complete) return t; if (code[0] === "W" && this._forceWinner(g)) return t; return this._almostCertain(code, t) ? t : null; };
       const slotLabel = (code) => code === "3rd" ? "Mejor 3º" : ((code[0] === "W" ? "1º " : "2º ") + code.split("-")[1]);
       const tbm = {}, labelOf = {};
       for (const m of D.R32) { const tm = teams ? teams[m.match] : { a: null, b: null }; tbm[m.match] = { a: conf(m.a, tm.a, m.match), b: conf(m.b, tm.b, m.match) }; labelOf[m.match] = { a: slotLabel(m.a), b: slotLabel(m.b) }; }
