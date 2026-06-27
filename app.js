@@ -93,7 +93,7 @@ window.porraApp = function () {
     // datos
     entries: [], ranked: [], results: {}, rEdit: defaultREdit(), koEdit: defaultKoEdit(), liveBr: { teamsByMatch: {}, winnerOf: {}, complete: false },
     koPreview: null, koPreviewShow: false, ko27: null, ko27Round: "r32",
-    bracket2: {}, _cols2: [], _mirror2: null, _champion2: null, ko27Busy: false, ko27Saved: false,
+    bracket2: {}, _cols2: [], _mirror2: null, _champion2: null, ko27Busy: false, ko27Saved: false, viewId2: null,
     // admin
     adminOk: false, adminPin: "", settings: Object.assign({}, D.DEFAULT_SCORING),
     scoreKeys: [
@@ -263,7 +263,7 @@ window.porraApp = function () {
       this.pushSupported = ("serviceWorker" in navigator) && ("PushManager" in window) && ("Notification" in window);
       if (!this.pushSupported) return;
       try {
-        const reg = await navigator.serviceWorker.register("sw.js?v=86");
+        const reg = await navigator.serviceWorker.register("sw.js?v=87");
         const sub = await reg.pushManager.getSubscription();
         this.pushOn = !!sub;
         if (!this.pushOn && !localStorage.getItem("porra_notif_dismissed")) {
@@ -1381,7 +1381,7 @@ window.porraApp = function () {
     // un cruce se puede tocar hasta 1 HORA antes de su partido
     matchEditable(match) { const k = this.matchKickoff(match); return k == null ? true : (Date.now() < k - 3600000); },
     // ¿se puede elegir este cruce? identificado + ambos equipos decididos + aún no cerrado por hora
-    canPick2(m) { return !!(this.me && this.me.id) && !!(m && m.a && m.a.team && m.b && m.b.team) && this.matchEditable(m.match); },
+    canPick2(m) { return this.viewingSelf2 && !!(this.me && this.me.id) && !!(m && m.a && m.a.team && m.b && m.b.team) && this.matchEditable(m.match); },
     // texto del candado de un cruce (cuándo se cierra, hora de España)
     matchLockTxt(match) { const k = this.matchKickoff(match); if (k == null) return ""; try { return this.madridTime(new Date(k - 3600000).toISOString()); } catch (e) { return ""; } },
     loadBracket2() {
@@ -1403,15 +1403,28 @@ window.porraApp = function () {
       const slotLabel = (code) => code === "3rd" ? "Mejor 3º" : ((code[0] === "W" ? "1º " : "2º ") + code.split("-")[1]);
       const tbm = {}, labelOf = {};
       for (const m of D.R32) { const tm = teams ? teams[m.match] : { a: null, b: null }; tbm[m.match] = { a: conf(m.a, tm.a), b: conf(m.b, tm.b) }; labelOf[m.match] = { a: slotLabel(m.a), b: slotLabel(m.b) }; }
-      const b = this.bracket2; const winnerOf = {};
+      // fuente de los picks: el tuyo (editable) o el de otro jugador (copia, solo lectura)
+      const b = this.viewingSelf2 ? this.bracket2 : Object.assign({}, this._viewedBracket2());
+      const winnerOf = {};
       const valid = (mNum) => { const pair = tbm[mNum]; const w = b[mNum]; if (w && pair && (w === pair.a || w === pair.b)) return w; if (w !== undefined) delete b[mNum]; return null; };
       for (const m of D.R32) winnerOf[m.match] = valid(m.match);
       for (const list of [D.R16, D.QF, D.SF, [D.FINAL]]) for (const m of list) { tbm[m.match] = { a: winnerOf[m.a] || null, b: winnerOf[m.b] || null }; winnerOf[m.match] = valid(m.match); }
       const cell = (t, label) => ({ team: t, es: t ? D.es(t) : null, flag: t ? D.flag(t) : "", label: label || null });
       const defs = [{ key: "r32", title: "1/16", list: D.R32 }, { key: "r16", title: "Octavos", list: D.R16 }, { key: "qf", title: "Cuartos", list: D.QF }, { key: "sf", title: "Semis", list: D.SF }, { key: "final", title: "Final", list: [D.FINAL] }];
-      this._cols2 = defs.map((d) => ({ key: d.key, title: d.title, matches: d.list.map((m, i) => ({ n: i + 1, match: m.match, a: cell(tbm[m.match].a, d.key === "r32" ? labelOf[m.match].a : null), b: cell(tbm[m.match].b, d.key === "r32" ? labelOf[m.match].b : null), pick: this.bracket2[m.match] || null })) }));
+      this._cols2 = defs.map((d) => ({ key: d.key, title: d.title, matches: d.list.map((m, i) => ({ n: i + 1, match: m.match, a: cell(tbm[m.match].a, d.key === "r32" ? labelOf[m.match].a : null), b: cell(tbm[m.match].b, d.key === "r32" ? labelOf[m.match].b : null), pick: b[m.match] || null })) }));
       this._champion2 = winnerOf[D.FINAL.match] || null;
       this._mirror2 = this._buildMirror2(this._cols2);          // cuadro visual interactivo (estable)
+    },
+    // ---- ver el cuadro de otros jugadores (al acabar la fase de grupos) ----
+    get groupStageOver() { return !!(this.outcome && this.outcome.allGroupsComplete) || !!(this.ko27 && this.ko27.complete === this.ko27.total); },
+    get viewingSelf2() { return !this.viewId2 || !!(this.me && this.viewId2 === this.me.id); },
+    _viewedBracket2() { const e = (this.entries || []).find((x) => x.id === this.viewId2); return (e && e.picks && e.picks.bracket2) || {}; },
+    viewPlayer2(id) { this.viewId2 = (id && (!this.me || id !== this.me.id)) ? id : null; this.rebuild2(); },
+    get ko27Players() {
+      const real = (this.ranked || []).filter((r) => !this.isGuest(r));
+      const byId = {}; (this.entries || []).forEach((e) => (byId[e.id] = e));
+      return real.map((r) => { const e = byId[r.id]; const n = e && e.picks && e.picks.bracket2 ? Object.keys(e.picks.bracket2).length : 0;
+        return { id: r.id, name: this._shortName(r), me: !!(this.me && r.id === this.me.id), picks: n }; });
     },
     // nº de cruces de 1/16 con AMBOS equipos ya decididos (listos para predecir)
     get ko27PlayableCount() { const r = (this._cols2 || []).find((c) => c.key === "r32"); return r ? r.matches.filter((m) => m.a.team && m.b.team).length : 0; },

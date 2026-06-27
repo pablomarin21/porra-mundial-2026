@@ -1403,6 +1403,35 @@ tr.clickrow.sel td{background:#e7f1ec}
 .k27-sb-btn:disabled{opacity:.6;cursor:default}
 .k27-clickhint{font-size:.82rem;color:#d7f3e6;background:rgba(46,194,122,.1);border:1px solid rgba(46,194,122,.32);border-radius:10px;padding:8px 11px;margin:0 0 10px;line-height:1.4}
 .k27-clickhint.warn{color:#ffdcb5;background:rgba(224,161,6,.13);border-color:rgba(224,161,6,.42)}
+.k27-clickhint.view{color:#cfe0ff;background:rgba(90,140,235,.14);border-color:rgba(90,140,235,.4)}
+/* selector "ver el cuadro de" */
+.k27-viewsel{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin:4px 0 10px}
+.k27-vs-lbl{font-size:.82rem;font-weight:800;color:#cfeede;margin-right:2px}
+.k27-vs-chip{background:#0e2b22;border:1px solid #2a6f51;color:#dff6ea;border-radius:999px;padding:5px 11px;font-size:.8rem;font-weight:700;cursor:pointer}
+.k27-vs-chip.on{background:linear-gradient(180deg,#37d27e,#1f9e57);color:#06231a;border-color:transparent;font-weight:900}
+.k27-vs-n{opacity:.7;font-size:.72rem}
+/* VISTA MÓVIL ronda a ronda */
+.k27-mob{display:none}
+.k27-mob-rounds{display:flex;gap:5px;overflow-x:auto;padding-bottom:4px;-webkit-overflow-scrolling:touch}
+.k27-mrb{flex:0 0 auto;background:#0e2b22;border:1px solid #2a6f51;color:#dff6ea;border-radius:9px;padding:7px 12px;font-size:.82rem;cursor:pointer}
+.k27-mrb.on{background:linear-gradient(180deg,#f5c542,#e0a106);color:#3a2a00;border-color:transparent;font-weight:900}
+.k27-mob-champ{text-align:center;font-size:.92rem;margin:8px 0;color:#ffe9a8}
+.k27-mob-list{display:flex;flex-direction:column;gap:9px;margin-top:8px}
+.k27-mob-m{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.12);border-radius:12px;padding:9px 10px}
+.k27-mob-m.locked{opacity:.62}
+.k27-mob-n{font-size:.72rem;font-weight:800;color:#9fb6ab}
+.k27-mob-pair{display:grid;grid-template-columns:1fr 26px 1fr;align-items:stretch;gap:6px;margin-top:5px}
+.k27-mob-opt{display:flex;align-items:center;justify-content:center;gap:5px;background:#fff;border:1.5px solid #cdd8d2;border-radius:11px;padding:12px 8px;font-size:.92rem;font-weight:700;color:#1b2a22;min-height:48px;cursor:pointer;text-align:center}
+.k27-mob-opt:disabled{cursor:default}
+.k27-mob-opt.sel{border-color:#1f9e57;background:#e8f6ee;color:#0b3d2e;font-weight:900;box-shadow:inset 0 0 0 1.5px #2ec27a}
+.k27-mob-opt.dim{opacity:.42}
+.k27-mob-ok{margin-left:4px;color:#159e57;font-weight:900}
+.k27-mob-vs{align-self:center;font-size:.74rem;color:#9fb6ab;font-weight:700}
+.k27-mob-lock{display:block;text-align:right;font-size:.7rem;color:#8fb0a2;margin-top:5px}
+@media(max-width:760px){
+  .wcb-stage{display:none}
+  .k27-mob{display:block}
+}
 
 /* CONECTORES dorados con glow */
 .wcb-col:not(.champ):not(.r-final) .wcb-m::after{content:"";position:absolute;left:122px;top:50%;width:22px;height:2px;
