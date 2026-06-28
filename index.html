@@ -9,7 +9,7 @@
   <!-- Auto-actualizador: si hay una versión nueva publicada, recarga sola (evita caché vieja) -->
   <script>
   (function () {
-    var CUR = 96;   // versión de este index.html
+    var CUR = 97;   // versión de este index.html
     try {
       fetch("ver.txt?t=" + Date.now(), { cache: "no-store" })
         .then(function (r) { return r.ok ? r.text() : ""; })
@@ -35,7 +35,7 @@
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="Porra Mundial" />
-  <link rel="stylesheet" href="styles.css?v=96" />
+  <link rel="stylesheet" href="styles.css?v=97" />
 </head>
 <body x-data="porraApp()" x-init="init()" x-cloak>
 
@@ -854,9 +854,10 @@
           </div>
           <p class="koc-sub">
             <span x-show="parte.ko.advanced.length"><b>Han pasado:</b> <template x-for="(t,i) in parte.ko.advanced" :key="'kadv'+i"><span x-text="(i?' · ':'')+t.flag+' '+t.es"></span></template>. </span>
-            <span x-show="parte.ko.key!=='champion'">Cada equipo tuyo que <b x-text="parte.ko.verb"></b> suma <b x-text="'+'+parte.ko.mainPts"></b> del cuadro inicial <b>+<span x-text="parte.ko.bonusPts"></span></b> del bonus 28-jun.</span>
-            <span x-show="parte.ko.key==='champion'">Acertar al campeón vale <b x-text="'+'+parte.ko.mainPts"></b> (y <b x-text="'+'+parte.ko.bonusPts"></b> en el bonus).</span>
+            <span x-show="parte.ko.key!=='champion'">Por cada equipo tuyo que <b x-text="parte.ko.verb"></b> sumas en <b>los dos cuadros</b>: <b x-text="'+'+parte.ko.mainPts"></b> de tu cuadro de <b>antes del Mundial</b> y <b x-text="'+'+parte.ko.bonusPts"></b> del <b>bonus 28-jun</b>.</span>
+            <span x-show="parte.ko.key==='champion'">Acertar al campeón suma en los <b>dos cuadros</b>: <b x-text="'+'+parte.ko.mainPts"></b> (antes del Mundial) y <b x-text="'+'+parte.ko.bonusPts"></b> (bonus 28-jun).</span>
           </p>
+          <div class="koc-warn">⚠️ <b>Cuentan los dos cuadros.</b> El que rellenaste <b>antes del Mundial</b> sigue sumando (y vale <b>el doble</b>); el del <b>28-jun</b> es un <b>bonus aparte</b> que se añade encima. No se sustituyen.</div>
           <div class="koc-top" x-show="parte.ko.top">🔝 Quien más sumó: <b x-text="parte.ko.top ? parte.ko.top.name : ''"></b> <span class="koc-plus" x-text="parte.ko.top ? ('+'+parte.ko.top.pts) : ''"></span> <span class="muted tiny" x-text="parte.ko ? ('· '+parte.ko.nScored+' suman, '+parte.ko.nZero+' aún no') : ''"></span></div>
           <div class="koc-players">
             <template x-for="p in parte.ko.players" :key="'kop'+p.id">
@@ -864,6 +865,7 @@
                 <div class="koc-rtop">
                   <span class="koc-pos" x-text="p.pos+'º'"></span>
                   <span class="koc-nm" x-text="p.name"></span>
+                  <span class="koc-split" x-show="p.pts>0" x-text="(p.mainPts?('+'+p.mainPts+' antes'):'')+((p.mainPts&&p.bonusPts)?'  ·  ':'')+(p.bonusPts?('+'+p.bonusPts+' bonus'):'')"></span>
                   <span class="koc-pts" :class="p.pts>0?'good':'mut'" x-text="(p.pts>0?'+':'')+p.pts"></span>
                 </div>
                 <div class="koc-teams">
@@ -873,7 +875,7 @@
               </div>
             </template>
           </div>
-          <p class="koc-foot tiny muted">Se actualiza solo con cada partido. <b style="color:#1c6e44">Verde</b> = equipo tuyo que superó la ronda · <b>✦</b> = además lo tienes en el cuadro bonus del 28-jun · <span class="koc-bdot"></span> = solo en el bonus.</p>
+          <p class="koc-foot tiny muted">Se actualiza solo con cada partido. <b style="color:#1c6e44">Verde</b> = equipo tuyo que superó la ronda (tu cuadro de <b>antes del Mundial</b>) · <b>✦</b> = lo tienes <b>también</b> en el bonus 28-jun · <span class="koc-bdot"></span> = solo en el bonus.</p>
         </div>
       </template>
 
@@ -1921,10 +1923,10 @@
   </div>
 
   <!-- ====== Dependencias ====== -->
-  <script src="data.js?v=96"></script>
-  <script src="engine.js?v=96"></script>
+  <script src="data.js?v=97"></script>
+  <script src="engine.js?v=97"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
-  <script src="app.js?v=96"></script>
+  <script src="app.js?v=97"></script>
   <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.1/dist/cdn.min.js"></script>
 </body>
 </html>

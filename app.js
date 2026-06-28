@@ -275,7 +275,7 @@ window.porraApp = function () {
       this.pushSupported = ("serviceWorker" in navigator) && ("PushManager" in window) && ("Notification" in window);
       if (!this.pushSupported) return;
       try {
-        const reg = await navigator.serviceWorker.register("sw.js?v=96");
+        const reg = await navigator.serviceWorker.register("sw.js?v=97");
         const sub = await reg.pushManager.getSubscription();
         this.pushOn = !!sub;
         // pide los avisos SOLA y de forma PERSISTENTE: si no los tiene, el banner vuelve en cada
@@ -1857,7 +1857,7 @@ window.porraApp = function () {
       const players = real.map((row, i) => {
         const e = byId[row.id]; let dp = null;
         if (e && e.picks) { try { dp = Eng.derivePicks(e.picks); } catch (x) {} }
-        const hits = [];
+        const hits = []; let mainPts = 0, bonusPts = 0;
         if (dp) {
           const b2 = dp.b2 || {};
           const mainSet = champ ? new Set(dp.champion ? [dp.champion] : []) : (dp[r.key] || new Set());
@@ -1866,11 +1866,13 @@ window.porraApp = function () {
           for (const t of advancedTeams) {
             const inM = mainHas(t), inB = bonusHas(t);
             if (inM || inB) hits.push({ es: D.es(t), flag: D.flag(t), main: inM, bonus: inB, pts: (inM ? r.main : 0) + (inB ? r.bonus : 0) });
+            if (inM) mainPts += r.main;
+            if (inB) bonusPts += r.bonus;
           }
         }
         hits.sort((a, b) => b.pts - a.pts);
-        const pts = hits.reduce((a, h) => a + h.pts, 0);
-        return { id: row.id, pos: i + 1, name: this._shortName(row), isMe: !!(this.me && row.id === this.me.id), pts, hits, n: hits.length };
+        const pts = mainPts + bonusPts;
+        return { id: row.id, pos: i + 1, name: this._shortName(row), isMe: !!(this.me && row.id === this.me.id), pts, mainPts, bonusPts, hits, n: hits.length };
       });
       const scorers = players.filter((p) => p.pts > 0).sort((a, b) => b.pts - a.pts);
       const zero = players.filter((p) => p.pts === 0);

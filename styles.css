@@ -1229,6 +1229,8 @@ tr.clickrow.sel td{background:#e7f1ec}
 .koc-prog{font-size:.72rem;font-weight:700;color:#5b6b8c;background:#fff;border:1px solid #cdd9f0;border-radius:999px;padding:2px 9px}
 .koc-prog.done{color:#1f7a4d;border-color:#bce6cf;background:#f1fbf5}
 .koc-sub{margin:7px 0 9px;font-size:.84rem;color:#2f3b52;line-height:1.45}
+.koc-warn{background:#fff7e6;border:1px solid #f0d2a0;border-radius:9px;padding:8px 11px;margin-bottom:9px;font-size:.82rem;color:#7a5310;line-height:1.45}
+.koc-split{font-size:.72rem;font-weight:700;color:#7a8298;white-space:nowrap;margin-right:6px}
 .koc-top{font-size:.86rem;color:#2f3b52;margin-bottom:9px;background:#fff;border-radius:8px;padding:7px 10px;border:1px solid #d7e1f5}
 .koc-plus{font-weight:800;color:#1f9d57}
 .koc-players{display:grid;gap:6px}
