@@ -1115,6 +1115,19 @@ tr.clickrow.sel td{background:#e7f1ec}
 .sp-over-c .sp-emo{font-size:1.2rem}
 .sp-over-c b{font-size:.85rem;color:#26323b}
 .sp-over-c small{font-size:.72rem;color:var(--muted)}
+/* "la gracia": el último aún puede librarse de la cena */
+.cena-hero{background:linear-gradient(135deg,#fff7e6,#fdecc8);border:1px solid var(--gold2);border-radius:14px;padding:15px 16px;margin-bottom:16px;box-shadow:0 4px 16px rgba(224,169,43,.18)}
+.cena-tt{font-size:1.04rem;font-weight:800;color:#7a5310;line-height:1.25;margin-bottom:8px}
+.cena-tt u{text-decoration-color:var(--gold2);text-underline-offset:2px}
+.cena-lead{margin:0 0 12px;font-size:.9rem;color:#4a3a1a;line-height:1.5}
+.cena-nums{display:grid;grid-template-columns:1fr;gap:9px;margin-bottom:12px}
+.cena-n{background:#fff;border:1px solid #f0dba8;border-radius:11px;padding:10px 12px;display:flex;align-items:center;gap:12px}
+.cena-n>b{font-size:1.6rem;font-weight:800;color:var(--gold2);line-height:1;min-width:62px;text-align:center;flex:0 0 auto}
+.cena-n>small{font-size:.78rem;color:#5b4a28;line-height:1.35}
+.cena-foot{margin:0 0 12px;font-size:.88rem;color:#4a3a1a;line-height:1.5;background:#fffdf7;border-radius:10px;padding:10px 12px;border:1px dashed #e6c878}
+.cena-go{width:100%;background:linear-gradient(135deg,var(--gold),var(--gold2));border:none;border-radius:11px;padding:12px;color:#3a2a08;font-weight:800;font-size:.92rem;cursor:pointer;box-shadow:0 3px 10px rgba(224,169,43,.35)}
+.cena-go:active{transform:translateY(1px)}
+@media(min-width:600px){.cena-nums{grid-template-columns:repeat(3,1fr)}.cena-n{flex-direction:column;text-align:center;gap:6px}.cena-n>b{min-width:0}}
 .sp-block{background:#fff;border:1px solid var(--line);border-radius:14px;padding:14px 15px;margin-bottom:13px;box-shadow:0 1px 3px rgba(0,0,0,.04)}
 .sp-block.key{border-color:#bfe6cd;box-shadow:0 0 0 2px #e9f7ee}
 .sp-h{display:flex;align-items:center;gap:9px;font-size:1.02rem;color:#26323b;margin:0 0 9px}

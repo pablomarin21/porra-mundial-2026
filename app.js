@@ -117,6 +117,18 @@ window.porraApp = function () {
     // Invitados (fuera de concurso): no ocupan número de posición ni podio. Solo familiares se numeran.
     isGuest(e) { const n = (e && e.first_name) || ""; return n.startsWith("🤖") || n.startsWith("🎙"); },
     get podium3() { return (this.ranked || []).filter((e) => !this.isGuest(e)).slice(0, 3); },
+    // "la gracia": cuánto queda por jugar (por jugador) vs lo que separa al 1º del último de la familia
+    get cenaInfo() {
+      const S = this.settings || {};
+      const mainKO = 16 * (S.octavos || 0) + 8 * (S.cuartos || 0) + 4 * (S.semis || 0) + 2 * (S.finalists || 0) + (S.champion || 0);
+      const bonus = 16 * 2 + 8 * 4 + 4 * 5 + 2 * 8 + 13;   // 2º cuadro (valores fijos): 113
+      const a = this.extrasActual || {};
+      let esp = 0;
+      for (const k of ["revelacion", "decepcion", "pichichi", "asistente", "portero"]) if (!a[k]) esp += (S[k] || 0);
+      const fam = (this.ranked || []).filter((e) => !this.isGuest(e)).map((e) => e.points).filter((p) => p != null);
+      const gap = fam.length >= 2 ? (Math.max(...fam) - Math.min(...fam)) : null;
+      return { remaining: mainKO + bonus + esp, mainKO, bonus, esp, gap, champion: S.champion || 0 };
+    },
     famPos(i) { const e = (this.ranked || [])[i]; if (!e || this.isGuest(e)) return null; let c = 0; for (let k = 0; k <= i; k++) { if (!this.isGuest(this.ranked[k])) c++; } return c; },
     // ---------- pronósticos de la gente (Bota de Oro / máximo asistente) para la pestaña Goleadores ----------
     _shortName(e) { const n = (e.first_name || "").trim(); if (n.startsWith("🤖")) return "🤖 IA"; if (n.startsWith("🎙")) return "🎙️ Maldini"; return n.split(/\s+/)[0] || n; },
@@ -263,7 +275,7 @@ window.porraApp = function () {
       this.pushSupported = ("serviceWorker" in navigator) && ("PushManager" in window) && ("Notification" in window);
       if (!this.pushSupported) return;
       try {
-        const reg = await navigator.serviceWorker.register("sw.js?v=94");
+        const reg = await navigator.serviceWorker.register("sw.js?v=95");
         const sub = await reg.pushManager.getSubscription();
         this.pushOn = !!sub;
         // pide los avisos SOLA y de forma PERSISTENTE: si no los tiene, el banner vuelve en cada

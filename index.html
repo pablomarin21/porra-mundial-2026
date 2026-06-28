@@ -9,7 +9,7 @@
   <!-- Auto-actualizador: si hay una versión nueva publicada, recarga sola (evita caché vieja) -->
   <script>
   (function () {
-    var CUR = 94;   // versión de este index.html
+    var CUR = 95;   // versión de este index.html
     try {
       fetch("ver.txt?t=" + Date.now(), { cache: "no-store" })
         .then(function (r) { return r.ok ? r.text() : ""; })
@@ -35,7 +35,7 @@
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="Porra Mundial" />
-  <link rel="stylesheet" href="styles.css?v=94" />
+  <link rel="stylesheet" href="styles.css?v=95" />
 </head>
 <body x-data="porraApp()" x-init="init()" x-cloak>
 
@@ -52,7 +52,7 @@
           <button class="tab-hot" :class="{active: tab==='ko27'}" @click="openKo27()">🗓️ 28 jun</button>
           <button :class="{active: tab==='leaderboard'}" @click="openLeaderboard()">Clasificación</button>
           <button :class="{active: tab==='play'}" @click="tab='play'">Mi Porra</button>
-          <button :class="{active: tab==='scoring'}" @click="tab='scoring'">📖 Puntuación</button>
+          <button :class="{active: tab==='scoring'}" @click="tab='scoring'; if(!(ranked&&ranked.length)) loadBoard()">📖 Puntuación</button>
           <button :class="{active: tab==='results'}" @click="openResults()">Resultados</button>
           <button :class="{active: tab==='goals'}" @click="openGoals()">⚽ Goleadores</button>
           <button :class="{active: tab==='admin'}" @click="tab='admin'">Admin</button>
@@ -1240,6 +1240,19 @@
       <p class="muted">Todo el sistema, al detalle y con ejemplos. Tus puntos se mueven <b>solos</b> con cada partido.</p>
     </div>
 
+    <!-- ===== LA GRACIA: el último aún puede librarse de la cena ===== -->
+    <div class="cena-hero">
+      <div class="cena-tt">🍽️ La gracia: el último <u>aún</u> puede librarse de la cena</div>
+      <p class="cena-lead"><b>Todos puntúan exactamente con las mismas reglas</b> — ni ventajas ni hándicaps. La diferencia la marca quién acierta, no quién va ganando ahora. Y lo importante: <b>la fase de grupos era solo el aperitivo.</b> Las eliminatorias valen <b>muchísimo</b> más.</p>
+      <div class="cena-nums">
+        <div class="cena-n"><b x-text="'~'+cenaInfo.remaining"></b><small>puntos que <b>cada uno</b> aún puede sumar (cuadro inicial + bonus 28-jun + especiales)</small></div>
+        <div class="cena-n" x-show="cenaInfo.gap!=null"><b x-text="cenaInfo.gap"></b><small>lo que separa hoy al <b>1º del último</b> de la familia</small></div>
+        <div class="cena-n"><b x-text="'+'+cenaInfo.champion"></b><small>solo por <b>acertar tu campeón</b> — casi toda esa diferencia, de un golpe</small></div>
+      </div>
+      <p class="cena-foot">O sea: <b>queda por jugar más de la mitad de la porra.</b> <span x-show="cenaInfo.gap!=null">Al último solo le faltan <b x-text="cenaInfo.gap"></b> puntos y hay <b x-text="'~'+cenaInfo.remaining"></b> sobre la mesa.</span> Quien clave las <b>eliminatorias</b> remonta, vaya como vaya hoy. 👉 La cena se decide en tu <b>cuadro del 28-jun</b>.</p>
+      <button class="cena-go" @click="openKo27()">🗓️ Montar mi cuadro del 28-jun →</button>
+    </div>
+
     <!-- De dónde salen los puntos -->
     <div class="sp-over">
       <p class="sp-over-h">Tus puntos salen de <b>5 sitios</b>, que suman por separado:</p>
@@ -1877,10 +1890,10 @@
   </div>
 
   <!-- ====== Dependencias ====== -->
-  <script src="data.js?v=94"></script>
-  <script src="engine.js?v=94"></script>
+  <script src="data.js?v=95"></script>
+  <script src="engine.js?v=95"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
-  <script src="app.js?v=94"></script>
+  <script src="app.js?v=95"></script>
   <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.1/dist/cdn.min.js"></script>
 </body>
 </html>
