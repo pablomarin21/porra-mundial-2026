@@ -275,7 +275,7 @@ window.porraApp = function () {
       this.pushSupported = ("serviceWorker" in navigator) && ("PushManager" in window) && ("Notification" in window);
       if (!this.pushSupported) return;
       try {
-        const reg = await navigator.serviceWorker.register("sw.js?v=95");
+        const reg = await navigator.serviceWorker.register("sw.js?v=96");
         const sub = await reg.pushManager.getSubscription();
         this.pushOn = !!sub;
         // pide los avisos SOLA y de forma PERSISTENTE: si no los tiene, el banner vuelve en cada
@@ -1761,6 +1761,7 @@ window.porraApp = function () {
         head, top3, champPop, spread, specials, inPodio,
         leaders: H.leaders, mover: H.mover, faller: H.faller,
         jcHas: JC.has, jcFrom: JC.prev, jcTo: JC.J,
+        ko: this.buildKoChronicle(oc, S),
       };
     },
     // HISTORIA: re-puntúa la clasificación al final de cada jornada (reconstruida de los resultados).
@@ -1827,6 +1828,59 @@ window.porraApp = function () {
         res.byId[r.id] = { net, ups, downs, upSum: ups.reduce((a, x) => a + x.pts, 0), downSum: downs.reduce((a, x) => a + x.pts, 0) };
       }
       return res;
+    },
+    // CRÓNICA DE LAS ELIMINATORIAS: tras cada ronda KO, quién SUMA y quién no (y con qué equipos).
+    // Cada ronda = el premio por SUPERARLA (entrar en oc.reached[stage]). Cuenta cuadro inicial + bonus 28-jun.
+    buildKoChronicle(oc, S) {
+      const reached = oc && oc.reached; if (!reached) return null;
+      const sz = (x) => (x && x.size) || 0;
+      const ROUNDS = [
+        { key: "octavos",  name: "Octavos de final", verb: "pasó a octavos",   main: S.octavos,   bonus: 2,  total: 16 },
+        { key: "cuartos",  name: "Cuartos de final", verb: "pasó a cuartos",   main: S.cuartos,   bonus: 4,  total: 8 },
+        { key: "semis",    name: "Semifinales",      verb: "llegó a semis",    main: S.semis,     bonus: 5,  total: 4 },
+        { key: "final",    name: "La final",         verb: "llegó a la final", main: S.finalists, bonus: 8,  total: 2 },
+        { key: "champion", name: "El campeón",       verb: "ganó el Mundial",  main: S.champion,  bonus: 13, total: 1 },
+      ];
+      // ronda activa = la más profunda con algún equipo ya clasificado
+      let r = null;
+      for (let i = ROUNDS.length - 1; i >= 0; i--) {
+        const k = ROUNDS[i].key;
+        const has = k === "champion" ? !!reached.champion : sz(reached[k]) > 0;
+        if (has) { r = ROUNDS[i]; break; }
+      }
+      if (!r) return null;   // todavía no se ha jugado ninguna eliminatoria
+      const champ = r.key === "champion";
+      const advancedTeams = champ ? (reached.champion ? [reached.champion] : []) : [...reached[r.key]];
+      const played = advancedTeams.length;
+      const real = (this.ranked || []).filter((x) => !this.isGuest(x));
+      const byId = {}; (this.entries || []).forEach((e) => (byId[e.id] = e));
+      const players = real.map((row, i) => {
+        const e = byId[row.id]; let dp = null;
+        if (e && e.picks) { try { dp = Eng.derivePicks(e.picks); } catch (x) {} }
+        const hits = [];
+        if (dp) {
+          const b2 = dp.b2 || {};
+          const mainSet = champ ? new Set(dp.champion ? [dp.champion] : []) : (dp[r.key] || new Set());
+          const bonusHas = (t) => champ ? (b2.champion === t) : !!(b2[r.key] && b2[r.key].has && b2[r.key].has(t));
+          const mainHas = (t) => champ ? (mainSet.has && mainSet.has(t)) : !!(mainSet && mainSet.has && mainSet.has(t));
+          for (const t of advancedTeams) {
+            const inM = mainHas(t), inB = bonusHas(t);
+            if (inM || inB) hits.push({ es: D.es(t), flag: D.flag(t), main: inM, bonus: inB, pts: (inM ? r.main : 0) + (inB ? r.bonus : 0) });
+          }
+        }
+        hits.sort((a, b) => b.pts - a.pts);
+        const pts = hits.reduce((a, h) => a + h.pts, 0);
+        return { id: row.id, pos: i + 1, name: this._shortName(row), isMe: !!(this.me && row.id === this.me.id), pts, hits, n: hits.length };
+      });
+      const scorers = players.filter((p) => p.pts > 0).sort((a, b) => b.pts - a.pts);
+      const zero = players.filter((p) => p.pts === 0);
+      const ordered = players.slice().sort((a, b) => b.pts - a.pts || a.pos - b.pos);
+      return {
+        key: r.key, name: r.name, verb: r.verb, mainPts: r.main, bonusPts: r.bonus,
+        played, total: r.total, complete: played >= r.total,
+        advanced: advancedTeams.map((t) => ({ es: D.es(t), flag: D.flag(t) })),
+        players: ordered, nScored: scorers.length, nZero: zero.length, top: scorers[0] || null,
+      };
     },
     // Briefing "qué ha cambiado desde tu última visita": posiciones y puntos (sobre participantes reales).
     computeBriefing() {

@@ -1223,6 +1223,30 @@ tr.clickrow.sel td{background:#e7f1ec}
 /* ===== EL PARTE (panorama + riesgos por jugador) ===== */
 .parte{background:#fff;border:1px solid var(--line);border-radius:14px;padding:13px 15px;margin-bottom:14px;box-shadow:0 1px 3px rgba(0,0,0,.05)}
 .parte-h{font-weight:800;color:var(--green);font-size:1rem;margin-bottom:9px;display:flex;flex-wrap:wrap;align-items:baseline;gap:7px}
+/* crónica de la ronda de eliminatorias: quién suma y quién no */
+.ko-cron{background:linear-gradient(135deg,#eef3ff,#e6edff);border:1px solid #c4d3f5;border-radius:12px;padding:12px 13px;margin-bottom:13px}
+.koc-h{font-weight:800;color:#274690;font-size:.98rem;display:flex;flex-wrap:wrap;align-items:baseline;gap:8px}
+.koc-prog{font-size:.72rem;font-weight:700;color:#5b6b8c;background:#fff;border:1px solid #cdd9f0;border-radius:999px;padding:2px 9px}
+.koc-prog.done{color:#1f7a4d;border-color:#bce6cf;background:#f1fbf5}
+.koc-sub{margin:7px 0 9px;font-size:.84rem;color:#2f3b52;line-height:1.45}
+.koc-top{font-size:.86rem;color:#2f3b52;margin-bottom:9px;background:#fff;border-radius:8px;padding:7px 10px;border:1px solid #d7e1f5}
+.koc-plus{font-weight:800;color:#1f9d57}
+.koc-players{display:grid;gap:6px}
+.koc-row{background:#fff;border:1px solid #e2e8f5;border-radius:9px;padding:7px 10px}
+.koc-row.me{background:#fffaf0;border-color:#f0d9a8}
+.koc-row.zero{opacity:.72}
+.koc-rtop{display:flex;align-items:center;gap:8px}
+.koc-pos{font-weight:700;color:#8593ad;font-size:.82rem;min-width:20px}
+.koc-nm{font-weight:700;color:#26323b;font-size:.88rem;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.koc-pts{font-weight:800;font-size:.96rem;text-align:right}
+.koc-pts.good{color:#1f9d57}
+.koc-pts.mut{color:#aab2c0}
+.koc-teams{display:flex;flex-wrap:wrap;gap:4px;align-items:center;margin-top:6px}
+.koc-tg{font-size:.75rem;background:#eafaf0;border:1px solid #bfe6cd;color:#1c6e44;border-radius:6px;padding:2px 7px;white-space:nowrap}
+.koc-tg.bonus{background:#fff4e3;border-color:#f0d2a0;color:#9a6a16}
+.koc-none{font-size:.78rem;color:#9aa3b2;font-style:italic}
+.koc-foot{margin:9px 0 0}
+.koc-bdot{display:inline-block;width:9px;height:9px;border-radius:3px;background:#fff4e3;border:1px solid #f0d2a0;vertical-align:middle}
 .parte-h small{font-weight:600;font-size:.72rem}
 .parte-pan{background:#f3faf5;border:1px solid #d9ece1;border-radius:10px;padding:9px 12px;margin-bottom:12px}
 .parte-pan p{margin:4px 0;font-size:.88rem;line-height:1.45}
