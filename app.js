@@ -275,7 +275,7 @@ window.porraApp = function () {
       this.pushSupported = ("serviceWorker" in navigator) && ("PushManager" in window) && ("Notification" in window);
       if (!this.pushSupported) return;
       try {
-        const reg = await navigator.serviceWorker.register("sw.js?v=104");
+        const reg = await navigator.serviceWorker.register("sw.js?v=105");
         const sub = await reg.pushManager.getSubscription();
         this.pushOn = !!sub;
         // pide los avisos SOLA y de forma PERSISTENTE: si no los tiene, el banner vuelve en cada
@@ -482,7 +482,7 @@ window.porraApp = function () {
       const tbm = (this.liveBr && this.liveBr.teamsByMatch) || {};
       const meId = this.me && this.me.id;
       const players = (this.entries || []).filter((e) => e.picks && !this.isGuest(e))
-        .map((e) => { let dp = null; try { dp = Eng.derivePicks(e.picks); } catch (x) {} return { id: e.id, name: this._shortName(e), isMe: e.id === meId, dp }; })
+        .map((e) => { let dp = null; try { dp = Eng.derivePicks(e.picks); } catch (x) {} return { id: e.id, name: this._shortName(e), isMe: e.id === meId, dp, b2: (e.picks && e.picks.bracket2) || {} }; })
         .filter((p) => p.dp);
       const out = [];
       for (const mk of Object.keys(D.KO_KICKOFF || {})) {
@@ -495,9 +495,16 @@ window.porraApp = function () {
         const hasMain = (P, t) => champ ? (P.champion === t) : !!(P[st.key] && P[st.key].has && P[st.key].has(t));
         const hasBon = (P, t) => champ ? (P.b2 && P.b2.champion === t) : !!(P.b2 && P.b2[st.key] && P.b2[st.key].has && P.b2[st.key].has(t));
         const rows = players.map((p) => {
-          const calc = (t) => { const m = hasMain(p.dp, t), b = hasBon(p.dp, t); return { g: (m ? st.pts : 0) + (b ? st.bonus : 0), det: [m && ("+" + st.pts + " cuadro"), b && ("+" + st.bonus + " bonus")].filter(Boolean).join(" · ") }; };
-          const ca = calc(teamA), cb = calc(teamB);
-          return { id: p.id, name: p.name, isMe: p.isMe, ifA: ca.g, ifB: cb.g, ifAdetail: ca.det, ifBdetail: cb.det, max: Math.max(ca.g, cb.g) };
+          // QUÉ PUSO cada uno para ESTE partido: el equipo que tiene avanzando en cada cuadro
+          const iniT = hasMain(p.dp, teamA) ? teamA : (hasMain(p.dp, teamB) ? teamB : null);     // cuadro de antes del Mundial
+          const bonT = (p.b2[mk] === teamA || p.b2[mk] === teamB) ? p.b2[mk] : null;              // su pick del 28-jun para este cruce
+          const same = !!(iniT && bonT && iniT === bonT);
+          const picks = [];
+          if (iniT) picks.push({ k: "cuadro", ic: "🏆", es: D.es(iniT), flag: D.flag(iniT), pts: st.pts });
+          if (bonT) picks.push({ k: "bonus", ic: "🗓️", es: D.es(bonT), flag: D.flag(bonT), pts: st.bonus });
+          const total = (iniT ? st.pts : 0) + (bonT ? st.bonus : 0);
+          return { id: p.id, name: p.name, isMe: p.isMe, picks, same,
+            sameEs: same ? D.es(iniT) : null, sameFlag: same ? D.flag(iniT) : null, total, max: total };
         }).sort((a, b) => (b.isMe - a.isMe) || (b.max - a.max) || a.name.localeCompare(b.name));
         out.push({ match: Number(mk), kickoffSpain: this.madridTime(iso), ts, round: st.round, stageKey: st.key,
           teamA, teamAes: D.es(teamA), teamAflag: D.flag(teamA), teamB, teamBes: D.es(teamB), teamBflag: D.flag(teamB),

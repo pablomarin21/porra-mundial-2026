@@ -382,15 +382,19 @@ table.mini tr.qual{background:#eafaf0} table.mini tr.third{background:#fff7e3}
 .kt-match{display:flex;align-items:center;justify-content:center;gap:12px;font-size:.98rem;color:#26323b;margin-bottom:10px;padding-bottom:9px;border-bottom:1px solid var(--line)}
 .kt-mt{display:flex;align-items:center;gap:6px}
 .kt-vs{font-weight:800;color:var(--muted);font-size:.82rem;min-width:34px;text-align:center}
-.kt-grid{display:flex;flex-direction:column;gap:3px}
-.kt-grow{display:grid;grid-template-columns:1fr 56px 56px;align-items:center;gap:6px;padding:4px 8px;border-radius:8px}
-.kt-grow.me{background:#fffaf0;outline:1px solid #f0d9a8}
-.kt-grow.zero{opacity:.5}
-.kt-gh{font-size:.72rem;color:var(--muted);font-weight:700;padding-bottom:2px}
-.kt-gh .kt-gt{justify-content:center;display:flex}
-.kt-gnm{font-weight:700;color:#37474f;font-size:.86rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.kt-gt{text-align:center;font-weight:800;font-size:.9rem;color:#aab2c0}
-.kt-gt.good{color:#1f9d57;background:#eafaf0;border-radius:7px;padding:2px 0}
+.kt-sub{font-size:.76rem;color:var(--muted);font-weight:700;margin-bottom:6px}
+.kt-players{display:flex;flex-direction:column;gap:4px}
+.kt-prow{display:grid;grid-template-columns:84px 1fr;align-items:center;gap:8px;padding:5px 8px;border-radius:9px}
+.kt-prow.me{background:#fffaf0;outline:1px solid #f0d9a8}
+.kt-prow.zero{opacity:.55}
+.kt-pn{font-weight:700;color:#37474f;font-size:.86rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.kt-pk{display:flex;flex-wrap:wrap;gap:5px;align-items:center}
+.kt-chip{display:inline-flex;align-items:center;gap:4px;background:#eafaf0;border:1px solid #bfe6cd;color:#1c6e44;border-radius:8px;padding:2px 7px;font-size:.8rem}
+.kt-chip.both{background:#e6f6ec;border-color:#9fd9b4;font-weight:700}
+.kt-chip.bonus{background:#fff4e3;border-color:#f0d2a0;color:#9a6a16}
+.kt-chip small{font-size:.74rem}
+.kt-pt{font-weight:800;margin-left:2px}
+.kt-none{font-size:.8rem;color:#9aa3b2;font-style:italic}
 .kt-foot{margin-top:9px}
 .live-groups{display:flex;flex-direction:column;gap:12px;margin-bottom:14px}
 .lg-card{background:#fff;border:1px solid var(--line);border-radius:14px;overflow:hidden;box-shadow:0 12px 30px rgba(0,0,0,.32);border-top:3px solid #e23b3b}

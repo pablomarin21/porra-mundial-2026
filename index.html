@@ -9,7 +9,7 @@
   <!-- Auto-actualizador: si hay una versión nueva publicada, recarga sola (evita caché vieja) -->
   <script>
   (function () {
-    var CUR = 104;   // versión de este index.html
+    var CUR = 105;   // versión de este index.html
     try {
       fetch("ver.txt?t=" + Date.now(), { cache: "no-store" })
         .then(function (r) { return r.ok ? r.text() : ""; })
@@ -35,7 +35,7 @@
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="Porra Mundial" />
-  <link rel="stylesheet" href="styles.css?v=104" />
+  <link rel="stylesheet" href="styles.css?v=105" />
 </head>
 <body x-data="porraApp()" x-init="init()" x-cloak>
 
@@ -1546,21 +1546,26 @@
             <span class="kt-vs" x-text="(m.hs!=null)?(m.hs+'–'+m.as):'vs'"></span>
             <span class="kt-mt"><span class="flag" x-text="m.teamBflag"></span> <b x-text="m.teamBes"></b></span>
           </div>
-          <div class="kt-grid">
-            <div class="kt-grow kt-gh">
-              <span class="kt-gnm">si gana →</span>
-              <span class="kt-gt"><span class="flag" x-text="m.teamAflag"></span></span>
-              <span class="kt-gt"><span class="flag" x-text="m.teamBflag"></span></span>
-            </div>
+          <div class="kt-sub">📋 Qué puso cada uno · 🏆 cuadro de antes · 🗓️ bonus 28-jun</div>
+          <div class="kt-players">
             <template x-for="p in m.players" :key="'ktp'+m.match+p.id">
-              <div class="kt-grow" :class="{me:p.isMe, zero:(p.ifA===0 && p.ifB===0)}">
-                <span class="kt-gnm" x-text="p.name"></span>
-                <span class="kt-gt" :class="{good:p.ifA>0}" :title="p.ifAdetail" x-text="p.ifA>0?('+'+p.ifA):'·'"></span>
-                <span class="kt-gt" :class="{good:p.ifB>0}" :title="p.ifBdetail" x-text="p.ifB>0?('+'+p.ifB):'·'"></span>
+              <div class="kt-prow" :class="{me:p.isMe, zero:!p.picks.length}">
+                <span class="kt-pn" x-text="p.name"></span>
+                <span class="kt-pk">
+                  <template x-if="p.same">
+                    <span class="kt-chip both"><span class="flag" x-text="p.sameFlag"></span> <b x-text="p.sameEs"></b><span class="kt-pt" x-text="'+'+p.total"></span></span>
+                  </template>
+                  <template x-if="!p.same">
+                    <template x-for="(pk,pi) in p.picks" :key="'pk'+m.match+p.id+pi">
+                      <span class="kt-chip" :class="pk.k"><small x-text="pk.ic"></small> <span class="flag" x-text="pk.flag"></span> <b x-text="pk.es"></b><span class="kt-pt" x-text="'+'+pk.pts"></span></span>
+                    </template>
+                    <span class="kt-none" x-show="!p.picks.length">— no tiene a ninguno</span>
+                  </template>
+                </span>
               </div>
             </template>
           </div>
-          <div class="kt-foot muted tiny">Suma quien tenga al ganador en su cuadro (inicial <b>+</b> bonus 28-jun). <span x-show="m.players.some(p=>p.isMe)">Tú, resaltado.</span></div>
+          <div class="kt-foot muted tiny">Suma el que acierte al ganador, en cada cuadro. Octavos: 🏆 +<span x-text="settings.octavos"></span> · 🗓️ +2. <span x-show="m.players.some(p=>p.isMe)">Tú, resaltado.</span></div>
         </div>
       </template>
     </div>
@@ -1987,10 +1992,10 @@
   </div>
 
   <!-- ====== Dependencias ====== -->
-  <script src="data.js?v=104"></script>
-  <script src="engine.js?v=104"></script>
+  <script src="data.js?v=105"></script>
+  <script src="engine.js?v=105"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
-  <script src="app.js?v=104"></script>
+  <script src="app.js?v=105"></script>
   <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.1/dist/cdn.min.js"></script>
 </body>
 </html>
