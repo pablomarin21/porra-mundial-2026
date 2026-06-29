@@ -9,7 +9,7 @@
   <!-- Auto-actualizador: si hay una versión nueva publicada, recarga sola (evita caché vieja) -->
   <script>
   (function () {
-    var CUR = 99;   // versión de este index.html
+    var CUR = 100;   // versión de este index.html
     try {
       fetch("ver.txt?t=" + Date.now(), { cache: "no-store" })
         .then(function (r) { return r.ok ? r.text() : ""; })
@@ -35,7 +35,7 @@
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="Porra Mundial" />
-  <link rel="stylesheet" href="styles.css?v=99" />
+  <link rel="stylesheet" href="styles.css?v=100" />
 </head>
 <body x-data="porraApp()" x-init="init()" x-cloak>
 
@@ -1055,13 +1055,17 @@
       <span class="k27-prog" x-text="(ko27?ko27.complete:0)+'/'+(ko27?ko27.total:12)+' grupos cerrados'"></span>
     </div>
 
-    <!-- Selector: ver el cuadro de cualquiera (al acabar la fase de grupos) -->
-    <div class="k27-viewsel" x-show="groupStageOver">
+    <!-- Selector: ver el cuadro de cualquiera — SOLO cuando ya cerraste el tuyo (anti-copia) -->
+    <div class="k27-viewsel" x-show="groupStageOver && ko27Frozen">
       <span class="k27-vs-lbl">👀 Ver el cuadro de:</span>
       <button class="k27-vs-chip" :class="{on:viewingSelf2}" @click="viewPlayer2(null)">🙋 Tú</button>
       <template x-for="p in ko27Players" :key="'vp'+p.id">
         <button class="k27-vs-chip" x-show="!p.me" :class="{on:viewId2===p.id}" @click="viewPlayer2(p.id)"><span x-text="p.name"></span><span class="k27-vs-n" x-show="p.picks" x-text="' '+p.picks"></span></button>
       </template>
+    </div>
+    <!-- Aún no cerraste el tuyo: no puedes ver el de los demás (para que nadie copie) -->
+    <div class="k27-viewlock" x-show="groupStageOver && !ko27Frozen && me && me.id">
+      🔒 Podrás ver el cuadro de los demás <b>cuando cierres el tuyo</b> (complétalo, <span x-text="bracket2Picked"></span>/31). Así nadie copia.
     </div>
 
     <!-- Barra de guardado + instrucción (ARRIBA del cuadro) — solo cuando ves el TUYO -->
@@ -1925,10 +1929,10 @@
   </div>
 
   <!-- ====== Dependencias ====== -->
-  <script src="data.js?v=99"></script>
-  <script src="engine.js?v=99"></script>
+  <script src="data.js?v=100"></script>
+  <script src="engine.js?v=100"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
-  <script src="app.js?v=99"></script>
+  <script src="app.js?v=100"></script>
   <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.1/dist/cdn.min.js"></script>
 </body>
 </html>

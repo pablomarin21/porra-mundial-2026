@@ -1448,6 +1448,7 @@ tr.clickrow.sel td{background:#e7f1ec}
 .k27-clickhint.warn{color:#ffdcb5;background:rgba(224,161,6,.13);border-color:rgba(224,161,6,.42)}
 .k27-clickhint.view{color:#cfe0ff;background:rgba(90,140,235,.14);border-color:rgba(90,140,235,.4)}
 .k27-clickhint.frozen{color:#dfe4ec;background:rgba(150,160,175,.16);border-color:rgba(150,160,175,.42)}
+.k27-viewlock{font-size:.82rem;color:#ffe1b8;background:rgba(224,161,6,.12);border:1px solid rgba(224,161,6,.4);border-radius:10px;padding:9px 12px;margin:0 0 10px;line-height:1.4}
 /* selector "ver el cuadro de" */
 .k27-viewsel{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin:4px 0 10px}
 .k27-vs-lbl{font-size:.82rem;font-weight:800;color:#cfeede;margin-right:2px}

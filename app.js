@@ -275,7 +275,7 @@ window.porraApp = function () {
       this.pushSupported = ("serviceWorker" in navigator) && ("PushManager" in window) && ("Notification" in window);
       if (!this.pushSupported) return;
       try {
-        const reg = await navigator.serviceWorker.register("sw.js?v=99");
+        const reg = await navigator.serviceWorker.register("sw.js?v=100");
         const sub = await reg.pushManager.getSubscription();
         this.pushOn = !!sub;
         // pide los avisos SOLA y de forma PERSISTENTE: si no los tiene, el banner vuelve en cada
@@ -1491,7 +1491,11 @@ window.porraApp = function () {
     get groupStageOver() { return !!(this.outcome && this.outcome.allGroupsComplete) || !!(this.ko27 && this.ko27.complete === this.ko27.total); },
     get viewingSelf2() { return !this.viewId2 || !!(this.me && this.viewId2 === this.me.id); },
     _viewedBracket2() { const e = (this.entries || []).find((x) => x.id === this.viewId2); return (e && e.picks && e.picks.bracket2) || {}; },
-    viewPlayer2(id) { this.viewId2 = (id && (!this.me || id !== this.me.id)) ? id : null; this.rebuild2(); },
+    viewPlayer2(id) {
+      // solo puedes ver el de OTROS si ya cerraste el tuyo (anti-copia); el tuyo siempre
+      if (id && (!this.me || id !== this.me.id) && !this.ko27Frozen) { this.toast("🔒 Cierra tu cuadro (complétalo) para ver el de los demás.", "warn"); return; }
+      this.viewId2 = (id && (!this.me || id !== this.me.id)) ? id : null; this.rebuild2();
+    },
     get ko27Players() {
       const real = (this.ranked || []).filter((r) => !this.isGuest(r));
       const byId = {}; (this.entries || []).forEach((e) => (byId[e.id] = e));
@@ -1534,7 +1538,8 @@ window.porraApp = function () {
         await this.rpc("porra_set_bracket2", { p_code: this.pool.code, p_participant_id: this.me.id, p_bracket2: this.bracket2 });
         const e = this.myEntry; if (e) { e.picks = e.picks || {}; e.picks.bracket2 = Object.assign({}, this.bracket2); }
         this.ko27Saved = true;
-        if (!silent) this.toast("✅ ¡Camino guardado! Sumarás los puntos bonus según avance el cuadro.");
+        if (this.bracket2Picked === 31) this.toast("🎉 ¡Cuadro del 28-jun COMPLETO! Queda cerrado y sumará solo. Ya puedes ver el de los demás. 👀");
+        else if (!silent) this.toast("✅ ¡Camino guardado! Sumarás los puntos bonus según avance el cuadro.");
         if (this.recomputeRanking) this.recomputeRanking();
       } catch (err) { this.toast(this.errMsg ? this.errMsg(err) : "No se pudo guardar", "err"); }
       finally { this.ko27Busy = false; }
