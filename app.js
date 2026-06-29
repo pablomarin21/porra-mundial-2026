@@ -275,7 +275,7 @@ window.porraApp = function () {
       this.pushSupported = ("serviceWorker" in navigator) && ("PushManager" in window) && ("Notification" in window);
       if (!this.pushSupported) return;
       try {
-        const reg = await navigator.serviceWorker.register("sw.js?v=102");
+        const reg = await navigator.serviceWorker.register("sw.js?v=103");
         const sub = await reg.pushManager.getSubscription();
         this.pushOn = !!sub;
         // pide los avisos SOLA y de forma PERSISTENTE: si no los tiene, el banner vuelve en cada
@@ -1502,23 +1502,42 @@ window.porraApp = function () {
     },
     matchKickoff(match) { const t = D.KO_KICKOFF && D.KO_KICKOFF[match]; return t ? new Date(t).getTime() : null; },
     // un cruce se puede tocar hasta 1 HORA antes de su partido (y NUNCA si tu cuadro ya está completo).
-    // Un cruce ya jugado/inminente: se puede RELLENAR si aún no lo tenías (para quien empieza tarde),
-    // pero NO cambiar si ya habías puesto algo (anti-trampa).
+    // FILL-ONLY: lo que ya pusiste NO se puede cambiar; solo se pueden RELLENAR los cruces vacíos.
+    // (Quien terminó los 31 queda congelado; quien no, sigue rellenando.)
     matchEditable(match) {
       if (this.ko27Frozen) return false;
-      const k = this.matchKickoff(match);
-      if (k == null) return true;
-      if (Date.now() < k - 3600000) return true;                 // aún falta >1h → editable
-      return !(this.bracket2 && this.bracket2[match]);           // ya jugado: solo si está vacío (rellenar, no cambiar)
+      return !(this.bracket2 && this.bracket2[match]);            // vacío → editable; con pick → bloqueado
     },
-    // ¿se puede elegir este cruce? identificado + ambos equipos decididos + aún no cerrado por hora
+    // ¿se puede elegir este cruce? identificado + ambos equipos decididos + cruce vacío
     canPick2(m) { return this.viewingSelf2 && !!(this.me && this.me.id) && !!(m && m.a && m.a.team && m.b && m.b.team) && this.matchEditable(m.match); },
     // texto del candado de un cruce (cuándo se cierra, hora de España)
     matchLockTxt(match) { const k = this.matchKickoff(match); if (k == null) return ""; try { return this.madridTime(new Date(k - 3600000).toISOString()); } catch (e) { return ""; } },
+    // 1/16 YA JUGADOS que dejaste vacíos → se auto-rellenan con el ganador REAL, para que el cuadro
+    // fluya y nadie se atasque esperando un partido que ya pasó. Solo el tuyo, si aún no lo cerraste.
+    _autoSeedPlayed() {
+      if (this.ko27Frozen || !this.viewingSelf2 || !this.me || !this.me.id) return false;
+      let oc = this.outcome;
+      if (!oc) { try { oc = Eng.outcomeFromEspn(this.espnEvents || [], this.dbResults || {}, this.extrasActual || {}); } catch (e) { oc = null; } }
+      const reached = oc && oc.reached && oc.reached.octavos;          // ganadores REALES de 1/16 (de ESPN)
+      if (!reached || !reached.size) return false;
+      const RES = this._resMap; const standings = {};
+      for (const L of D.GROUP_LETTERS) standings[L] = Eng.groupStandings(L, RES, false, null);
+      let teams = null; try { teams = Eng.buildR32Teams(Eng.computeQualifiers(standings)).teams; } catch (e) { return false; }
+      let changed = false;
+      for (const m of D.R32) {
+        if (this.bracket2[m.match]) continue;                         // ya tiene pick: no tocar
+        const pair = teams[m.match]; if (!pair) continue;
+        const w = (pair.a && reached.has(pair.a)) ? pair.a : ((pair.b && reached.has(pair.b)) ? pair.b : null);   // el ganador REAL
+        if (w) { this.bracket2[m.match] = w; changed = true; }
+      }
+      return changed;
+    },
     loadBracket2() {
       const e = this.myEntry;
       this.bracket2 = (e && e.picks && e.picks.bracket2) ? Object.assign({}, e.picks.bracket2) : (this.bracket2 || {});
+      const seeded = this._autoSeedPlayed();   // rellena los 1/16 ya jugados que falten
       this.rebuild2();
+      if (seeded) this._autoSave2();            // persiste el auto-relleno
     },
     // Reconstruye el 2º cuadro SEMBRADO desde los clasificados REALES (no desde tu predicción de grupos).
     rebuild2() {
