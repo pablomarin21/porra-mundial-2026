@@ -9,7 +9,7 @@
   <!-- Auto-actualizador: si hay una versión nueva publicada, recarga sola (evita caché vieja) -->
   <script>
   (function () {
-    var CUR = 101;   // versión de este index.html
+    var CUR = 102;   // versión de este index.html
     try {
       fetch("ver.txt?t=" + Date.now(), { cache: "no-store" })
         .then(function (r) { return r.ok ? r.text() : ""; })
@@ -35,7 +35,7 @@
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="Porra Mundial" />
-  <link rel="stylesheet" href="styles.css?v=101" />
+  <link rel="stylesheet" href="styles.css?v=102" />
 </head>
 <body x-data="porraApp()" x-init="init()" x-cloak>
 
@@ -753,6 +753,39 @@
           </div>
         </template>
 
+        <!-- ===== SUS DOS CUADROS DE ELIMINATORIAS: qué puso en cada uno + estado en vivo ===== -->
+        <template x-if="boardLocked && det.ko1">
+          <div class="det-ko">
+            <div class="dko-tt">🏆 Sus eliminatorias <span class="muted tiny">— qué puso en los dos cuadros y cómo va</span></div>
+            <div class="dko-grid">
+              <div class="dko-col">
+                <div class="dko-h">🏆 Antes del Mundial <span class="dko-pts" x-text="'+'+det.ko1.total"></span></div>
+                <template x-for="r in det.ko1.rounds" :key="'k1'+r.key">
+                  <div class="dko-round" x-show="r.n">
+                    <span class="dko-rl"><b x-text="r.label"></b><small x-text="' +'+r.ppts"></small></span>
+                    <div class="dko-teams"><template x-for="(c,ci) in r.cells" :key="'k1c'+r.key+ci"><span class="dko-tg" :class="c.status" x-text="c.flag+' '+c.es"></span></template></div>
+                  </div>
+                </template>
+              </div>
+              <div class="dko-col">
+                <div class="dko-h">🗓️ Del 28-jun <span class="dko-pts" x-text="'+'+det.ko2.total"></span></div>
+                <template x-if="det.ko2Filled">
+                  <div>
+                    <template x-for="r in det.ko2.rounds" :key="'k2'+r.key">
+                      <div class="dko-round" x-show="r.n">
+                        <span class="dko-rl"><b x-text="r.label"></b><small x-text="' +'+r.ppts"></small></span>
+                        <div class="dko-teams"><template x-for="(c,ci) in r.cells" :key="'k2c'+r.key+ci"><span class="dko-tg" :class="c.status" x-text="c.flag+' '+c.es"></span></template></div>
+                      </div>
+                    </template>
+                  </div>
+                </template>
+                <div class="dko-empty" x-show="!det.ko2Filled">Aún no ha rellenado su cuadro del 28-jun.</div>
+              </div>
+            </div>
+            <div class="dko-leg"><span class="dko-tg adv">✓ pasó</span> <span class="dko-tg out">✗ eliminado</span> <span class="dko-tg pend">⏳ pendiente</span></div>
+          </div>
+        </template>
+
         <!-- Justificación: qué ha acertado, punto a punto -->
         <template x-if="boardLocked">
           <div class="det-aciertos">
@@ -796,13 +829,6 @@
         </template>
 
         <div class="qv">
-          <div class="qv-champ">
-            <small>Su campeón</small>
-            <div class="qv-champ-team"><span class="flag big" x-text="det.champion?flag(det.champion):'🏆'"></span><b x-text="det.champion?es(det.champion):'—'"></b></div>
-          </div>
-          <div class="qv-row"><b>Finalistas:</b> <template x-for="t in det.finalists" :key="'f'+t"><span class="qchip"><span class="flag" x-text="flag(t)"></span><span x-text="es(t)"></span></span></template><span class="muted tiny" x-show="!det.finalists.length">(sin completar)</span></div>
-          <div class="qv-row"><b>Semifinalistas:</b> <template x-for="t in det.semis" :key="'s'+t"><span class="qchip"><span class="flag" x-text="flag(t)"></span><span x-text="es(t)"></span></span></template></div>
-          <div class="qv-row"><b>Cuartos:</b> <template x-for="t in det.cuartos" :key="'c'+t"><span class="qchip sm"><span class="flag" x-text="flag(t)"></span><span x-text="es(t)"></span></span></template></div>
           <div class="qv-row" x-show="det.extras && (det.extras.revelacion||det.extras.decepcion||det.extras.pichichi||det.extras.asistente||(det.extras.sidebets&&(det.extras.sidebets.hattrick||det.extras.sidebets.dobleRoja)))">
             <b>⭐ Especiales:</b>
             <span class="qchip sm" x-show="det.extras.revelacion">✨ <span x-text="es(det.extras.revelacion)"></span></span>
@@ -813,8 +839,7 @@
             <span class="qchip sm" x-show="det.extras.sidebets&&det.extras.sidebets.dobleRoja" x-text="'Doble roja: '+(det.extras.sidebets?det.extras.sidebets.dobleRoja:'')"></span>
           </div>
           <details class="qv-more">
-            <summary>Ver octavos, terceros y grupos</summary>
-            <div class="qv-row"><b>Octavos:</b> <template x-for="t in det.octavos" :key="'o'+t"><span class="qchip sm"><span class="flag" x-text="flag(t)"></span><span x-text="es(t)"></span></span></template></div>
+            <summary>Ver terceros y grupos</summary>
             <div class="qv-row"><b>8 mejores terceros:</b> <template x-for="t in det.thirds" :key="'th'+t"><span class="qchip sm third"><span class="flag" x-text="flag(t)"></span><span x-text="es(t)"></span></span></template></div>
             <div class="qv-groups">
               <template x-for="L in letters" :key="'qg'+L">
@@ -1929,10 +1954,10 @@
   </div>
 
   <!-- ====== Dependencias ====== -->
-  <script src="data.js?v=101"></script>
-  <script src="engine.js?v=101"></script>
+  <script src="data.js?v=102"></script>
+  <script src="engine.js?v=102"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
-  <script src="app.js?v=101"></script>
+  <script src="app.js?v=102"></script>
   <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.1/dist/cdn.min.js"></script>
 </body>
 </html>

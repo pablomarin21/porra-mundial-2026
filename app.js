@@ -275,7 +275,7 @@ window.porraApp = function () {
       this.pushSupported = ("serviceWorker" in navigator) && ("PushManager" in window) && ("Notification" in window);
       if (!this.pushSupported) return;
       try {
-        const reg = await navigator.serviceWorker.register("sw.js?v=101");
+        const reg = await navigator.serviceWorker.register("sw.js?v=102");
         const sub = await reg.pushManager.getSubscription();
         this.pushOn = !!sub;
         // pide los avisos SOLA y de forma PERSISTENTE: si no los tiene, el banner vuelve en cada
@@ -1237,7 +1237,58 @@ window.porraApp = function () {
         extras: e.picks.extras || {}, ex, total: bd.total + ex.total,
         bits: this._explainBits(e.picks, oc, this.settings, bd, ex),   // justificación punto a punto
         groupDetail: this._groupDetail(e.picks, oc, this.settings),    // grupos en directo (pred vs real + pts + riesgo)
+        ko1: this._koView(dp, oc, this.settings, false),               // cuadro de antes del Mundial (rondas + estado)
+        ko2: this._koView(dp, oc, this.settings, true),                // cuadro del 28-jun (rondas + estado)
+        ko2Filled: !!(dp.b2 && dp.b2.octavos && dp.b2.octavos.size),   // ¿rellenó el 28-jun?
       };
+    },
+    // ---- vista compacta de un cuadro KO (de cualquier jugador), por rondas, con estado en vivo ----
+    _koEliminated() {   // equipos que YA perdieron un partido de eliminatorias (de los emparejamientos reales)
+      const elim = new Set(); const br = this.liveBr || {}; const tbm = br.teamsByMatch || {}, won = br.winnerOf || {};
+      for (const list of [D.R32, D.R16, D.QF, D.SF, [D.FINAL]]) for (const m of list) {
+        const w = won[m.match], pair = tbm[m.match];
+        if (w && pair) { const loser = pair.a === w ? pair.b : pair.a; if (loser) elim.add(loser); }
+      }
+      return elim;
+    },
+    _koQualifiedSet() {   // los 32 equipos que SÍ están en la fase KO real (1/16)
+      const s = new Set(); const tbm = (this.liveBr && this.liveBr.teamsByMatch) || {};
+      for (const m of D.R32) { const p = tbm[m.match]; if (p) { if (p.a) s.add(p.a); if (p.b) s.add(p.b); } }
+      return s;
+    },
+    _koPickStatus(team, stage, oc, elim, inKo, koKnown) {   // 'adv' | 'out' | 'pend'
+      if (!team) return "pend";
+      const r = (oc && oc.reached) || {};
+      if (stage === "champion") {
+        if (r.champion == null) return (elim.has(team) || (koKnown && inKo.size && !inKo.has(team))) ? "out" : "pend";
+        return r.champion === team ? "adv" : "out";
+      }
+      const set = r[stage];
+      if (set && set.has && set.has(team)) return "adv";
+      if (elim.has(team)) return "out";
+      if (koKnown && inKo.size && !inKo.has(team)) return "out";   // ni siquiera se clasificó a la fase KO
+      return "pend";
+    },
+    _koView(dp, oc, S, isBonus) {
+      if (!this.liveBr || !this.liveBr.teamsByMatch || !Object.keys(this.liveBr.teamsByMatch).length) { try { this.refreshLiveBracket(); } catch (e) {} }
+      const elim = this._koEliminated(), inKo = this._koQualifiedSet(), koKnown = !!this.groupStageOver;
+      const pts = isBonus ? { octavos: 2, cuartos: 4, semis: 5, final: 8, champion: 13 }
+                          : { octavos: S.octavos, cuartos: S.cuartos, semis: S.semis, final: S.finalists, champion: S.champion };
+      const src = isBonus ? (dp.b2 || {}) : dp;
+      const ROUNDS = [["octavos", "Octavos"], ["cuartos", "Cuartos"], ["semis", "Semis"], ["final", "Final"], ["champion", "Campeón"]];
+      let total = 0;
+      const rounds = ROUNDS.map(([key, label]) => {
+        let teams = [];
+        if (key === "champion") { const c = src.champion; teams = c ? [c] : []; }
+        else { const set = src[key]; teams = set ? [...set] : []; }
+        const cells = teams.map((t) => {
+          const status = this._koPickStatus(t, key, oc, elim, inKo, koKnown);
+          const p = status === "adv" ? pts[key] : 0; total += p;
+          return { es: D.es(t), flag: D.flag(t), status, pts: p };
+        }).sort((a, b) => a.es.localeCompare(b.es));
+        return { key, label, ppts: pts[key], cells, n: cells.length, adv: cells.filter((c) => c.status === "adv").length };
+      });
+      return { rounds, total };
     },
     // Grupos en directo para el detalle: por grupo, su pronóstico vs la tabla real, puntos y riesgo.
     _groupDetail(picks, oc, S) {
