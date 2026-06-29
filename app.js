@@ -275,7 +275,7 @@ window.porraApp = function () {
       this.pushSupported = ("serviceWorker" in navigator) && ("PushManager" in window) && ("Notification" in window);
       if (!this.pushSupported) return;
       try {
-        const reg = await navigator.serviceWorker.register("sw.js?v=100");
+        const reg = await navigator.serviceWorker.register("sw.js?v=101");
         const sub = await reg.pushManager.getSubscription();
         this.pushOn = !!sub;
         // pide los avisos SOLA y de forma PERSISTENTE: si no los tiene, el banner vuelve en cada
@@ -1450,8 +1450,16 @@ window.porraApp = function () {
       return true;
     },
     matchKickoff(match) { const t = D.KO_KICKOFF && D.KO_KICKOFF[match]; return t ? new Date(t).getTime() : null; },
-    // un cruce se puede tocar hasta 1 HORA antes de su partido (y NUNCA si el cuadro está cerrado)
-    matchEditable(match) { if (this.ko27Frozen) return false; const k = this.matchKickoff(match); return k == null ? true : (Date.now() < k - 3600000); },
+    // un cruce se puede tocar hasta 1 HORA antes de su partido (y NUNCA si tu cuadro ya está completo).
+    // Un cruce ya jugado/inminente: se puede RELLENAR si aún no lo tenías (para quien empieza tarde),
+    // pero NO cambiar si ya habías puesto algo (anti-trampa).
+    matchEditable(match) {
+      if (this.ko27Frozen) return false;
+      const k = this.matchKickoff(match);
+      if (k == null) return true;
+      if (Date.now() < k - 3600000) return true;                 // aún falta >1h → editable
+      return !(this.bracket2 && this.bracket2[match]);           // ya jugado: solo si está vacío (rellenar, no cambiar)
+    },
     // ¿se puede elegir este cruce? identificado + ambos equipos decididos + aún no cerrado por hora
     canPick2(m) { return this.viewingSelf2 && !!(this.me && this.me.id) && !!(m && m.a && m.a.team && m.b && m.b.team) && this.matchEditable(m.match); },
     // texto del candado de un cruce (cuándo se cierra, hora de España)
