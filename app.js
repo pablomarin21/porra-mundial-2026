@@ -275,7 +275,7 @@ window.porraApp = function () {
       this.pushSupported = ("serviceWorker" in navigator) && ("PushManager" in window) && ("Notification" in window);
       if (!this.pushSupported) return;
       try {
-        const reg = await navigator.serviceWorker.register("sw.js?v=98");
+        const reg = await navigator.serviceWorker.register("sw.js?v=99");
         const sub = await reg.pushManager.getSubscription();
         this.pushOn = !!sub;
         // pide los avisos SOLA y de forma PERSISTENTE: si no los tiene, el banner vuelve en cada
@@ -1439,8 +1439,10 @@ window.porraApp = function () {
 
     // ¿está abierto el 2º cuadro? estás identificado + aún no ha empezado la final (cada cruce
     // tiene además su propio candado: 1h antes de SU partido).
-    // CERRADO POR EL ORGANIZADOR (29-jun): el cuadro del 28-jun ya no se puede tocar. Lo que pusieron queda fijo.
-    get ko27Frozen() { try { return Date.now() >= new Date("2026-06-29T00:00:00Z").getTime(); } catch (e) { return true; } },
+    // El cuadro del 28-jun se CONGELA en cuanto lo completas (31 cruces): a partir de ahí queda fijo y
+    // no se toca. Quien aún NO lo terminó puede seguir rellenándolo, con candado por partido (no puede
+    // tocar cruces ya jugados, para que nadie acierte sobre seguro).
+    get ko27Frozen() { const e = this.myEntry; const b2 = e && e.picks && e.picks.bracket2; return (b2 ? Object.keys(b2).length : 0) >= 31; },
     get ko27Editable() {
       if (this.ko27Frozen) return false;
       if (!this.me || !this.me.id || !this.ko27) return false;

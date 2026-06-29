@@ -9,7 +9,7 @@
   <!-- Auto-actualizador: si hay una versión nueva publicada, recarga sola (evita caché vieja) -->
   <script>
   (function () {
-    var CUR = 98;   // versión de este index.html
+    var CUR = 99;   // versión de este index.html
     try {
       fetch("ver.txt?t=" + Date.now(), { cache: "no-store" })
         .then(function (r) { return r.ok ? r.text() : ""; })
@@ -35,7 +35,7 @@
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="Porra Mundial" />
-  <link rel="stylesheet" href="styles.css?v=98" />
+  <link rel="stylesheet" href="styles.css?v=99" />
 </head>
 <body x-data="porraApp()" x-init="init()" x-cloak>
 
@@ -1045,11 +1045,11 @@
       <div class="k27-lock-l">
         <span class="k27-lock-ic" x-text="(ko27Editable && !ko27Frozen)?'🟢':'🔒'"></span>
         <div>
-          <b x-text="ko27Frozen?'Cuadro del 28-jun CERRADO':(ko27Editable?'¡Abierto! Monta tu camino a la final':'Se abre en cuanto se decida el primer cruce')"></b>
-          <small x-show="ko27Frozen">🔒 Ya <b>no se puede tocar</b>. Lo que pusiste queda <b>fijo</b> y seguirá sumando ronda a ronda.</small>
+          <b x-text="ko27Frozen?'Cuadro del 28-jun COMPLETO y CERRADO':(ko27Editable?'¡Aún puedes terminar tu cuadro!':'Se abre en cuanto se decida el primer cruce')"></b>
+          <small x-show="ko27Frozen">🔒 Lo <b>completaste</b> (31/31): queda <b>fijo</b> y seguirá sumando ronda a ronda.</small>
           <small x-show="!ko27Frozen && !ko27Editable && ko27DaysLeft>0" x-text="'Faltan '+ko27DaysLeft+' día'+(ko27DaysLeft===1?'':'s')+' · se va abriendo según se decidan los cruces'"></small>
           <small x-show="!ko27Frozen && !ko27Editable && ko27DaysLeft<=0">en cuanto se decida el primer cruce</small>
-          <small x-show="!ko27Frozen && ko27Editable">Ya puedes elegir los cruces <b>decididos</b> (<span x-text="ko27PlayableCount"></span> de 16); el resto se desbloquea según cierran los grupos. Edita hasta el <b>primer 1/16</b> (28-jun, 21:00 España).</small>
+          <small x-show="!ko27Frozen && ko27Editable">No lo terminaste: <b>complétalo</b> (<span x-text="bracket2Picked"></span>/31). Cada cruce se cierra <b>1h antes de su partido</b> y los <b>ya jugados</b> quedan 🔒. Cuando llegues a 31, se queda fijo.</small>
         </div>
       </div>
       <span class="k27-prog" x-text="(ko27?ko27.complete:0)+'/'+(ko27?ko27.total:12)+' grupos cerrados'"></span>
@@ -1071,7 +1071,7 @@
     </div>
     <p class="k27-clickhint" x-show="ko27Editable && viewingSelf2">👆 Toca al equipo que crees que <b>gana</b> cada cruce — avanza solo y se <b>guarda automáticamente</b> (no hay botón). Cada cruce lo puedes cambiar <b>hasta 1 hora antes de su partido</b>; después queda 🔒. Los grises se abren cuando se deciden sus equipos.</p>
     <p class="k27-clickhint view" x-show="!viewingSelf2">👀 Estás viendo el cuadro de <b x-text="(ko27Players.find(p=>p.id===viewId2)||{}).name"></b> — <b>solo lectura</b>. Toca <b>«Tú»</b> para volver al tuyo.</p>
-    <p class="k27-clickhint frozen" x-show="viewingSelf2 && ko27Frozen">🔒 El cuadro del 28-jun está <b>CERRADO</b>: ya no se puede modificar. Lo que pusiste queda <b>fijo</b> y suma ronda a ronda. Puedes ver el de los demás con el selector de arriba.</p>
+    <p class="k27-clickhint frozen" x-show="viewingSelf2 && ko27Frozen">🔒 <b>Completaste</b> tu cuadro del 28-jun (31/31): queda <b>fijo</b> y suma ronda a ronda. Ya no se toca. Puedes ver el de los demás con el selector de arriba.</p>
     <p class="k27-clickhint warn" x-show="viewingSelf2 && !ko27Frozen && !ko27Editable && (!me || !me.id)">⚠️ Para montar tu cuadro, primero <b>entra con tu nombre</b> (pestaña <b>«Mi Porra»</b>). Luego vuelve aquí y toca a los ganadores.</p>
 
     <!-- CUADRO VISUAL INTERACTIVO estilo Mundial -->
@@ -1925,10 +1925,10 @@
   </div>
 
   <!-- ====== Dependencias ====== -->
-  <script src="data.js?v=98"></script>
-  <script src="engine.js?v=98"></script>
+  <script src="data.js?v=99"></script>
+  <script src="engine.js?v=99"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
-  <script src="app.js?v=98"></script>
+  <script src="app.js?v=99"></script>
   <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.1/dist/cdn.min.js"></script>
 </body>
 </html>
