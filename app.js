@@ -275,7 +275,7 @@ window.porraApp = function () {
       this.pushSupported = ("serviceWorker" in navigator) && ("PushManager" in window) && ("Notification" in window);
       if (!this.pushSupported) return;
       try {
-        const reg = await navigator.serviceWorker.register("sw.js?v=97");
+        const reg = await navigator.serviceWorker.register("sw.js?v=98");
         const sub = await reg.pushManager.getSubscription();
         this.pushOn = !!sub;
         // pide los avisos SOLA y de forma PERSISTENTE: si no los tiene, el banner vuelve en cada
@@ -1439,14 +1439,17 @@ window.porraApp = function () {
 
     // ¿está abierto el 2º cuadro? estás identificado + aún no ha empezado la final (cada cruce
     // tiene además su propio candado: 1h antes de SU partido).
+    // CERRADO POR EL ORGANIZADOR (29-jun): el cuadro del 28-jun ya no se puede tocar. Lo que pusieron queda fijo.
+    get ko27Frozen() { try { return Date.now() >= new Date("2026-06-29T00:00:00Z").getTime(); } catch (e) { return true; } },
     get ko27Editable() {
+      if (this.ko27Frozen) return false;
       if (!this.me || !this.me.id || !this.ko27) return false;
       try { const fin = D.KO_KICKOFF[104]; if (fin && Date.now() >= new Date(fin).getTime() - 3600000) return false; } catch (e) {}
       return true;
     },
     matchKickoff(match) { const t = D.KO_KICKOFF && D.KO_KICKOFF[match]; return t ? new Date(t).getTime() : null; },
-    // un cruce se puede tocar hasta 1 HORA antes de su partido
-    matchEditable(match) { const k = this.matchKickoff(match); return k == null ? true : (Date.now() < k - 3600000); },
+    // un cruce se puede tocar hasta 1 HORA antes de su partido (y NUNCA si el cuadro está cerrado)
+    matchEditable(match) { if (this.ko27Frozen) return false; const k = this.matchKickoff(match); return k == null ? true : (Date.now() < k - 3600000); },
     // ¿se puede elegir este cruce? identificado + ambos equipos decididos + aún no cerrado por hora
     canPick2(m) { return this.viewingSelf2 && !!(this.me && this.me.id) && !!(m && m.a && m.a.team && m.b && m.b.team) && this.matchEditable(m.match); },
     // texto del candado de un cruce (cuándo se cierra, hora de España)

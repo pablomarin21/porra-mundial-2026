@@ -1012,6 +1012,8 @@ tr.clickrow.sel td{background:#e7f1ec}
 /* ===== 27-jun: modo editable (elegir ganadores) ===== */
 .k27-lock.open{background:linear-gradient(135deg,#e9f8ef,#d7f0e0);border-color:#9fd9b4}
 .k27-lock.open .k27-lock-l small{color:#1f8f4e}
+.k27-lock.frozen{background:linear-gradient(135deg,#f2f4f7,#e6e9ee);border-color:#c4cbd6}
+.k27-lock.frozen .k27-lock-l small{color:#5a6675}
 .k27-edit{margin-top:4px}
 .k27-edit-bar{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;margin-bottom:8px}
 .k27-prog2{background:#eef4f0;border-radius:20px;padding:4px 11px;font-size:.76rem;font-weight:800;color:var(--green)}
@@ -1445,6 +1447,7 @@ tr.clickrow.sel td{background:#e7f1ec}
 .k27-clickhint{font-size:.82rem;color:#d7f3e6;background:rgba(46,194,122,.1);border:1px solid rgba(46,194,122,.32);border-radius:10px;padding:8px 11px;margin:0 0 10px;line-height:1.4}
 .k27-clickhint.warn{color:#ffdcb5;background:rgba(224,161,6,.13);border-color:rgba(224,161,6,.42)}
 .k27-clickhint.view{color:#cfe0ff;background:rgba(90,140,235,.14);border-color:rgba(90,140,235,.4)}
+.k27-clickhint.frozen{color:#dfe4ec;background:rgba(150,160,175,.16);border-color:rgba(150,160,175,.42)}
 /* selector "ver el cuadro de" */
 .k27-viewsel{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin:4px 0 10px}
 .k27-vs-lbl{font-size:.82rem;font-weight:800;color:#cfeede;margin-right:2px}
