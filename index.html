@@ -9,7 +9,7 @@
   <!-- Auto-actualizador: si hay una versión nueva publicada, recarga sola (evita caché vieja) -->
   <script>
   (function () {
-    var CUR = 103;   // versión de este index.html
+    var CUR = 104;   // versión de este index.html
     try {
       fetch("ver.txt?t=" + Date.now(), { cache: "no-store" })
         .then(function (r) { return r.ok ? r.text() : ""; })
@@ -35,7 +35,7 @@
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="Porra Mundial" />
-  <link rel="stylesheet" href="styles.css?v=103" />
+  <link rel="stylesheet" href="styles.css?v=104" />
 </head>
 <body x-data="porraApp()" x-init="init()" x-cloak>
 
@@ -1532,6 +1532,39 @@
         </div>
       </template>
     </div>
+    <!-- ⚡ PARTIDOS DE HOY (eliminatorias): qué puede sumar cada uno según el resultado -->
+    <div class="ko-today" x-show="koToday.length">
+      <div class="kt-head">⚡ Partidos de hoy <span class="muted tiny">— qué se juega cada uno (incluye la madrugada)</span></div>
+      <template x-for="m in koToday" :key="'kt'+m.match">
+        <div class="kt-card" :class="{live:m.live, done:m.done}">
+          <div class="kt-top">
+            <span class="kt-round" x-text="m.round"></span>
+            <span class="kt-time" :class="{live:m.live}" x-text="m.live?'🔴 EN VIVO':(m.done?'✓ FINAL':('🕒 '+m.kickoffSpain))"></span>
+          </div>
+          <div class="kt-match">
+            <span class="kt-mt"><span class="flag" x-text="m.teamAflag"></span> <b x-text="m.teamAes"></b></span>
+            <span class="kt-vs" x-text="(m.hs!=null)?(m.hs+'–'+m.as):'vs'"></span>
+            <span class="kt-mt"><span class="flag" x-text="m.teamBflag"></span> <b x-text="m.teamBes"></b></span>
+          </div>
+          <div class="kt-grid">
+            <div class="kt-grow kt-gh">
+              <span class="kt-gnm">si gana →</span>
+              <span class="kt-gt"><span class="flag" x-text="m.teamAflag"></span></span>
+              <span class="kt-gt"><span class="flag" x-text="m.teamBflag"></span></span>
+            </div>
+            <template x-for="p in m.players" :key="'ktp'+m.match+p.id">
+              <div class="kt-grow" :class="{me:p.isMe, zero:(p.ifA===0 && p.ifB===0)}">
+                <span class="kt-gnm" x-text="p.name"></span>
+                <span class="kt-gt" :class="{good:p.ifA>0}" :title="p.ifAdetail" x-text="p.ifA>0?('+'+p.ifA):'·'"></span>
+                <span class="kt-gt" :class="{good:p.ifB>0}" :title="p.ifBdetail" x-text="p.ifB>0?('+'+p.ifB):'·'"></span>
+              </div>
+            </template>
+          </div>
+          <div class="kt-foot muted tiny">Suma quien tenga al ganador en su cuadro (inicial <b>+</b> bonus 28-jun). <span x-show="m.players.some(p=>p.isMe)">Tú, resaltado.</span></div>
+        </div>
+      </template>
+    </div>
+
     <!-- 🔴 EN DIRECTO: lo que pusisteis para el grupo que se está jugando -->
     <div class="live-groups" x-show="liveGroups.length">
       <template x-for="g in liveGroups" :key="'lg'+g.letter">
@@ -1954,10 +1987,10 @@
   </div>
 
   <!-- ====== Dependencias ====== -->
-  <script src="data.js?v=103"></script>
-  <script src="engine.js?v=103"></script>
+  <script src="data.js?v=104"></script>
+  <script src="engine.js?v=104"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
-  <script src="app.js?v=103"></script>
+  <script src="app.js?v=104"></script>
   <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.1/dist/cdn.min.js"></script>
 </body>
 </html>

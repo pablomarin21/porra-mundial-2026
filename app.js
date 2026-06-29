@@ -275,7 +275,7 @@ window.porraApp = function () {
       this.pushSupported = ("serviceWorker" in navigator) && ("PushManager" in window) && ("Notification" in window);
       if (!this.pushSupported) return;
       try {
-        const reg = await navigator.serviceWorker.register("sw.js?v=103");
+        const reg = await navigator.serviceWorker.register("sw.js?v=104");
         const sub = await reg.pushManager.getSubscription();
         this.pushOn = !!sub;
         // pide los avisos SOLA y de forma PERSISTENTE: si no los tiene, el banner vuelve en cada
@@ -458,6 +458,57 @@ window.porraApp = function () {
       return (upcoming.length ? upcoming : this.liveMatches).slice(0, 10);
     },
     get todayKey() { return this._dayKey(new Date(this.nowTs || Date.now()).toISOString()); },
+    // ---- ⚡ PARTIDOS DE HOY (eliminatorias): qué puede sumar cada uno según el resultado ----
+    _koStage(match) {
+      if (match >= 73 && match <= 88) return { key: "octavos", pts: this.settings.octavos, bonus: 2, round: "Octavos" };
+      if (match >= 89 && match <= 96) return { key: "cuartos", pts: this.settings.cuartos, bonus: 4, round: "Cuartos" };
+      if (match >= 97 && match <= 100) return { key: "semis", pts: this.settings.semis, bonus: 5, round: "Semis" };
+      if (match === 101 || match === 102) return { key: "final", pts: this.settings.finalists, bonus: 8, round: "Final" };
+      if (match === 104) return { key: "champion", pts: this.settings.champion, bonus: 13, round: "Campeón" };
+      return null;
+    },
+    // Jornada futbolística en hora de España: [hoy 06:00, mañana 06:00). Así la MADRUGADA del día
+    // siguiente cuenta como hoy. CEST = UTC+2 (jun/jul 2026, sin cambio de hora).
+    get _footballDayWindow() {
+      const OFF = 2 * 3600000;
+      const now = this.nowTs || Date.now();
+      const madrid = now + OFF;
+      const dayStartMadrid = Math.floor((madrid - 6 * 3600000) / 86400000) * 86400000 + 6 * 3600000;
+      const fromUtc = dayStartMadrid - OFF;
+      return { from: fromUtc, to: fromUtc + 86400000 };
+    },
+    get koToday() {
+      const w = this._footballDayWindow;
+      const tbm = (this.liveBr && this.liveBr.teamsByMatch) || {};
+      const meId = this.me && this.me.id;
+      const players = (this.entries || []).filter((e) => e.picks && !this.isGuest(e))
+        .map((e) => { let dp = null; try { dp = Eng.derivePicks(e.picks); } catch (x) {} return { id: e.id, name: this._shortName(e), isMe: e.id === meId, dp }; })
+        .filter((p) => p.dp);
+      const out = [];
+      for (const mk of Object.keys(D.KO_KICKOFF || {})) {
+        const iso = D.KO_KICKOFF[mk]; const d = this._d(iso); if (!d) continue;
+        const ts = d.getTime(); if (ts < w.from || ts >= w.to) continue;          // fuera de la jornada de hoy
+        const st = this._koStage(Number(mk)); if (!st) continue;
+        const pair = tbm[mk] || {}; const teamA = pair.a, teamB = pair.b;
+        if (!teamA || !teamB) continue;                                            // solo con ambos equipos decididos
+        const champ = st.key === "champion";
+        const hasMain = (P, t) => champ ? (P.champion === t) : !!(P[st.key] && P[st.key].has && P[st.key].has(t));
+        const hasBon = (P, t) => champ ? (P.b2 && P.b2.champion === t) : !!(P.b2 && P.b2[st.key] && P.b2[st.key].has && P.b2[st.key].has(t));
+        const rows = players.map((p) => {
+          const calc = (t) => { const m = hasMain(p.dp, t), b = hasBon(p.dp, t); return { g: (m ? st.pts : 0) + (b ? st.bonus : 0), det: [m && ("+" + st.pts + " cuadro"), b && ("+" + st.bonus + " bonus")].filter(Boolean).join(" · ") }; };
+          const ca = calc(teamA), cb = calc(teamB);
+          return { id: p.id, name: p.name, isMe: p.isMe, ifA: ca.g, ifB: cb.g, ifAdetail: ca.det, ifBdetail: cb.det, max: Math.max(ca.g, cb.g) };
+        }).sort((a, b) => (b.isMe - a.isMe) || (b.max - a.max) || a.name.localeCompare(b.name));
+        out.push({ match: Number(mk), kickoffSpain: this.madridTime(iso), ts, round: st.round, stageKey: st.key,
+          teamA, teamAes: D.es(teamA), teamAflag: D.flag(teamA), teamB, teamBes: D.es(teamB), teamBflag: D.flag(teamB),
+          live: false, done: false, hs: null, as: null, players: rows });
+      }
+      for (const card of out) {
+        const lm = (this.liveMatches || []).find((m) => (m.hCanon === card.teamA && m.aCanon === card.teamB) || (m.hCanon === card.teamB && m.aCanon === card.teamA));
+        if (lm) { card.live = lm.live; card.done = lm.done; if (lm.live || lm.done) { card.hs = lm.hs; card.as = lm.as; } }
+      }
+      return out.sort((a, b) => a.ts - b.ts);
+    },
     get schedule() {
       const f = this.calFilter, today = this.todayKey, byDay = {};
       for (const m of this.liveMatches) {
