@@ -276,7 +276,7 @@ window.porraApp = function () {
       this.pushSupported = ("serviceWorker" in navigator) && ("PushManager" in window) && ("Notification" in window);
       if (!this.pushSupported) return;
       try {
-        const reg = await navigator.serviceWorker.register("sw.js?v=107");
+        const reg = await navigator.serviceWorker.register("sw.js?v=108");
         const sub = await reg.pushManager.getSubscription();
         this.pushOn = !!sub;
         // pide los avisos SOLA y de forma PERSISTENTE: si no los tiene, el banner vuelve en cada
@@ -591,6 +591,7 @@ window.porraApp = function () {
       if (this.tab === "goals") this.loadMatchData();
       this.recomputeRanking();
       this.refreshLiveBracket();
+      if (this.tab === "ko27") this.rebuildReal();   // cuadro real en vivo con cada partido
       this.explain = this.buildExplain();
       this.scoringStatus = this.computeScoringStatus();
     },
