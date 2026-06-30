@@ -1485,6 +1485,16 @@ tr.clickrow.sel td{background:#e7f1ec}
 .wcb-pk{margin-left:auto;color:#159e57;font-weight:900;flex:none}
 .wcb-pend{display:inline-flex;align-items:center;gap:3px}
 /* barra de guardado + avisos (arriba del cuadro) */
+/* toggle Mi cuadro / Cuadro real */
+.ko27-modesel{display:flex;gap:8px;margin:4px 0 8px}
+.km-btn{flex:1;background:#0e2b22;border:1px solid #1f6b4d;border-radius:11px;padding:9px 10px;color:#bfe6cd;font-weight:800;font-size:.9rem;cursor:pointer}
+.km-btn small{display:block;font-weight:600;font-size:.68rem;opacity:.8}
+.km-btn.on{background:linear-gradient(135deg,#1f9d57,#15803d);border-color:#1f9d57;color:#fff;box-shadow:0 3px 10px rgba(31,157,87,.3)}
+.ko27-realnote{font-size:.82rem;color:#dff3e7;background:rgba(31,157,87,.12);border:1px solid rgba(31,157,87,.35);border-radius:10px;padding:8px 11px;margin:0 0 10px;line-height:1.45}
+.k27-mob-cmp{display:block;text-align:center;font-size:.78rem;font-weight:800;margin-top:6px;border-radius:7px;padding:3px}
+.k27-mob-cmp.hit{color:#15803d;background:rgba(31,157,87,.14)}
+.k27-mob-cmp.miss{color:#d8453b;background:rgba(216,69,59,.12)}
+.k27-mob-cmp.pending{color:#8fb0a2}
 .k27-savebar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;background:#0e2b22;border:1px solid #1f6b4d;border-radius:12px;padding:9px 13px;margin:6px 0 8px}
 .k27-sb-prog{font-weight:800;color:#eafff4}
 .k27-sb-status{font-size:.8rem;color:#bfe7d3}

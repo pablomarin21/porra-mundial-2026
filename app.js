@@ -94,6 +94,7 @@ window.porraApp = function () {
     entries: [], ranked: [], results: {}, rEdit: defaultREdit(), koEdit: defaultKoEdit(), liveBr: { teamsByMatch: {}, winnerOf: {}, complete: false },
     koPreview: null, koPreviewShow: false, ko27: null, ko27Round: "r32",
     bracket2: {}, _cols2: [], _mirror2: null, _champion2: null, ko27Busy: false, ko27Saved: false, viewId2: null,
+    ko27Mode: "mine", _mirrorReal: null, _realChampion: null, _realCols: null,
     // admin
     adminOk: false, adminPin: "", settings: Object.assign({}, D.DEFAULT_SCORING),
     scoreKeys: [
@@ -275,7 +276,7 @@ window.porraApp = function () {
       this.pushSupported = ("serviceWorker" in navigator) && ("PushManager" in window) && ("Notification" in window);
       if (!this.pushSupported) return;
       try {
-        const reg = await navigator.serviceWorker.register("sw.js?v=106");
+        const reg = await navigator.serviceWorker.register("sw.js?v=107");
         const sub = await reg.pushManager.getSubscription();
         this.pushOn = !!sub;
         // pide los avisos SOLA y de forma PERSISTENTE: si no los tiene, el banner vuelve en cada
@@ -1566,8 +1567,8 @@ window.porraApp = function () {
       if (this.ko27Frozen) return false;
       return !(this.bracket2 && this.bracket2[match]);            // vacío → editable; con pick → bloqueado
     },
-    // ¿se puede elegir este cruce? identificado + ambos equipos decididos + cruce vacío
-    canPick2(m) { return this.viewingSelf2 && !!(this.me && this.me.id) && !!(m && m.a && m.a.team && m.b && m.b.team) && this.matchEditable(m.match); },
+    // ¿se puede elegir este cruce? identificado + ambos equipos decididos + cruce vacío (y NUNCA en modo "cuadro real")
+    canPick2(m) { return !this.realMode && this.viewingSelf2 && !!(this.me && this.me.id) && !!(m && m.a && m.a.team && m.b && m.b.team) && this.matchEditable(m.match); },
     // texto del candado de un cruce (cuándo se cierra, hora de España)
     matchLockTxt(match) { const k = this.matchKickoff(match); if (k == null) return ""; try { return this.madridTime(new Date(k - 3600000).toISOString()); } catch (e) { return ""; } },
     // 1/16 YA JUGADOS que dejaste vacíos → se auto-rellenan con el ganador REAL, para que el cuadro
@@ -1622,6 +1623,51 @@ window.porraApp = function () {
       this._cols2 = defs.map((d) => ({ key: d.key, title: d.title, matches: d.list.map((m, i) => ({ n: i + 1, match: m.match, a: cell(tbm[m.match].a, d.key === "r32" ? labelOf[m.match].a : null), b: cell(tbm[m.match].b, d.key === "r32" ? labelOf[m.match].b : null), pick: b[m.match] || null })) }));
       this._champion2 = winnerOf[D.FINAL.match] || null;
       this._mirror2 = this._buildMirror2(this._cols2);          // cuadro visual interactivo (estable)
+      this.rebuildReal();                                        // y el espejo REAL (cómo va de verdad)
+    },
+    // ---- CUADRO REAL: cómo va quedando de verdad (ganadores REALES de ESPN), para comparar con lo que pusiste ----
+    get realMode() { return this.ko27Mode === "real"; },
+    get wcbView() { return this.realMode ? this.mirrorReal : this.mirror2; },
+    get wcbChampion() { return this.realMode ? (this._realChampion || null) : this._champion2; },
+    setKo27Mode(mode) { this.ko27Mode = mode === "real" ? "real" : "mine"; if (this.realMode) this.rebuildReal(); },
+    get mirrorReal() { return this._mirrorReal || { leftCols: [], rightCols: [], finalMatch: null }; },
+    // aciertos del jugador en los 1/16 ya jugados (lo que pusiste vs lo que pasó)
+    get realHits() {
+      const r32 = ((this._realCols || []).find((c) => c.key === "r32") || {}).matches || [];
+      let hit = 0, played = 0;
+      for (const m of r32) { if (m.status === "hit") { hit++; played++; } else if (m.status === "miss") played++; }
+      return { hit, played };
+    },
+    _reachedKeyFor(match) {
+      if (match >= 73 && match <= 88) return "octavos";
+      if (match >= 89 && match <= 96) return "cuartos";
+      if (match >= 97 && match <= 100) return "semis";
+      if (match === 101 || match === 102) return "final";
+      if (match === D.FINAL.match) return "champion";
+      return null;
+    },
+    rebuildReal() {
+      let oc = this.outcome;
+      if (!oc) { try { oc = Eng.outcomeFromEspn(this.espnEvents || [], this.dbResults || {}, this.extrasActual || {}); } catch (e) { oc = null; } }
+      const reached = (oc && oc.reached) || { octavos: new Set(), cuartos: new Set(), semis: new Set(), final: new Set(), champion: null };
+      const has = (key, t) => { if (!t) return false; if (key === "champion") return reached.champion === t; const s = reached[key]; return !!(s && s.has && s.has(t)); };
+      const RES = this._resMap, standings = {};
+      for (const L of D.GROUP_LETTERS) standings[L] = Eng.groupStandings(L, RES, false, null);
+      let teams = null; try { teams = Eng.buildR32Teams(Eng.computeQualifiers(standings)).teams; } catch (e) { teams = null; }
+      const picks = this.viewingSelf2 ? this.bracket2 : this._viewedBracket2();
+      const tbm = {}, winnerOf = {};
+      const realWinner = (mNum, pair) => { const key = this._reachedKeyFor(mNum); if (!key || !pair) return null; if (pair.a && has(key, pair.a)) return pair.a; if (pair.b && has(key, pair.b)) return pair.b; return null; };
+      for (const m of D.R32) { tbm[m.match] = (teams && teams[m.match]) ? teams[m.match] : { a: null, b: null }; winnerOf[m.match] = realWinner(m.match, tbm[m.match]); }
+      for (const list of [D.R16, D.QF, D.SF, [D.FINAL]]) for (const m of list) { tbm[m.match] = { a: winnerOf[m.a] || null, b: winnerOf[m.b] || null }; winnerOf[m.match] = realWinner(m.match, tbm[m.match]); }
+      const sideOf = (mNum, t) => { const w = winnerOf[mNum]; if (!t || !w) return "plain"; return t === w ? "in" : "out"; };
+      const cell = (mNum, t) => ({ team: t, es: t ? D.es(t) : null, flag: t ? D.flag(t) : "", label: null, side: sideOf(mNum, t) });
+      const r32set = new Set(D.R32.map((m) => m.match));
+      const pickStatus = (mNum) => { if (!r32set.has(mNum)) return null; const w = winnerOf[mNum], p = picks[mNum]; if (!p) return null; if (!w) return "pending"; return p === w ? "hit" : "miss"; };
+      const defs = [{ key: "r32", list: D.R32 }, { key: "r16", list: D.R16 }, { key: "qf", list: D.QF }, { key: "sf", list: D.SF }, { key: "final", list: [D.FINAL] }];
+      const cols = defs.map((d) => ({ key: d.key, matches: d.list.map((m, i) => ({ n: i + 1, match: m.match, a: cell(m.match, tbm[m.match].a), b: cell(m.match, tbm[m.match].b), pick: winnerOf[m.match] || null, status: pickStatus(m.match) })) }));
+      this._realChampion = reached.champion || winnerOf[D.FINAL.match] || null;
+      this._realCols = cols;                                    // para la vista móvil (ronda a ronda)
+      this._mirrorReal = this._buildMirror2(cols);
     },
     // ---- ver el cuadro de otros jugadores (al acabar la fase de grupos) ----
     get groupStageOver() { return !!(this.outcome && this.outcome.allGroupsComplete) || !!(this.ko27 && this.ko27.complete === this.ko27.total); },
@@ -1654,7 +1700,7 @@ window.porraApp = function () {
       const fin = (byN.final || {})[1];
       return { leftCols: colsOf(L), rightCols: colsOf(R), finalMatch: fin || null };
     },
-    get activeCol2() { return (this._cols2 || []).find((c) => c.key === this.ko27Round) || null; },
+    get activeCol2() { const cols = this.realMode ? this._realCols : this._cols2; return (cols || []).find((c) => c.key === this.ko27Round) || null; },
     get myChampion2() { return this._champion2; },
     get bracket2Picked() { let n = 0; for (const m of [...D.R32, ...D.R16, ...D.QF, ...D.SF, D.FINAL]) if (this.bracket2[m.match]) n++; return n; },
     get bracket2Done() { return this.bracket2Picked === 31; },
