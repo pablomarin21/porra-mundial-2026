@@ -89,6 +89,8 @@ window.porraApp = function () {
     sideBets: D.SIDE_BETS,
     // en vivo (ESPN) + cierre automático
     espnEvents: [], espnAt: 0, liveBusy: false, nowTs: 0, outcome: null, extrasActual: {}, _espnTimer: null, explain: null, scoringStatus: null, forecasts: {}, forecastsAt: 0, pathAnalysis: null, pathLoading: false, cmpA: "", cmpB: "", cmpGroup: "",
+    // Solo display: marcas de tiempo "acaba de marcar" / "acaba de terminar" para animar marcadores.
+    scoreFlash: {}, finFlash: {}, _scoreCache: null,
     extrasActualEdit: { revelacion: "", decepcion: "", pichichi: "", asistente: "", portero: "", sidebets: {} },
     // datos
     entries: [], ranked: [], results: {}, rEdit: defaultREdit(), koEdit: defaultKoEdit(), liveBr: { teamsByMatch: {}, winnerOf: {}, complete: false },
@@ -471,6 +473,9 @@ window.porraApp = function () {
           aName: cA ? D.es(cA) : this.koLabel(A.team.displayName), aFlag: cA ? D.flag(cA) : "🏳️",
           hs: H.score, as: A.score, live: st.state === "in", done: !!st.completed, pre: st.state === "pre",
           status: st.shortDetail || st.detail || st.description || "",
+          // Solo display: gol reciente (<90s) / final reciente (<3 min) para animar.
+          flash: !!(this.scoreFlash[ev.id] && this.nowTs - this.scoreFlash[ev.id] < 90000),
+          justDone: !!(this.finFlash[ev.id] && this.nowTs - this.finFlash[ev.id] < 180000),
         });
       }
       out.sort((a, b) => a.ts - b.ts);
@@ -539,19 +544,29 @@ window.porraApp = function () {
           const bonT = (p.b2[mk] === teamA || p.b2[mk] === teamB) ? p.b2[mk] : null;              // su pick del 28-jun para este cruce
           const same = !!(iniT && bonT && iniT === bonT);
           const picks = [];
-          if (iniT) picks.push({ k: "cuadro", ic: "🏆", es: D.es(iniT), flag: D.flag(iniT), pts: st.pts });
-          if (bonT) picks.push({ k: "bonus", ic: "🗓️", es: D.es(bonT), flag: D.flag(bonT), pts: st.bonus });
+          if (iniT) picks.push({ k: "cuadro", ic: "🏆", t: iniT, es: D.es(iniT), flag: D.flag(iniT), pts: st.pts });
+          if (bonT) picks.push({ k: "bonus", ic: "🗓️", t: bonT, es: D.es(bonT), flag: D.flag(bonT), pts: st.bonus });
           const total = (iniT ? st.pts : 0) + (bonT ? st.bonus : 0);
-          return { id: p.id, name: p.name, isMe: p.isMe, picks, same,
+          return { id: p.id, name: p.name, isMe: p.isMe, picks, same, sameT: same ? iniT : null,
             sameEs: same ? D.es(iniT) : null, sameFlag: same ? D.flag(iniT) : null, total, max: total };
         }).sort((a, b) => (b.isMe - a.isMe) || (b.max - a.max) || a.name.localeCompare(b.name));
         out.push({ match: Number(mk), kickoffSpain: this.madridTime(iso), ts, round: st.round, stageKey: st.key,
+          pts: st.pts, bonus: st.bonus,
           teamA, teamAes: D.es(teamA), teamAflag: D.flag(teamA), teamB, teamBes: D.es(teamB), teamBflag: D.flag(teamB),
           live: false, done: false, hs: null, as: null, players: rows });
       }
       for (const card of out) {
         const lm = (this.liveMatches || []).find((m) => (m.hCanon === card.teamA && m.aCanon === card.teamB) || (m.hCanon === card.teamB && m.aCanon === card.teamA));
-        if (lm) { card.live = lm.live; card.done = lm.done; if (lm.live || lm.done) { card.hs = lm.hs; card.as = lm.as; } }
+        if (lm) { card.live = lm.live; card.done = lm.done; card.flash = lm.flash; card.justDone = lm.justDone; if (lm.live || lm.done) { card.hs = lm.hs; card.as = lm.as; } }
+        // Solo display: con el marcador actual, quién pasa y quién sumaría cuántos puntos.
+        card.leader = null; card.nowWho = "";
+        if ((card.live || card.done) && card.hs != null && card.as != null && Number(card.hs) !== Number(card.as)) {
+          card.leader = Number(card.hs) > Number(card.as) ? card.teamA : card.teamB;
+          const gains = card.players
+            .map((p) => { const g = p.picks.filter((pk) => pk.t === card.leader).reduce((s, pk) => s + pk.pts, 0); return g > 0 ? p.name + " +" + g : null; })
+            .filter(Boolean);
+          card.nowWho = gains.length ? gains.join(" · ") : "nadie";
+        }
       }
       return out.sort((a, b) => a.ts - b.ts);
     },
@@ -620,6 +635,23 @@ window.porraApp = function () {
       return this._espnInFlight;
     },
     computeLive() {
+      // Solo display: detectar cambio de marcador (gol) y fin de partido para animarlos.
+      // No toca nada de puntuación; usa el tick de nowTs (20s) para caducar solo.
+      try {
+        const prev = this._scoreCache, next = {};
+        for (const ev of (this.espnEvents || [])) {
+          const c = ev.competitions && ev.competitions[0]; if (!c) continue;
+          const st = (ev.status && ev.status.type) || {};
+          const key = (c.competitors || []).map((x) => x.score).join("-") + "|" + (st.completed ? 1 : 0);
+          next[ev.id] = key;
+          if (prev && prev[ev.id] != null && prev[ev.id] !== key) {
+            const wasDone = prev[ev.id].endsWith("|1");
+            if (st.completed && !wasDone) this.finFlash[ev.id] = Date.now();
+            else if (!st.completed) this.scoreFlash[ev.id] = Date.now();
+          }
+        }
+        this._scoreCache = next;
+      } catch (e) { /* decorativo: nunca debe romper el cálculo real */ }
       this.outcome = Eng.outcomeFromEspn(this.espnEvents, this.results, this.extrasActual);
       this.computeScorers();
       if (this.tab === "results") {

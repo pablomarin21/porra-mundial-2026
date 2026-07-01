@@ -35,7 +35,7 @@
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="Porra Mundial" />
-  <link rel="stylesheet" href="styles.css?v=111" />
+  <link rel="stylesheet" href="styles.css?v=112" />
 </head>
 <body x-data="porraApp()" x-init="init()" x-cloak>
 
@@ -62,7 +62,7 @@
     <template x-if="pool">
       <div class="poolbar">
         <span>Porra: <b x-text="pool.name"></b></span>
-        <span class="code-chip" @click="copyShare()" title="Copiar enlace para la familia">
+        <span class="code-chip" @click="copyShare(); $el.classList.add('copied'); setTimeout(()=>$el.classList.remove('copied'),1500)" title="Copiar enlace para la familia">
           Código <b x-text="pool.code"></b> · 🔗 copiar enlace
         </span>
         <span class="lock-chip" :class="pool.locked ? 'closed':'open'" x-text="pool.locked ? '🔒 Cerrada' : '✏️ Abierta'"></span>
@@ -524,7 +524,7 @@
     </template>
 
     <!-- Tabla de liga -->
-    <div class="league" x-show="ranked.length">
+    <div class="league" :class="{calc:probBusy}" x-show="ranked.length">
       <div class="league-head">
         <span class="lr-pos">#</span>
         <span class="lr-name">Jugador</span>
@@ -532,7 +532,7 @@
         <span class="lr-win"><span class="lr-winval">🏆 Ganar</span></span>
       </div>
       <template x-for="(e,i) in ranked" :key="e.id">
-        <div class="league-row clickrow" :class="{me:e.id===me.id, bot:(e.first_name||'').startsWith('🤖'), guest:isGuest(e), paying: famPos(i)!==null && famPos(i)>3, sel:selectedId===e.id, pos1:famPos(i)===1, pos2:famPos(i)===2, pos3:famPos(i)===3}" @click="toggleDetail(e.id)">
+        <div class="league-row clickrow" :style="'--i:'+i" :class="{me:e.id===me.id, bot:(e.first_name||'').startsWith('🤖'), guest:isGuest(e), paying: famPos(i)!==null && famPos(i)>3, sel:selectedId===e.id, pos1:famPos(i)===1, pos2:famPos(i)===2, pos3:famPos(i)===3}" @click="toggleDetail(e.id)">
           <span class="lr-pos" :class="{inv: famPos(i)===null}" :title="famPos(i)===null ? 'Invitado, fuera de concurso' : ''" x-text="famPos(i)!==null ? famPos(i) : '·'"></span>
           <span class="lr-name"><span class="av sm" x-html="avatarHtml(e.id, e.first_name+' '+e.last_name)"></span><span x-text="e.first_name+' '+e.last_name"></span><span class="paytag" x-show="famPos(i)!==null && famPos(i)>3">🍽️ ¡vas a pagar una cena!</span><span class="invtag" x-show="isGuest(e)">invitado</span><span class="incompleto" x-show="e.complete===false && !isGuest(e)">⚠️ sin terminar</span><span class="youtag" x-show="e.id===me.id">tú</span><span class="seehint" x-show="canViewPicks">👁️</span></span>
           <span class="lr-num" x-show="boardLocked"><span class="tietag" x-show="e._tied" :title="'Empate a puntos — desempata por '+(e._tieReason||'el sistema de puntuación')">🟰</span><b x-text="e.points"></b></span>
@@ -595,38 +595,49 @@
 
     <!-- ⚡ PARTIDOS DE HOY (eliminatorias): qué puso cada uno + cuánto puede sumar -->
     <div class="ko-today" x-show="koToday.length">
-      <div class="kt-head">⚡ Partidos de hoy <span class="muted tiny">— qué puso cada uno y cuánto suma (incluye la madrugada)</span></div>
+      <div class="kt-head">⚡ Cruces de hoy <span class="muted tiny">— qué puso cada uno y qué puede sumar (incluye la madrugada)</span></div>
       <template x-for="m in koToday" :key="'ktl'+m.match">
-        <div class="kt-card" :class="{live:m.live, done:m.done}">
+        <div class="kt-card" :class="{live:m.live, done:m.done, findone:m.justDone}">
           <div class="kt-top">
             <span class="kt-round" x-text="m.round"></span>
-            <span class="kt-time" :class="{live:m.live}" x-text="m.live?'🔴 EN VIVO':(m.done?'✓ FINAL':('🕒 '+m.kickoffSpain))"></span>
+            <span class="kt-time" :class="{live:m.live}" x-text="m.live?'EN VIVO':(m.done?'✓ FINAL':('🕒 '+m.kickoffSpain))"></span>
           </div>
           <div class="kt-match">
             <span class="kt-mt"><span class="flag" x-text="m.teamAflag"></span> <b x-text="m.teamAes"></b></span>
-            <span class="kt-vs" x-text="(m.hs!=null)?(m.hs+'–'+m.as):'vs'"></span>
+            <span class="kt-vs" :class="{scored:m.flash}" x-text="(m.hs!=null)?(m.hs+'–'+m.as):'vs'"></span>
             <span class="kt-mt"><span class="flag" x-text="m.teamBflag"></span> <b x-text="m.teamBes"></b></span>
           </div>
-          <div class="kt-sub">📋 Qué puso cada uno · 🏆 cuadro de antes · 🗓️ bonus 28-jun</div>
+          <div class="kt-now" x-show="m.live||m.done">
+            <template x-if="m.leader">
+              <span x-text="(m.done?'✅ Pasó ':'🔴 Ahora mismo pasa ')+(m.leader===m.teamA?m.teamAes:m.teamBes)+(m.done?' → suman: ':' → sumarían: ')+m.nowWho"></span>
+            </template>
+            <template x-if="!m.leader">
+              <span x-text="m.done ? '🥅 Se decidió en los penaltis — suma quien tenga al que pasa de ronda' : '⚖️ Empate — así nadie suma todavía (prórroga o penaltis deciden)'"></span>
+            </template>
+          </div>
+          <div class="kt-legend"><span class="kt-lg-t">Cada uno juega con sus 2 cuadros:</span>
+            <span class="kt-chip cuadro"><small>🏆</small> el de antes del Mundial <span class="kt-pt" x-text="'+'+m.pts"></span></span>
+            <span class="kt-chip bonus"><small>🗓️</small> el 2º, del 28-jun <span class="kt-pt" x-text="'+'+m.bonus"></span></span>
+          </div>
           <div class="kt-players">
             <template x-for="p in m.players" :key="'ktlp'+m.match+p.id">
               <div class="kt-prow" :class="{me:p.isMe, zero:!p.picks.length}">
                 <span class="kt-pn" x-text="p.name"></span>
                 <span class="kt-pk">
                   <template x-if="p.same">
-                    <span class="kt-chip both"><span class="flag" x-text="p.sameFlag"></span> <b x-text="p.sameEs"></b><span class="kt-pt" x-text="'+'+p.total"></span></span>
+                    <span class="kt-chip both" :class="(m.live||m.done)&&m.leader ? (p.sameT===m.leader?'hit':'miss') : ''"><small>🏆🗓️</small> <span class="flag" x-text="p.sameFlag"></span> <b x-text="p.sameEs"></b><span class="kt-pt" x-text="'+'+p.total"></span></span>
                   </template>
                   <template x-if="!p.same">
                     <template x-for="(pk,pi) in p.picks" :key="'pkl'+m.match+p.id+pi">
-                      <span class="kt-chip" :class="pk.k"><small x-text="pk.ic"></small> <span class="flag" x-text="pk.flag"></span> <b x-text="pk.es"></b><span class="kt-pt" x-text="'+'+pk.pts"></span></span>
+                      <span class="kt-chip" :class="[pk.k, (m.live||m.done)&&m.leader ? (pk.t===m.leader?'hit':'miss') : '']"><small x-text="pk.ic"></small> <span class="flag" x-text="pk.flag"></span> <b x-text="pk.es"></b><span class="kt-pt" x-text="'+'+pk.pts"></span></span>
                     </template>
-                    <span class="kt-none" x-show="!p.picks.length">— no tiene a ninguno</span>
+                    <span class="kt-none" x-show="!p.picks.length">no puso a ninguno de estos dos equipos</span>
                   </template>
                 </span>
               </div>
             </template>
           </div>
-          <div class="kt-foot muted tiny">Suma el que acierte al ganador, en cada cuadro. Octavos: 🏆 +<span x-text="settings.octavos"></span> · 🗓️ +2. <span x-show="m.players.some(p=>p.isMe)">Tú, resaltado.</span></div>
+          <div class="kt-foot muted tiny">Suma quien tenga al <b>ganador del cruce</b> en su cuadro: 🏆 +<span x-text="m.pts"></span> · 🗓️ +<span x-text="m.bonus"></span> · con los dos, +<span x-text="m.pts+m.bonus"></span>.</div>
         </div>
       </template>
     </div>
@@ -1618,48 +1629,59 @@
     </div>
     <div class="livestrip" x-show="liveToday.length">
       <template x-for="m in liveToday" :key="'lm'+m.id">
-        <div class="lcard" :class="{live:m.live, done:m.done}">
+        <div class="lcard" :class="{live:m.live, done:m.done, findone:m.justDone}">
           <span class="lc-badge" x-text="m.live?'🔴 EN VIVO':(m.done?'FINAL':(m.dayShort+' · '+m.time))"></span>
           <div class="lc-team"><span class="flag" x-text="m.hFlag"></span><span x-text="m.hName"></span></div>
-          <div class="lc-score" x-text="m.pre ? 'vs' : (m.hs+' - '+m.as)"></div>
+          <div class="lc-score" :class="{scored:m.flash}" x-text="m.pre ? 'vs' : (m.hs+' - '+m.as)"></div>
           <div class="lc-team"><span class="flag" x-text="m.aFlag"></span><span x-text="m.aName"></span></div>
         </div>
       </template>
     </div>
     <!-- ⚡ PARTIDOS DE HOY (eliminatorias): qué puede sumar cada uno según el resultado -->
     <div class="ko-today" x-show="koToday.length">
-      <div class="kt-head">⚡ Partidos de hoy <span class="muted tiny">— qué se juega cada uno (incluye la madrugada)</span></div>
+      <div class="kt-head">⚡ Cruces de hoy <span class="muted tiny">— qué puso cada uno y qué puede sumar (incluye la madrugada)</span></div>
       <template x-for="m in koToday" :key="'kt'+m.match">
-        <div class="kt-card" :class="{live:m.live, done:m.done}">
+        <div class="kt-card" :class="{live:m.live, done:m.done, findone:m.justDone}">
           <div class="kt-top">
             <span class="kt-round" x-text="m.round"></span>
-            <span class="kt-time" :class="{live:m.live}" x-text="m.live?'🔴 EN VIVO':(m.done?'✓ FINAL':('🕒 '+m.kickoffSpain))"></span>
+            <span class="kt-time" :class="{live:m.live}" x-text="m.live?'EN VIVO':(m.done?'✓ FINAL':('🕒 '+m.kickoffSpain))"></span>
           </div>
           <div class="kt-match">
             <span class="kt-mt"><span class="flag" x-text="m.teamAflag"></span> <b x-text="m.teamAes"></b></span>
-            <span class="kt-vs" x-text="(m.hs!=null)?(m.hs+'–'+m.as):'vs'"></span>
+            <span class="kt-vs" :class="{scored:m.flash}" x-text="(m.hs!=null)?(m.hs+'–'+m.as):'vs'"></span>
             <span class="kt-mt"><span class="flag" x-text="m.teamBflag"></span> <b x-text="m.teamBes"></b></span>
           </div>
-          <div class="kt-sub">📋 Qué puso cada uno · 🏆 cuadro de antes · 🗓️ bonus 28-jun</div>
+          <div class="kt-now" x-show="m.live||m.done">
+            <template x-if="m.leader">
+              <span x-text="(m.done?'✅ Pasó ':'🔴 Ahora mismo pasa ')+(m.leader===m.teamA?m.teamAes:m.teamBes)+(m.done?' → suman: ':' → sumarían: ')+m.nowWho"></span>
+            </template>
+            <template x-if="!m.leader">
+              <span x-text="m.done ? '🥅 Se decidió en los penaltis — suma quien tenga al que pasa de ronda' : '⚖️ Empate — así nadie suma todavía (prórroga o penaltis deciden)'"></span>
+            </template>
+          </div>
+          <div class="kt-legend"><span class="kt-lg-t">Cada uno juega con sus 2 cuadros:</span>
+            <span class="kt-chip cuadro"><small>🏆</small> el de antes del Mundial <span class="kt-pt" x-text="'+'+m.pts"></span></span>
+            <span class="kt-chip bonus"><small>🗓️</small> el 2º, del 28-jun <span class="kt-pt" x-text="'+'+m.bonus"></span></span>
+          </div>
           <div class="kt-players">
             <template x-for="p in m.players" :key="'ktp'+m.match+p.id">
               <div class="kt-prow" :class="{me:p.isMe, zero:!p.picks.length}">
                 <span class="kt-pn" x-text="p.name"></span>
                 <span class="kt-pk">
                   <template x-if="p.same">
-                    <span class="kt-chip both"><span class="flag" x-text="p.sameFlag"></span> <b x-text="p.sameEs"></b><span class="kt-pt" x-text="'+'+p.total"></span></span>
+                    <span class="kt-chip both" :class="(m.live||m.done)&&m.leader ? (p.sameT===m.leader?'hit':'miss') : ''"><small>🏆🗓️</small> <span class="flag" x-text="p.sameFlag"></span> <b x-text="p.sameEs"></b><span class="kt-pt" x-text="'+'+p.total"></span></span>
                   </template>
                   <template x-if="!p.same">
                     <template x-for="(pk,pi) in p.picks" :key="'pk'+m.match+p.id+pi">
-                      <span class="kt-chip" :class="pk.k"><small x-text="pk.ic"></small> <span class="flag" x-text="pk.flag"></span> <b x-text="pk.es"></b><span class="kt-pt" x-text="'+'+pk.pts"></span></span>
+                      <span class="kt-chip" :class="[pk.k, (m.live||m.done)&&m.leader ? (pk.t===m.leader?'hit':'miss') : '']"><small x-text="pk.ic"></small> <span class="flag" x-text="pk.flag"></span> <b x-text="pk.es"></b><span class="kt-pt" x-text="'+'+pk.pts"></span></span>
                     </template>
-                    <span class="kt-none" x-show="!p.picks.length">— no tiene a ninguno</span>
+                    <span class="kt-none" x-show="!p.picks.length">no puso a ninguno de estos dos equipos</span>
                   </template>
                 </span>
               </div>
             </template>
           </div>
-          <div class="kt-foot muted tiny">Suma el que acierte al ganador, en cada cuadro. Octavos: 🏆 +<span x-text="settings.octavos"></span> · 🗓️ +2. <span x-show="m.players.some(p=>p.isMe)">Tú, resaltado.</span></div>
+          <div class="kt-foot muted tiny">Suma quien tenga al <b>ganador del cruce</b> en su cuadro: 🏆 +<span x-text="m.pts"></span> · 🗓️ +<span x-text="m.bonus"></span> · con los dos, +<span x-text="m.pts+m.bonus"></span>.</div>
         </div>
       </template>
     </div>
@@ -2089,7 +2111,7 @@
   <script src="data.js?v=111"></script>
   <script src="engine.js?v=111"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
-  <script src="app.js?v=111"></script>
+  <script src="app.js?v=112"></script>
   <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.1/dist/cdn.min.js"></script>
 </body>
 </html>
