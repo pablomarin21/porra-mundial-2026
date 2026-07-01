@@ -35,7 +35,7 @@
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="Porra Mundial" />
-  <link rel="stylesheet" href="styles.css?v=114" />
+  <link rel="stylesheet" href="styles.css?v=115" />
 </head>
 <body x-data="porraApp()" x-init="init()" x-cloak>
 
@@ -787,15 +787,20 @@
     <details class="path-box top3-box" x-show="boardLocked && me.id && ranked.length>=4" @toggle="$event.target.open && !top3Analysis && computeTop3()">
       <summary>🎯 Qué tiene que pasar para quedar en el TOP 3 <span class="muted tiny">(y librarte de la cena 🍽️)</span></summary>
       <div class="pb-body">
+        <div class="t3-whobar">Ver el análisis de:
+          <select class="t3-whosel" x-model="top3Who" @change="computeTop3()">
+            <template x-for="o in top3Options" :key="'t3o'+o.id"><option :value="o.id" x-text="o.name" :selected="o.id===top3Who"></option></template>
+          </select>
+        </div>
         <div class="pb-loading" x-show="top3Loading"><span class="pb-spin"></span> Simulando miles de finales del Mundial…</div>
         <p class="muted tiny" x-show="!top3Loading && top3Analysis && top3Analysis.none">Necesitas tu porra creada y al menos 4 participantes para calcular esto.</p>
         <template x-if="!top3Loading && top3Analysis && !top3Analysis.none">
           <div>
             <p class="pb-status">
-              Ahora vas <b x-text="top3Analysis.myPos ? top3Analysis.myPos+'º' : '—'"></b><span x-show="top3Analysis.inTop3"> — ¡estás dentro! Se trata de <b>aguantar</b>.</span><span x-show="!top3Analysis.inTop3 && top3Analysis.gap>0"> — te separan <b x-text="top3Analysis.gap"></b> pts del 3º (<span x-text="top3Analysis.thirdName"></span>).</span>
-              Acabas en el top 3 en <span class="pb-pill pod">🥉 <b x-text="pct(top3Analysis.pod)"></b></span> de las simulaciones.
+              <span x-text="top3Analysis.line1"></span>
+              <span x-text="top3Analysis.isMe ? 'Acabas en el top 3 en' : 'Acaba en el top 3 en'"></span> <span class="pb-pill pod">🥉 <b x-text="pct(top3Analysis.pod)"></b></span> de las simulaciones.
             </p>
-            <div class="pb-h">⚔️ Cruce a cruce: tus opciones de top 3 según quién pase <span class="muted tiny">(ordenado por lo que más te cambia)</span></div>
+            <div class="pb-h">⚔️ Cruce a cruce: opciones de top 3 según quién pase <span class="muted tiny">(ordenado por lo que más cambia)</span></div>
             <div class="t3-rows">
               <template x-for="(r,i) in top3Analysis.rows.slice(0,8)" :key="'t3r'+i">
                 <div class="t3-row">
@@ -813,7 +818,7 @@
               </template>
             </div>
             <p class="tiny muted" x-show="!top3Analysis.rows.length">No queda ningún cruce con los dos equipos decididos: se actualizará cuando avance el cuadro.</p>
-            <p class="tiny muted" style="margin-top:6px">El % = tus opciones de acabar top 3 si pasa ese equipo. <b class="t3-good-txt">Verde</b> = el que te conviene · 🏆 = lo tienes en tu cuadro. Los partidos ya jugados están fijados (no se re-simulan).</p>
+            <p class="tiny muted" style="margin-top:6px" x-text="top3Analysis.legend"></p>
             <p class="tiny muted pb-foot">🔄 Se recalcula con cada partido. <button class="btn mini ghost" @click="computeTop3()" :disabled="top3Loading">↻ recalcular</button></p>
           </div>
         </template>
@@ -2156,7 +2161,7 @@
   <script src="data.js?v=111"></script>
   <script src="engine.js?v=111"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
-  <script src="app.js?v=114"></script>
+  <script src="app.js?v=115"></script>
   <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.1/dist/cdn.min.js"></script>
 </body>
 </html>

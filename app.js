@@ -101,7 +101,7 @@ window.porraApp = function () {
     letters: D.GROUP_LETTERS, allTeams: ALL_TEAMS.slice().sort((a, b) => D.es(a).localeCompare(D.es(b))),
     sideBets: D.SIDE_BETS,
     // en vivo (ESPN) + cierre automático
-    espnEvents: [], espnAt: 0, liveBusy: false, nowTs: 0, outcome: null, extrasActual: {}, _espnTimer: null, explain: null, scoringStatus: null, forecasts: {}, forecastsAt: 0, pathAnalysis: null, pathLoading: false, top3Analysis: null, top3Loading: false, cmpA: "", cmpB: "", cmpGroup: "",
+    espnEvents: [], espnAt: 0, liveBusy: false, nowTs: 0, outcome: null, extrasActual: {}, _espnTimer: null, explain: null, scoringStatus: null, forecasts: {}, forecastsAt: 0, pathAnalysis: null, pathLoading: false, top3Analysis: null, top3Loading: false, top3Who: "", cmpA: "", cmpB: "", cmpGroup: "",
     // Solo display: marcas de tiempo "acaba de marcar" / "acaba de terminar" para animar marcadores.
     scoreFlash: {}, finFlash: {}, _scoreCache: null,
     extrasActualEdit: { revelacion: "", decepcion: "", pichichi: "", asistente: "", portero: "", sidebets: {} },
@@ -884,26 +884,34 @@ window.porraApp = function () {
         };
       } finally { this.pathLoading = false; }
     },
+    // Jugadores elegibles para el análisis TOP 3, en orden de clasificación actual.
+    get top3Options() {
+      const withPicks = new Set((this.entries || []).filter((e) => e.picks && !this.isGuest(e)).map((e) => e.id));
+      const fam = (this.ranked || []).filter((r) => !this.isGuest(r) && withPicks.has(r.id));
+      return fam.map((r, i) => ({ id: r.id, name: (i + 1) + "º · " + ((r.first_name || "").trim()) }));
+    },
     // ---------- "Qué tiene que pasar para el TOP 3": condicionales cruce a cruce ----------
     // Para cada eliminatoria PENDIENTE mide, con miles de simulaciones, tus opciones de acabar
     // en el podio según quién pase. Los KO YA JUGADOS se fijan (no se re-simulan): la realidad
     // viene de oc.reached (ESPN) propagada por el cuadro, con la DB (admin) por encima.
     async computeTop3() {
       const meId = this.me && this.me.id;
+      if (!this.top3Who && meId) this.top3Who = meId;
+      const whoId = this.top3Who || meId;
       if (this.top3Loading) return;
       this.top3Loading = true; this.top3Analysis = null;
       await new Promise((r) => setTimeout(r, 40));
       try {
-        if (!meId) { this.top3Analysis = { none: true }; return; }
+        if (!whoId) { this.top3Analysis = { none: true }; return; }
         const S = this.settings;
         const oc0 = this.outcome || Eng.liveOutcome(this.results);
         const simMap = Object.assign({}, this.results, (oc0 && oc0.groupMap) || {});
         const entries = (this.entries || []).filter((e) => e.picks && !this.isGuest(e)).map((e) => ({
-          id: e.id, dp: Eng.derivePicks(e.picks),
+          id: e.id, name: (e.first_name || "").trim(), dp: Eng.derivePicks(e.picks),
           extra: Eng.scoreExtras(e.picks.extras, this.extrasActual, S).total,
         }));
-        const me = entries.find((e) => e.id === meId);
-        if (!me || entries.length < 4) { this.top3Analysis = { none: true }; return; }
+        const who = entries.find((e) => e.id === whoId);
+        if (!who || entries.length < 4) { this.top3Analysis = { none: true }; return; }
 
         // Cuadro real: ronda de cada partido + ganador si ya se decidió (DB > ESPN reached).
         const stageOf = {};
@@ -941,7 +949,7 @@ window.porraApp = function () {
         for (let s = 0; s < N; s++) {
           const oc = Eng.simulateOutcome(simMap, Math.random);
           let myP = 0; const ps = [];
-          for (const e of entries) { const p = Eng.scoreEntry(e.dp, oc, S) + e.extra; ps.push(p); if (e.id === meId) myP = p; }
+          for (const e of entries) { const p = Eng.scoreEntry(e.dp, oc, S) + e.extra; ps.push(p); if (e.id === whoId) myP = p; }
           let above = 0; for (const p of ps) { if (p > myP) above++; }
           const pod = above + 1 <= 3;
           if (pod) mePod++;
@@ -951,7 +959,7 @@ window.porraApp = function () {
             if (slot) { slot.n++; if (pod) slot.pod++; }
           }
         }
-        const mine = (key, t) => key === "champion" ? me.dp.champion === t : !!(me.dp[key] && me.dp[key].has && me.dp[key].has(t));
+        const mine = (key, t) => key === "champion" ? who.dp.champion === t : !!(who.dp[key] && who.dp[key].has && who.dp[key].has(t));
         const ROUND = { octavos: "Octavos", cuartos: "Cuartos", semis: "Semis", final: "Final", champion: "Campeón" };
         const rows = pend.map((pm) => {
           const A = agg[pm.mk].a, B = agg[pm.mk].b;
@@ -964,13 +972,21 @@ window.porraApp = function () {
 
         // Posición actual entre familiares + hueco con el 3º (para el texto de cabecera).
         const fam = (this.ranked || []).filter((r) => !this.isGuest(r));
-        const myIdx = fam.findIndex((r) => r.id === meId);
+        const myIdx = fam.findIndex((r) => r.id === whoId);
         const myPos = myIdx >= 0 ? myIdx + 1 : null;
         const third = fam[2] || null;
         const myRow = myIdx >= 0 ? fam[myIdx] : null;
         const gap = myPos && myPos > 3 && third && myRow ? third.points - myRow.points : 0;
         const pod = myRow && typeof myRow.podium === "number" ? myRow.podium : mePod / N;
+        const isMe = whoId === meId;
+        const whoName = who.name || "—";
+        const posTxt = myPos ? myPos + "º" : "—";
+        let line1;
+        if (myPos && myPos <= 3) line1 = (isMe ? "Ahora vas " : "Ahora " + whoName + " va ") + posTxt + " — ¡dentro! Se trata de aguantar.";
+        else line1 = (isMe ? "Ahora vas " : "Ahora " + whoName + " va ") + posTxt + (gap > 0 ? " — " + (isMe ? "te separan " : "le separan ") + gap + " pts del 3º (" + (third ? (third.first_name || "").trim() : "") + ")." : ".");
+        const legend = "El % = opciones de acabar top 3 si pasa ese equipo. Verde = el que " + (isMe ? "te" : "le") + " conviene · 🏆 = lo " + (isMe ? "tienes en tu" : "lleva en su") + " cuadro. Los partidos ya jugados están fijados (no se re-simulan).";
         this.top3Analysis = { pod, sims: N, rows, myPos, inTop3: !!(myPos && myPos <= 3), gap,
+          isMe, whoName, line1, legend,
           thirdName: third ? (third.first_name || "").trim() : null };
       } finally { this.top3Loading = false; }
     },

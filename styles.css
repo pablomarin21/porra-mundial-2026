@@ -1876,3 +1876,7 @@ tr.clickrow.sel td{background:#e7f1ec}
   .lr-name>.av+span{flex:1 1 auto;min-width:56px}
   .paytag,.invtag{flex:0 1 auto;min-width:0;max-width:34vw;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 }
+
+/* selector de jugador del análisis TOP 3 */
+.t3-whobar{display:flex;align-items:center;gap:9px;margin:4px 0 10px;font-size:.86rem;font-weight:700;color:#cfe7dc;flex-wrap:wrap}
+.t3-whosel{flex:0 1 auto;width:auto;min-width:150px;padding:8px 10px;border-radius:9px;border:1.5px solid #2d6b52;background:#0f4231;color:#fff;font-weight:700;font-size:.9rem}
