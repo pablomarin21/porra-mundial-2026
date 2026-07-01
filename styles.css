@@ -759,6 +759,30 @@ tr.clickrow.sel td{background:#e7f1ec}
 @media(min-width:1000px){.goals-sec .sc-cols.sc3{grid-template-columns:repeat(3,1fr)}}
 
 /* ===== "Tu camino al podio" (Monte Carlo personalizado) ===== */
+/* ¿por qué sube y baja cada uno? */
+.moves-box{margin:12px 0;background:#fff;border:1px solid var(--line);border-radius:14px;overflow:hidden;box-shadow:var(--shadow)}
+.moves-box>summary{list-style:none;cursor:pointer;padding:13px 15px;font-weight:800;font-size:.96rem;color:var(--green);display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.moves-box>summary::-webkit-details-marker{display:none}
+.moves-box>summary::before{content:"▸";transition:transform .2s}
+.moves-box[open]>summary::before{transform:rotate(90deg)}
+.moves-body{padding:0 14px 14px;display:flex;flex-direction:column;gap:9px}
+.mv-row{border:1px solid var(--line);border-left:4px solid #cbd5d0;border-radius:11px;padding:9px 11px;background:#fbfdfc}
+.mv-row.up{border-left-color:#1f9d57;background:#f2fbf6}
+.mv-row.down{border-left-color:#d8453b;background:#fdf4f3}
+.mv-row.me{outline:2px solid #f0d9a8}
+.mv-head{display:flex;align-items:center;gap:8px}
+.mv-pos{font-weight:800;color:#8593ad;font-size:.85rem;min-width:26px}
+.mv-name{font-size:.95rem;color:#26323b;flex:1}
+.mv-delta{font-size:.76rem;font-weight:800;border-radius:999px;padding:2px 9px;background:#eef3f0;color:#5a6675}
+.mv-delta.up{background:#eafaf0;color:#1f9d57}
+.mv-delta.down{background:#fdeceb;color:#d8453b}
+.mv-bars{display:flex;flex-wrap:wrap;gap:5px;margin:7px 0}
+.mv-tag{font-size:.74rem;font-weight:700;color:#3a4a43;background:#eef3f0;border:1px solid var(--line);border-radius:7px;padding:2px 8px}
+.mv-tag.g{background:#eef6ff;border-color:#cfe3f7;color:#2f6fd0}
+.mv-tag.k{background:#eafaf0;border-color:#bfe6cd;color:#1c6e44}
+.mv-tag.e{background:#fff4e3;border-color:#f0d2a0;color:#9a6a16}
+.mv-tag.t{background:var(--green);border-color:var(--green);color:#fff}
+.mv-reason{margin:2px 0 0;font-size:.86rem;color:#37474f;line-height:1.45}
 .path-box{margin-top:14px;background:linear-gradient(180deg,#0d3a2b,#0b3326);border:1px solid #1d5a44;border-radius:14px;color:#eaf5ef;overflow:hidden}
 .path-box>summary{list-style:none;cursor:pointer;padding:13px 15px;font-weight:800;font-size:.96rem;color:#ffe89b;display:flex;align-items:center;gap:8px}
 .path-box>summary::-webkit-details-marker{display:none}

@@ -9,7 +9,7 @@
   <!-- Auto-actualizador: si hay una versión nueva publicada, recarga sola (evita caché vieja) -->
   <script>
   (function () {
-    var CUR = 109;   // versión de este index.html
+    var CUR = 110;   // versión de este index.html
     try {
       fetch("ver.txt?t=" + Date.now(), { cache: "no-store" })
         .then(function (r) { return r.ok ? r.text() : ""; })
@@ -35,7 +35,7 @@
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="Porra Mundial" />
-  <link rel="stylesheet" href="styles.css?v=109" />
+  <link rel="stylesheet" href="styles.css?v=110" />
 </head>
 <body x-data="porraApp()" x-init="init()" x-cloak>
 
@@ -544,6 +544,31 @@
     <p class="muted" x-show="!ranked.length && !probBusy" style="text-align:center;padding:16px">Aún no hay quinielas para calcular la clasificación.</p>
     <p class="tiny muted" x-show="!boardLocked && ranked.length">👁️ Toca a un jugador para ver su <b>quiniela completa</b>. «🏆 Ganar» = probabilidad de acabar 1º según miles de simulaciones del Mundial con la fuerza de cada selección. <span x-show="lockCountdown">⏳ Cierra en <b x-text="lockCountdown"></b>.</span></p>
     <p class="tiny muted" x-show="boardLocked && ranked.length">👁️ Toca a un jugador para ver su quiniela y el desglose. «🏆 Ganar» = probabilidad de acabar 1º según miles de simulaciones del resto del Mundial.</p>
+
+    <!-- 📊 ¿POR QUÉ SUBE Y BAJA CADA UNO? grupos (fijos) vs eliminatorias (se decide ahora) -->
+    <details class="moves-box" x-show="boardLocked && movements.length>=2">
+      <summary>📊 ¿Por qué sube y baja cada uno? <small class="muted">— grupos vs eliminatorias</small></summary>
+      <div class="moves-body">
+        <p class="tiny muted">Al acabar los grupos, esos puntos quedaron <b>fijos</b>. Ahora todo se decide en las <b>ELIMINATORIAS</b>. Por eso el orden se mueve: quien clavó los grupos pero falla el cuadro <b>baja</b>, y quien acierta el KO <b>remonta</b>.</p>
+        <template x-for="m in movements" :key="'mv'+m.id">
+          <div class="mv-row" :class="[m.dir, {me:m.isMe}]">
+            <div class="mv-head">
+              <span class="mv-pos" x-text="m.posNow+'º'"></span>
+              <b class="mv-name" x-text="m.name"></b>
+              <span class="mv-delta" :class="m.dir" x-text="m.dir==='up'?('▲ sube '+m.delta):(m.dir==='down'?('▼ baja '+(-m.delta)):'= igual')"></span>
+            </div>
+            <div class="mv-bars">
+              <span class="mv-tag g">Grupos <b x-text="m.grupos"></b></span>
+              <span class="mv-tag k">Eliminatorias <b x-text="m.ko"></b></span>
+              <span class="mv-tag e" x-show="m.ex">Especiales <b x-text="m.ex"></b></span>
+              <span class="mv-tag t">= <b x-text="m.total"></b></span>
+            </div>
+            <p class="mv-reason" x-text="m.reason"></p>
+          </div>
+        </template>
+        <p class="tiny muted">«sube/baja» = respecto a cómo quedó la clasificación <b>al terminar los grupos</b>.</p>
+      </div>
+    </details>
 
     <!-- ⚡ PARTIDOS DE HOY (eliminatorias): qué puso cada uno + cuánto puede sumar -->
     <div class="ko-today" x-show="koToday.length">
@@ -2038,10 +2063,10 @@
   </div>
 
   <!-- ====== Dependencias ====== -->
-  <script src="data.js?v=109"></script>
-  <script src="engine.js?v=109"></script>
+  <script src="data.js?v=110"></script>
+  <script src="engine.js?v=110"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
-  <script src="app.js?v=109"></script>
+  <script src="app.js?v=110"></script>
   <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.1/dist/cdn.min.js"></script>
 </body>
 </html>

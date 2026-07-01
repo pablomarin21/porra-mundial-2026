@@ -118,6 +118,44 @@ window.porraApp = function () {
     // Invitados (fuera de concurso): no ocupan número de posición ni podio. Solo familiares se numeran.
     isGuest(e) { const n = (e && e.first_name) || ""; return n.startsWith("🤖") || n.startsWith("🎙"); },
     get podium3() { return (this.ranked || []).filter((e) => !this.isGuest(e)).slice(0, 3); },
+    // ---- ¿por qué sube/baja cada uno? grupos (ya fijos) vs eliminatorias (donde se decide ahora) ----
+    get movements() {
+      if (!this.entries || !this.entries.length) return [];
+      const oc = this.outcome || Eng.liveOutcome(this.results); const S = this.settings;
+      let H = { traj: {} }; try { H = this.buildParteHistory(oc, S); } catch (e) {}
+      const real = this.entries.filter((e) => e.picks && !this.isGuest(e));
+      const rows = real.map((e) => {
+        let bd = { grupos: 0, terceros: 0, octavos: 0, cuartos: 0, semis: 0, final: 0, campeon: 0, bonus: 0 }, ex = 0;
+        try { const dp = Eng.derivePicks(e.picks); bd = Eng.scoreBreakdown(dp, oc, S); ex = Eng.scoreExtras(e.picks.extras, this.extrasActual, S).total; } catch (x) {}
+        const grupos = bd.grupos + bd.terceros;
+        const ko = bd.octavos + bd.cuartos + bd.semis + bd.final + bd.campeon + bd.bonus;
+        const t = (H.traj && H.traj[e.id]) || [];
+        const peak = t.length ? Math.min.apply(null, t.map((x) => x.pos)) : null;
+        return { id: e.id, name: this._shortName(e), isMe: !!(this.me && e.id === this.me.id), grupos, ko, ex, total: grupos + ko + ex, peak };
+      });
+      const n = rows.length;
+      const rankBy = (key) => { const s = rows.slice().sort((a, b) => b[key] - a[key] || a.name.localeCompare(b.name)); const m = {}; s.forEach((r, i) => (m[r.id] = i + 1)); return m; };
+      const posG = rankBy("grupos"), posT = rankBy("total"), posKO = rankBy("ko");
+      return rows.map((r) => {
+        const posGroups = posG[r.id], posNow = posT[r.id], koRank = posKO[r.id], delta = posGroups - posNow;
+        const dir = delta > 0 ? "up" : (delta < 0 ? "down" : "flat");
+        const koStrong = koRank <= 2, koWeak = koRank >= n - 1;
+        const peakTxt = (r.peak && r.peak <= 2 && posNow >= 3) ? ("Llegaste a ir " + r.peak + "º. ") : "";
+        let reason;
+        if (dir === "down") {
+          reason = peakTxt + "Clavaste los grupos (" + r.grupos + " pts), pero en las ELIMINATORIAS " + (koWeak ? "eres de los que MENOS suma" : "sumas poco") + " (" + r.ko + " pts)" + (r.ex === 0 ? " y no has pillado ninguna especial" : "") + ". Los que iban por detrás están remontando por el cuadro y te adelantan.";
+        } else if (dir === "up") {
+          reason = "Estás " + (koStrong ? "de los que MÁS suma" : "sumando bien") + " en las ELIMINATORIAS (" + r.ko + " pts)" + (r.ex ? " y pillaste especiales (+" + r.ex + ")" : "") + " → remontas puestos.";
+        } else if (posNow === 1) {
+          reason = "Aguantas el 1º: tu ventaja en grupos (" + r.grupos + " pts) todavía nadie la alcanza. Ojo, en el KO se puede recortar.";
+        } else if (posNow === n) {
+          reason = "Sigues último: tus grupos (" + r.grupos + " pts) te dejaron lejos; aunque sumes en el KO (" + r.ko + ")" + (r.ex ? " y especiales (+" + r.ex + ")" : "") + " no alcanzas... de momento.";
+        } else {
+          reason = "Te mantienes " + posNow + "º: " + (koStrong ? "sigues sumando en el cuadro (" + r.ko + ")" : "grupos sólidos (" + r.grupos + "), KO discreto (" + r.ko + ")") + ".";
+        }
+        return { id: r.id, name: r.name, isMe: r.isMe, grupos: r.grupos, ko: r.ko, ex: r.ex, total: r.total, posGroups, posNow, koRank, delta, dir, reason };
+      }).sort((a, b) => a.posNow - b.posNow);
+    },
     // "la gracia": cuánto queda por jugar (por jugador) vs lo que separa al 1º del último de la familia
     get cenaInfo() {
       const S = this.settings || {};
@@ -276,7 +314,7 @@ window.porraApp = function () {
       this.pushSupported = ("serviceWorker" in navigator) && ("PushManager" in window) && ("Notification" in window);
       if (!this.pushSupported) return;
       try {
-        const reg = await navigator.serviceWorker.register("sw.js?v=109");
+        const reg = await navigator.serviceWorker.register("sw.js?v=110");
         const sub = await reg.pushManager.getSubscription();
         this.pushOn = !!sub;
         // pide los avisos SOLA y de forma PERSISTENTE: si no los tiene, el banner vuelve en cada
