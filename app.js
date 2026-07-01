@@ -18,6 +18,19 @@ function urlB64ToUint8Array(b) {
 }
 
 const ALL_TEAMS = [].concat(...D.GROUP_LETTERS.map((L) => D.GROUPS[L]));
+
+// ---- Rendimiento (móvil): caches a nivel de MÓDULO, fuera del proxy reactivo ----
+// Intl.DateTimeFormat es muy caro de construir: con ~104 partidos × varios getters
+// por render se creaban cientos por actualización. Un formatter por (locale+opts).
+const _DTF = {};
+function dtf(locale, opts) {
+  const k = locale + JSON.stringify(opts);
+  return _DTF[k] || (_DTF[k] = new Intl.DateTimeFormat(locale, opts));
+}
+// Memo de getters pesados (liveMatches/koToday). Vive fuera de Alpine a propósito:
+// escribir un caché DENTRO del objeto reactivo desde un getter crea dependencias
+// sobre el propio caché y puede provocar bucles de re-render.
+const _MEMO = { lmKey: null, lmVal: null, ktKey: null, ktVal: null };
 // Sedes del Mundial 2026: zona horaria local + temperatura típica (máx. diurna jun-jul, °C).
 // Se busca por ciudad (de ESPN venue.address.city), sin acentos y en minúsculas.
 const VENUES = {
@@ -88,7 +101,7 @@ window.porraApp = function () {
     letters: D.GROUP_LETTERS, allTeams: ALL_TEAMS.slice().sort((a, b) => D.es(a).localeCompare(D.es(b))),
     sideBets: D.SIDE_BETS,
     // en vivo (ESPN) + cierre automático
-    espnEvents: [], espnAt: 0, liveBusy: false, nowTs: 0, outcome: null, extrasActual: {}, _espnTimer: null, explain: null, scoringStatus: null, forecasts: {}, forecastsAt: 0, pathAnalysis: null, pathLoading: false, cmpA: "", cmpB: "", cmpGroup: "",
+    espnEvents: [], espnAt: 0, liveBusy: false, nowTs: 0, outcome: null, extrasActual: {}, _espnTimer: null, explain: null, scoringStatus: null, forecasts: {}, forecastsAt: 0, pathAnalysis: null, pathLoading: false, top3Analysis: null, top3Loading: false, cmpA: "", cmpB: "", cmpGroup: "",
     // Solo display: marcas de tiempo "acaba de marcar" / "acaba de terminar" para animar marcadores.
     scoreFlash: {}, finFlash: {}, _scoreCache: null,
     extrasActualEdit: { revelacion: "", decepcion: "", pichichi: "", asistente: "", portero: "", sidebets: {} },
@@ -123,6 +136,9 @@ window.porraApp = function () {
     // ---- ¿por qué sube/baja cada uno? grupos (ya fijos) vs eliminatorias (donde se decide ahora) ----
     get movements() {
       if (!this.entries || !this.entries.length) return [];
+      // Memo: re-puntuaba a toda la familia por jornada en CADA binding (2 efectos x refresco).
+      const memoKey = "mv|" + this.espnAt + "|" + this.entries.length + "|" + (this.ranked || []).map((r) => r.id + ":" + r.points).join(",");
+      if (_MEMO.mvKey === memoKey && _MEMO.mvVal) return _MEMO.mvVal;
       const oc = this.outcome || Eng.liveOutcome(this.results); const S = this.settings;
       let H = { traj: {} }; try { H = this.buildParteHistory(oc, S); } catch (e) {}
       const real = this.entries.filter((e) => e.picks && !this.isGuest(e));
@@ -138,7 +154,7 @@ window.porraApp = function () {
       const n = rows.length;
       const rankBy = (key) => { const s = rows.slice().sort((a, b) => b[key] - a[key] || a.name.localeCompare(b.name)); const m = {}; s.forEach((r, i) => (m[r.id] = i + 1)); return m; };
       const posG = rankBy("grupos"), posT = rankBy("total"), posKO = rankBy("ko");
-      return rows.map((r) => {
+      const out = rows.map((r) => {
         const posGroups = posG[r.id], posNow = posT[r.id], koRank = posKO[r.id], delta = posGroups - posNow;
         const dir = delta > 0 ? "up" : (delta < 0 ? "down" : "flat");
         const koStrong = koRank <= 2, koWeak = koRank >= n - 1;
@@ -157,6 +173,8 @@ window.porraApp = function () {
         }
         return { id: r.id, name: r.name, isMe: r.isMe, grupos: r.grupos, ko: r.ko, ex: r.ex, total: r.total, posGroups, posNow, koRank, delta, dir, reason };
       }).sort((a, b) => a.posNow - b.posNow);
+      _MEMO.mvKey = memoKey; _MEMO.mvVal = out;
+      return out;
     },
     // "la gracia": cuánto queda por jugar (por jugador) vs lo que separa al 1º del último de la familia
     get cenaInfo() {
@@ -402,8 +420,8 @@ window.porraApp = function () {
     },
     // --- fechas/horas en hora de España (Madrid) ---
     _d(iso) { if (!iso) return null; let s = String(iso); if (/T\d\d:\d\dZ$/.test(s)) s = s.replace("Z", ":00Z"); const d = new Date(s); return isNaN(d.getTime()) ? null : d; },
-    madridTime(iso) { const d = this._d(iso); if (!d) return ""; try { return new Intl.DateTimeFormat("es-ES", { timeZone: "Europe/Madrid", hour: "2-digit", minute: "2-digit", hour12: false }).format(d); } catch (e) { return ""; } },
-    localTimeAt(iso, tz) { const d = this._d(iso); if (!d || !tz) return ""; try { return new Intl.DateTimeFormat("es-ES", { timeZone: tz, hour: "2-digit", minute: "2-digit", hour12: false }).format(d); } catch (e) { return ""; } },
+    madridTime(iso) { const d = this._d(iso); if (!d) return ""; try { return dtf("es-ES", { timeZone: "Europe/Madrid", hour: "2-digit", minute: "2-digit", hour12: false }).format(d); } catch (e) { return ""; } },
+    localTimeAt(iso, tz) { const d = this._d(iso); if (!d || !tz) return ""; try { return dtf("es-ES", { timeZone: tz, hour: "2-digit", minute: "2-digit", hour12: false }).format(d); } catch (e) { return ""; } },
     // temperatura estimada de un partido: máx. típica de la sede ajustada por la hora local de saque
     estTempC(iso, vi) {
       if (!vi) return null;
@@ -419,7 +437,7 @@ window.porraApp = function () {
     localHourKey(iso, tz) {
       const d = this._d(iso); if (!d || !tz) return "";
       try {
-        const g = {}; new Intl.DateTimeFormat("en-CA", { timeZone: tz, year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", hour12: false }).formatToParts(d).forEach((p) => (g[p.type] = p.value));
+        const g = {}; dtf("en-CA", { timeZone: tz, year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", hour12: false }).formatToParts(d).forEach((p) => (g[p.type] = p.value));
         const hh = g.hour === "24" ? "00" : g.hour;
         return `${g.year}-${g.month}-${g.day}T${hh}`;
       } catch (e) { return ""; }
@@ -446,11 +464,16 @@ window.porraApp = function () {
       }));
       if (Object.keys(out).length) { this.forecasts = Object.assign({}, this.forecasts, out); this.forecastsAt = Date.now(); }
     },
-    madridDayLong(iso) { const d = this._d(iso); if (!d) return ""; try { const s = new Intl.DateTimeFormat("es-ES", { timeZone: "Europe/Madrid", weekday: "long", day: "numeric", month: "long" }).format(d); return s.charAt(0).toUpperCase() + s.slice(1); } catch (e) { return ""; } },
-    madridDayShort(iso) { const d = this._d(iso); if (!d) return ""; try { return new Intl.DateTimeFormat("es-ES", { timeZone: "Europe/Madrid", weekday: "short", day: "numeric", month: "short" }).format(d); } catch (e) { return ""; } },
-    _dayKey(iso) { const d = this._d(iso); if (!d) return (iso || "").slice(0, 10); try { return new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/Madrid", year: "numeric", month: "2-digit", day: "2-digit" }).format(d); } catch (e) { return (iso || "").slice(0, 10); } },
+    madridDayLong(iso) { const d = this._d(iso); if (!d) return ""; try { const s = dtf("es-ES", { timeZone: "Europe/Madrid", weekday: "long", day: "numeric", month: "long" }).format(d); return s.charAt(0).toUpperCase() + s.slice(1); } catch (e) { return ""; } },
+    madridDayShort(iso) { const d = this._d(iso); if (!d) return ""; try { return dtf("es-ES", { timeZone: "Europe/Madrid", weekday: "short", day: "numeric", month: "short" }).format(d); } catch (e) { return ""; } },
+    _dayKey(iso) { const d = this._d(iso); if (!d) return (iso || "").slice(0, 10); try { return dtf("en-CA", { timeZone: "Europe/Madrid", year: "numeric", month: "2-digit", day: "2-digit" }).format(d); } catch (e) { return (iso || "").slice(0, 10); } },
 
     get liveMatches() {
+      // Memo (móvil): reconstruir ~104 partidos con formatos de fecha en CADA evaluación
+      // de binding era el mayor coste de CPU. Clave por fetch + tick de 20s; computeLive
+      // también invalida (goles/finales) para que el flash no llegue tarde.
+      const memoKey = "lm|" + this.espnAt + "|" + this.forecastsAt + "|" + Math.floor((this.nowTs || 0) / 20000);
+      if (_MEMO.lmKey === memoKey && _MEMO.lmVal) return _MEMO.lmVal;
       const out = [];
       for (const ev of (this.espnEvents || [])) {
         const comp = ev.competitions && ev.competitions[0]; if (!comp) continue;
@@ -480,6 +503,7 @@ window.porraApp = function () {
         });
       }
       out.sort((a, b) => a.ts - b.ts);
+      _MEMO.lmKey = memoKey; _MEMO.lmVal = out;
       return out;
     },
     get liveGroups() {
@@ -523,6 +547,10 @@ window.porraApp = function () {
       return { from: fromUtc, to: fromUtc + 86400000 };
     },
     get koToday() {
+      // Memo (móvil): derivePicks de TODOS los jugadores en cada evaluación era caro.
+      // Clave por fetch + tick 20s + nº de entradas + usuario; computeLive invalida.
+      const memoKey = "kt|" + this.espnAt + "|" + Math.floor((this.nowTs || 0) / 20000) + "|" + ((this.entries || []).length) + "|" + ((this.me && this.me.id) || "");
+      if (_MEMO.ktKey === memoKey && _MEMO.ktVal) return _MEMO.ktVal;
       const w = this._footballDayWindow;
       const tbm = (this.liveBr && this.liveBr.teamsByMatch) || {};
       const meId = this.me && this.me.id;
@@ -569,7 +597,9 @@ window.porraApp = function () {
           card.nowWho = gains.length ? gains.join(" · ") : "nadie";
         }
       }
-      return out.sort((a, b) => a.ts - b.ts);
+      out.sort((a, b) => a.ts - b.ts);
+      _MEMO.ktKey = memoKey; _MEMO.ktVal = out;
+      return out;
     },
     get schedule() {
       const f = this.calFilter, today = this.todayKey, byDay = {};
@@ -589,7 +619,9 @@ window.porraApp = function () {
       try { this._matchCache = JSON.parse(localStorage.getItem("porra_matchdata") || "{}"); } catch (e) { this._matchCache = {}; }
       this.rebuild();
       this.nowTs = Date.now();
-      setInterval(() => { this.nowTs = Date.now(); }, 20000);
+      // Carril de pestañas móvil: centrar la pestaña activa al cambiar (si no, queda cortada).
+      try { this.$watch("tab", () => setTimeout(() => { const b = document.querySelector(".tabs button.active"); if (b && b.scrollIntoView) b.scrollIntoView({ inline: "center", block: "nearest", behavior: "smooth" }); }, 60)); } catch (e) {}
+      setInterval(() => { if (document.hidden) return; this.nowTs = Date.now(); }, 20000);
       window.addEventListener("beforeinstallprompt", (e) => { e.preventDefault(); this.deferredPrompt = e; });
       window.addEventListener("appinstalled", () => { this.deferredPrompt = null; this.showInstall = false; });
       this.initPush();
@@ -653,18 +685,29 @@ window.porraApp = function () {
         }
         this._scoreCache = next;
       } catch (e) { /* decorativo: nunca debe romper el cálculo real */ }
+      // Datos nuevos de ESPN → invalidar los memos de los getters pesados.
+      _MEMO.lmKey = null; _MEMO.ktKey = null;
       this.outcome = Eng.outcomeFromEspn(this.espnEvents, this.results, this.extrasActual);
       this.computeScorers();
       if (this.tab === "results") {
-        const mc = Eng.monteCarloTeams((this.outcome && this.outcome.groupMap) || {}, 3000, Math.random);
-        this.teamProbs = mc.byTeam; this.teamProbsSims = mc.sims;
+        // Memo: 3000 sims solo cuando CAMBIA algún resultado de grupo, no cada 60s.
+        const gm = (this.outcome && this.outcome.groupMap) || {};
+        const sig = Object.keys(gm).sort().map((c) => c + ":" + gm[c].home_score + "-" + gm[c].away_score + ":" + (gm[c].played ? 1 : 0)).join("|");
+        if (_MEMO.mcSig !== sig || !_MEMO.mcVal) {
+          const mc = Eng.monteCarloTeams(gm, 3000, Math.random);
+          _MEMO.mcSig = sig; _MEMO.mcVal = { byTeam: mc.byTeam, sims: mc.sims };
+        }
+        this.teamProbs = _MEMO.mcVal.byTeam; this.teamProbsSims = _MEMO.mcVal.sims;
       }
       if (this.tab === "goals") this.loadMatchData();
       this.recomputeRanking();
       this.refreshLiveBracket();
       if (this.tab === "ko27") this.rebuildReal();   // cuadro real en vivo con cada partido
-      this.explain = this.buildExplain();
-      this.scoringStatus = this.computeScoringStatus();
+      // Solo se pintan en Clasificación/Puntuación: no pagar su coste desde otras pestañas.
+      if (this.tab === "leaderboard" || this.tab === "scoring") {
+        this.explain = this.buildExplain();
+        this.scoringStatus = this.computeScoringStatus();
+      }
     },
     // ---------- estado de puntuación por jornadas (para el aviso de la clasificación) ----------
     computeScoringStatus() {
@@ -840,6 +883,96 @@ window.porraApp = function () {
           scenarios, rival, groupDiffs,
         };
       } finally { this.pathLoading = false; }
+    },
+    // ---------- "Qué tiene que pasar para el TOP 3": condicionales cruce a cruce ----------
+    // Para cada eliminatoria PENDIENTE mide, con miles de simulaciones, tus opciones de acabar
+    // en el podio según quién pase. Los KO YA JUGADOS se fijan (no se re-simulan): la realidad
+    // viene de oc.reached (ESPN) propagada por el cuadro, con la DB (admin) por encima.
+    async computeTop3() {
+      const meId = this.me && this.me.id;
+      if (this.top3Loading) return;
+      this.top3Loading = true; this.top3Analysis = null;
+      await new Promise((r) => setTimeout(r, 40));
+      try {
+        if (!meId) { this.top3Analysis = { none: true }; return; }
+        const S = this.settings;
+        const oc0 = this.outcome || Eng.liveOutcome(this.results);
+        const simMap = Object.assign({}, this.results, (oc0 && oc0.groupMap) || {});
+        const entries = (this.entries || []).filter((e) => e.picks && !this.isGuest(e)).map((e) => ({
+          id: e.id, dp: Eng.derivePicks(e.picks),
+          extra: Eng.scoreExtras(e.picks.extras, this.extrasActual, S).total,
+        }));
+        const me = entries.find((e) => e.id === meId);
+        if (!me || entries.length < 4) { this.top3Analysis = { none: true }; return; }
+
+        // Cuadro real: ronda de cada partido + ganador si ya se decidió (DB > ESPN reached).
+        const stageOf = {};
+        D.R32.forEach((m) => (stageOf[m.match] = "octavos")); D.R16.forEach((m) => (stageOf[m.match] = "cuartos"));
+        D.QF.forEach((m) => (stageOf[m.match] = "semis")); D.SF.forEach((m) => (stageOf[m.match] = "final"));
+        stageOf[D.FINAL.match] = "champion";
+        const reach = (k) => k === "champion"
+          ? (oc0.reached && oc0.reached.champion ? new Set([oc0.reached.champion]) : new Set())
+          : ((oc0.reached && oc0.reached[k]) || new Set());
+        const dbWin = (mk) => (this.liveBr && this.liveBr.winnerOf && this.liveBr.winnerOf[mk]) || null;
+        const decided = (mk, a, b) => {
+          if (!a || !b) return null;
+          const w = dbWin(mk); if (w) return w;
+          const R = reach(stageOf[mk]); const wa = R.has(a), wb = R.has(b);
+          return wa && !wb ? a : (wb && !wa ? b : null);
+        };
+        const teams = {}, win = {};
+        for (const m of D.R32) { const t = (this.liveBr.teamsByMatch || {})[m.match] || {}; teams[m.match] = { a: t.a || null, b: t.b || null }; win[m.match] = decided(m.match, t.a, t.b); }
+        for (const list of [D.R16, D.QF, D.SF, [D.FINAL]]) for (const m of list) {
+          const a = win[m.a] || null, b = win[m.b] || null;
+          teams[m.match] = { a, b }; win[m.match] = decided(m.match, a, b);
+        }
+        // Fijar lo ya decidido en el mapa de simulación + lista de cruces pendientes.
+        const pend = [];
+        for (const mk of Object.keys(stageOf)) {
+          const n = Number(mk), t = teams[n];
+          if (win[n]) { if (!simMap[n] && !simMap[String(n)]) simMap[n] = { played: true, winner: win[n] }; continue; }
+          if (t && t.a && t.b) pend.push({ mk: n, key: stageOf[n], a: t.a, b: t.b });
+        }
+        pend.sort((x, y) => x.mk - y.mk);
+
+        const N = 3000;
+        let mePod = 0;
+        const agg = {}; pend.forEach((p) => (agg[p.mk] = { a: { n: 0, pod: 0 }, b: { n: 0, pod: 0 } }));
+        for (let s = 0; s < N; s++) {
+          const oc = Eng.simulateOutcome(simMap, Math.random);
+          let myP = 0; const ps = [];
+          for (const e of entries) { const p = Eng.scoreEntry(e.dp, oc, S) + e.extra; ps.push(p); if (e.id === meId) myP = p; }
+          let above = 0; for (const p of ps) { if (p > myP) above++; }
+          const pod = above + 1 <= 3;
+          if (pod) mePod++;
+          for (const pm of pend) {
+            const R = pm.key === "champion" ? (oc.reached.champion ? new Set([oc.reached.champion]) : new Set()) : (oc.reached[pm.key] || new Set());
+            const slot = R.has(pm.a) ? agg[pm.mk].a : (R.has(pm.b) ? agg[pm.mk].b : null);
+            if (slot) { slot.n++; if (pod) slot.pod++; }
+          }
+        }
+        const mine = (key, t) => key === "champion" ? me.dp.champion === t : !!(me.dp[key] && me.dp[key].has && me.dp[key].has(t));
+        const ROUND = { octavos: "Octavos", cuartos: "Cuartos", semis: "Semis", final: "Final", champion: "Campeón" };
+        const rows = pend.map((pm) => {
+          const A = agg[pm.mk].a, B = agg[pm.mk].b;
+          const pA = A.n ? A.pod / A.n : null, pB = B.n ? B.pod / B.n : null;
+          const need = pA == null || pB == null ? null : (pA - pB > 0.005 ? "a" : (pB - pA > 0.005 ? "b" : null));
+          return { round: ROUND[pm.key] || pm.key, aEs: D.es(pm.a), aFlag: D.flag(pm.a), bEs: D.es(pm.b), bFlag: D.flag(pm.b),
+            pA, pB, need, aMine: mine(pm.key, pm.a), bMine: mine(pm.key, pm.b),
+            delta: pA != null && pB != null ? Math.abs(pA - pB) : 0 };
+        }).sort((x, y) => y.delta - x.delta);
+
+        // Posición actual entre familiares + hueco con el 3º (para el texto de cabecera).
+        const fam = (this.ranked || []).filter((r) => !this.isGuest(r));
+        const myIdx = fam.findIndex((r) => r.id === meId);
+        const myPos = myIdx >= 0 ? myIdx + 1 : null;
+        const third = fam[2] || null;
+        const myRow = myIdx >= 0 ? fam[myIdx] : null;
+        const gap = myPos && myPos > 3 && third && myRow ? third.points - myRow.points : 0;
+        const pod = myRow && typeof myRow.podium === "number" ? myRow.podium : mePod / N;
+        this.top3Analysis = { pod, sims: N, rows, myPos, inTop3: !!(myPos && myPos <= 3), gap,
+          thirdName: third ? (third.first_name || "").trim() : null };
+      } finally { this.top3Loading = false; }
     },
     // Goleadores: instantáneo desde el scoreboard (con equipo + penaltis). El scoreboard NO trae
     // asistencias → esas se cargan aparte de los summaries (loadMatchData).
@@ -1791,6 +1924,7 @@ window.porraApp = function () {
       try {
         await this.rpc("porra_set_bracket2", { p_code: this.pool.code, p_participant_id: this.me.id, p_bracket2: this.bracket2 });
         const e = this.myEntry; if (e) { e.picks = e.picks || {}; e.picks.bracket2 = Object.assign({}, this.bracket2); }
+        _MEMO.ktKey = null;   // el memo de koToday depende del contenido de bracket2
         this.ko27Saved = true;
         if (this.bracket2Picked === 31) this.toast("🎉 ¡Cuadro del 28-jun COMPLETO! Queda cerrado y sumará solo. Ya puedes ver el de los demás. 👀");
         else if (!silent) this.toast("✅ ¡Camino guardado! Sumarás los puntos bonus según avance el cuadro.");
@@ -1832,9 +1966,7 @@ window.porraApp = function () {
       // marcadores en vivo + picks (no deben afectar a la tabla del servidor)
       try { await this.loadResults(); if (ok) await this.loadEntries({ recompute: false }); } catch (e) {}
       if (!ok) { this.usingServerBoard = false; try { await this.refreshBoard(); } catch (e) {} }
-      try { await this.fetchEspn(false); } catch (e) {}   // refresca outcome + la explicación de puntos
-      this.explain = this.buildExplain();
-      this.scoringStatus = this.computeScoringStatus();
+      try { await this.fetchEspn(false); } catch (e) {}   // refresca outcome + explicación (computeLive)
       this.applyTiebreak();   // reordena empates por el sistema de puntuación
       this.probBusy = false;
     },
@@ -1884,6 +2016,11 @@ window.porraApp = function () {
     // EL PARTE: panorama + riesgos/bazas de cada jugador según lo que puso (forward-looking).
     computeParte() {
       if (!this.boardLocked) { this.parte = null; return; }
+      // Memo: el parte (1500 sims + historia por jornadas) solo se rehace si cambia algo real.
+      const _gm = (this.outcome && this.outcome.groupMap) || {};
+      const _sig = "pt|" + Object.keys(_gm).sort().map((c) => c + ":" + _gm[c].home_score + "-" + _gm[c].away_score).join("|") + "#" + (this.ranked || []).map((r) => r.id + ":" + r.points).join(",");
+      if (_MEMO.ptSig === _sig && this.parte) return;
+      _MEMO.ptSig = _sig;
       const real = (this.ranked || []).filter((r) => !this.isGuest(r));
       if (!real.length) { this.parte = null; return; }
       const oc = this.outcome || Eng.liveOutcome(this.results); const S = this.settings;
@@ -2218,7 +2355,7 @@ window.porraApp = function () {
     },
     async saveSettings() {
       this.busy = true;
-      try { await this.rpc("porra_set_settings", { p_code: this.pool.code, p_pin: this.adminPin, p_settings: this.settings }); this.pool.settings = Object.assign({}, this.settings); this.toast("Puntuación guardada."); this.recomputeRanking(); }
+      try { await this.rpc("porra_set_settings", { p_code: this.pool.code, p_pin: this.adminPin, p_settings: this.settings }); this.pool.settings = Object.assign({}, this.settings); _MEMO.ktKey = null; this.toast("Puntuación guardada."); this.recomputeRanking(); }
       catch (e) { this.toast(this.errMsg(e), "err"); } finally { this.busy = false; }
     },
     async saveGroupResult(fx) {
