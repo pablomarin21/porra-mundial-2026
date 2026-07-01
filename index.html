@@ -35,7 +35,7 @@
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="Porra Mundial" />
-  <link rel="stylesheet" href="styles.css?v=112" />
+  <link rel="stylesheet" href="styles.css?v=113" />
 </head>
 <body x-data="porraApp()" x-init="init()" x-cloak>
 
@@ -72,15 +72,23 @@
   </header>
 
   <!-- Banner para activar avisos (un toque) -->
-  <div class="notif-banner" x-show="view==='pool' && showNotifBanner" x-cloak>
-    <div class="nb-ic">🔔</div>
-    <div class="nb-body">
-      <b>🔔 Activa los avisos (1 toque)</b>
-      <small>Para que te avisemos de <b>montar tu cuadro del 28-jun</b> (¡o pagas la cena! 🍽️), <b>final de partido</b>, <b>grupo cerrado</b> y cuando <b>te adelanten</b>. Solo hay que dar permiso <b>una vez</b>.</small>
-    </div>
-    <div class="nb-actions">
-      <button class="btn primary" @click="activateFromBanner()" :disabled="pushBusy" x-text="pushBusy ? '…' : '🔔 Activar avisos'"></button>
-      <button class="nb-x" @click="dismissNotifBanner()">Ahora no</button>
+  <!-- MODAL AVISOS: salta al entrar si no están activados ("Ahora no" = solo esta sesión) -->
+  <div class="modal-bg" x-show="view==='pool' && showNotifModal" x-transition.opacity x-cloak @click.self="dismissNotifModal()">
+    <div class="modal notif-modal">
+      <div class="modal-head">
+        <h3>🔔 ¿Te avisamos de la porra?</h3>
+        <button class="modal-x" @click="dismissNotifModal()">✕</button>
+      </div>
+      <p class="muted">Actívalo y te llega todo al móvil, sin tener que entrar a mirar:</p>
+      <ul class="nm-list">
+        <li><span class="nm-ic">📅</span><span><b>Novedades del día</b> — por la mañana: los cruces de hoy y el top de la clasificación</span></li>
+        <li><span class="nm-ic">🌙</span><span><b>Resumen del día</b> — por la noche: resultados, top 3 y cómo vas tú</span></li>
+        <li><span class="nm-ic">📈</span><span><b>Clasificación al momento</b> — si subes o te adelantan, te enteras al instante</span></li>
+        <li><span class="nm-ic">⚽</span><span><b>Final de cada partido</b> — con el marcador</span></li>
+      </ul>
+      <button class="btn gold big block" @click="acceptNotifModal()" :disabled="pushBusy" x-text="pushBusy ? 'Activando…' : '🔔 Sí, avisadme'"></button>
+      <button class="nm-later" @click="dismissNotifModal()">Ahora no</button>
+      <p class="tiny muted" style="text-align:center;margin:6px 0 0">Solo hay que dar permiso una vez. Se puede quitar cuando quieras.</p>
     </div>
   </div>
 
@@ -2111,7 +2119,7 @@
   <script src="data.js?v=111"></script>
   <script src="engine.js?v=111"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
-  <script src="app.js?v=112"></script>
+  <script src="app.js?v=113"></script>
   <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.1/dist/cdn.min.js"></script>
 </body>
 </html>

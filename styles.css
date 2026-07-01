@@ -1531,17 +1531,12 @@ tr.clickrow.sel td{background:#e7f1ec}
 .notif-chip.on{background:rgba(245,197,66,.25);color:var(--gold)}
 .notif-chip:disabled{opacity:.6}
 
-/* banner de activar avisos (un toque) */
-.notif-banner{max-width:var(--app-w);margin:10px auto 0;padding:11px 14px;display:flex;align-items:center;gap:12px;background:linear-gradient(135deg,#fff7e6,#fdecd0);border:1px solid #f0d79a;border-radius:14px;box-shadow:0 2px 8px rgba(0,0,0,.06)}
-.nb-ic{font-size:1.6rem;flex:none}
-.nb-body{flex:1;min-width:0}
-.nb-body>b{display:block;color:#26323b;font-size:.95rem}
-.nb-body small b{display:inline;color:inherit;font-size:inherit}
-.nb-body small{display:block;color:#7a5a16;font-size:.8rem;line-height:1.4;margin-top:2px}
-.nb-actions{display:flex;flex-direction:column;gap:5px;flex:none;align-items:stretch}
-.nb-actions .btn{padding:8px 14px;font-size:.85rem;white-space:nowrap}
-.nb-x{background:none;border:0;color:var(--muted);font-size:.74rem;cursor:pointer;text-decoration:underline}
-@media(max-width:520px){.notif-banner{align-items:flex-start}.nb-actions{flex-direction:row;align-items:center}}
+/* modal de activar avisos (salta al entrar hasta que los activen) */
+.notif-modal{max-width:400px}
+.nm-list{list-style:none;margin:12px 0;padding:0;display:flex;flex-direction:column;gap:9px}
+.nm-list li{display:flex;gap:9px;align-items:flex-start;font-size:.88rem;line-height:1.45;background:#f6faf8;border:1px solid var(--line);border-radius:10px;padding:8px 10px;color:var(--ink)}
+.nm-ic{font-size:1.15rem;flex:none;width:1.4em;text-align:center}
+.nm-later{display:block;margin:6px auto 0;background:none;border:0;color:var(--muted);font-size:.85rem;cursor:pointer;text-decoration:underline;padding:10px 14px;min-height:44px}
 
 /* ============================================================================
    CUADRO ESPECTACULAR — bracket edición Mundial (cinematográfico)

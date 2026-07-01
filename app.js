@@ -81,7 +81,7 @@ window.porraApp = function () {
     // ui
     toasts: [], busy: false, probBusy: false, syncBusy: false, syncMsg: "",
     showInstall: false, deferredPrompt: null,
-    pushSupported: false, pushOn: false, pushBusy: false, notifBusy: false, notifTitle: "", notifBody: "", showNotifBanner: false,
+    pushSupported: false, pushOn: false, pushBusy: false, notifBusy: false, notifTitle: "", notifBody: "", showNotifModal: false,
     // pronósticos
     groups: emptyGroups(), thirds: [], bracket: {}, _cols: [], _champion: null,
     extras: { revelacion: "", decepcion: "", pichichi: "", asistente: "", portero: "", sidebets: {} },
@@ -319,15 +319,16 @@ window.porraApp = function () {
         const reg = await navigator.serviceWorker.register("sw.js?v=111");
         const sub = await reg.pushManager.getSubscription();
         this.pushOn = !!sub;
-        // pide los avisos SOLA y de forma PERSISTENTE: si no los tiene, el banner vuelve en cada
-        // visita (descartar solo lo oculta esta sesión) hasta que los active.
+        // pide los avisos SOLA y de forma PERSISTENTE con un modal: si no los tiene,
+        // salta en cada visita ("Ahora no" solo lo calla esta sesión) hasta que los active.
+        // Si el tutorial de instalación está abierto, no se pisa: ya saltará la próxima vez.
         if (!this.pushOn && !sessionStorage.getItem("porra_notif_dismissed")) {
-          setTimeout(() => { if (!this.pushOn) this.showNotifBanner = true; }, 2500);
+          setTimeout(() => { if (!this.pushOn && !this.showInstall) this.showNotifModal = true; }, 2600);
         }
       } catch (e) { this.pushSupported = false; }
     },
-    dismissNotifBanner() { this.showNotifBanner = false; try { sessionStorage.setItem("porra_notif_dismissed", "1"); } catch (e) {} },
-    async activateFromBanner() { await this.togglePush(); if (this.pushOn) this.showNotifBanner = false; },
+    dismissNotifModal() { this.showNotifModal = false; try { sessionStorage.setItem("porra_notif_dismissed", "1"); } catch (e) {} },
+    async acceptNotifModal() { await this.togglePush(); if (this.pushOn) this.showNotifModal = false; },
     async togglePush() {
       if (!this.pushSupported || this.pushBusy) return;
       this.pushBusy = true;
