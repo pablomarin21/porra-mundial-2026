@@ -9,7 +9,7 @@
   <!-- Auto-actualizador: si hay una versión nueva publicada, recarga sola (evita caché vieja) -->
   <script>
   (function () {
-    var CUR = 110;   // versión de este index.html
+    var CUR = 111;   // versión de este index.html
     try {
       fetch("ver.txt?t=" + Date.now(), { cache: "no-store" })
         .then(function (r) { return r.ok ? r.text() : ""; })
@@ -35,7 +35,7 @@
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="Porra Mundial" />
-  <link rel="stylesheet" href="styles.css?v=110" />
+  <link rel="stylesheet" href="styles.css?v=111" />
 </head>
 <body x-data="porraApp()" x-init="init()" x-cloak>
 
@@ -544,6 +544,29 @@
     <p class="muted" x-show="!ranked.length && !probBusy" style="text-align:center;padding:16px">Aún no hay quinielas para calcular la clasificación.</p>
     <p class="tiny muted" x-show="!boardLocked && ranked.length">👁️ Toca a un jugador para ver su <b>quiniela completa</b>. «🏆 Ganar» = probabilidad de acabar 1º según miles de simulaciones del Mundial con la fuerza de cada selección. <span x-show="lockCountdown">⏳ Cierra en <b x-text="lockCountdown"></b>.</span></p>
     <p class="tiny muted" x-show="boardLocked && ranked.length">👁️ Toca a un jugador para ver su quiniela y el desglose. «🏆 Ganar» = probabilidad de acabar 1º según miles de simulaciones del resto del Mundial.</p>
+
+    <!-- 🎯 EXPLICADOR SIMPLE: por qué hay 2 cuadros + de dónde salen los puntos -->
+    <div class="howto-card" x-show="boardLocked">
+      <div class="ht-key">🎯 <b>¿No lo pillas?</b> Aquí puntúan <b>2 cuadros</b> y los <b>2 SUMAN</b>:</div>
+      <div class="ht-two">
+        <div class="ht-b main"><span class="ht-em">🏆</span><b>El de antes del Mundial</b><small>el que hiciste a ciegas · <b>la principal</b> · vale <b>doble</b></small></div>
+        <div class="ht-plus">+</div>
+        <div class="ht-b bonus"><span class="ht-em">🗓️</span><b>El del 28-jun</b><small>un <b>EXTRA</b> con los cruces reales · vale la <b>mitad</b></small></div>
+      </div>
+      <p class="ht-warn">⚠️ El del <b>28-jun NO sustituye</b> al primero — son <b>puntos de más</b> (tu segunda oportunidad: aunque tu cuadro inicial se muriera, sigues sumando).</p>
+      <details class="ht-more">
+        <summary>➕ Y entonces, ¿por qué sube y baja el orden?</summary>
+        <div class="ht-more-body">
+          <p><b>Los puntos salen de 3 sitios:</b></p>
+          <ul class="ht-list">
+            <li>⚽ <b>Grupos</b> — ya <b>FIJOS</b>, no cambian.</li>
+            <li>🏆 <b>Eliminatorias</b> — se deciden <b>AHORA</b>: cada equipo tuyo que pasa de ronda <b>suma</b> (en los 2 cuadros).</li>
+            <li>⭐ <b>Especiales</b> — pichichi, decepción…</li>
+          </ul>
+          <p class="ht-why">En las eliminatorias <b>nadie RESTA</b> — solo se <b>SUMA</b> cuando tus equipos pasan. Si tus equipos <b>caen</b>, dejas de sumar y los que aciertan el cuadro <b>te adelantan</b>. <b>No pierdes puntos: los demás ganan más.</b></p>
+        </div>
+      </details>
+    </div>
 
     <!-- 📊 ¿POR QUÉ SUBE Y BAJA CADA UNO? grupos (fijos) vs eliminatorias (se decide ahora) -->
     <details class="moves-box" x-show="boardLocked && movements.length>=2">
@@ -2063,10 +2086,10 @@
   </div>
 
   <!-- ====== Dependencias ====== -->
-  <script src="data.js?v=110"></script>
-  <script src="engine.js?v=110"></script>
+  <script src="data.js?v=111"></script>
+  <script src="engine.js?v=111"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
-  <script src="app.js?v=110"></script>
+  <script src="app.js?v=111"></script>
   <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.1/dist/cdn.min.js"></script>
 </body>
 </html>
