@@ -961,14 +961,39 @@ window.porraApp = function () {
         }
         const mine = (key, t) => key === "champion" ? who.dp.champion === t : !!(who.dp[key] && who.dp[key].has && who.dp[key].has(t));
         const ROUND = { octavos: "Octavos", cuartos: "Cuartos", semis: "Semis", final: "Final", champion: "Campeón" };
+        const isMe = whoId === meId;
+        const whoName = who.name || "—";
+        const P = (x) => Math.round(x * 100) + "%";
+        // Cada cruce, en UNA frase entendible: a quién necesita y qué pasa si no.
         const rows = pend.map((pm) => {
           const A = agg[pm.mk].a, B = agg[pm.mk].b;
           const pA = A.n ? A.pod / A.n : null, pB = B.n ? B.pod / B.n : null;
+          const aMine = mine(pm.key, pm.a), bMine = mine(pm.key, pm.b);
+          const delta = pA != null && pB != null ? Math.abs(pA - pB) : 0;
           const need = pA == null || pB == null ? null : (pA - pB > 0.005 ? "a" : (pB - pA > 0.005 ? "b" : null));
-          return { round: ROUND[pm.key] || pm.key, aEs: D.es(pm.a), aFlag: D.flag(pm.a), bEs: D.es(pm.b), bFlag: D.flag(pm.b),
-            pA, pB, need, aMine: mine(pm.key, pm.a), bMine: mine(pm.key, pm.b),
-            delta: pA != null && pB != null ? Math.abs(pA - pB) : 0 };
+          const imp = delta >= 0.15 ? "clave" : (delta >= 0.04 ? "media" : "igual");
+          const aTag = D.flag(pm.a) + " " + D.es(pm.a) + (aMine ? " 🏆" : "");
+          const bTag = D.flag(pm.b) + " " + D.es(pm.b) + (bMine ? " 🏆" : "");
+          const title = aTag + "  vs  " + bTag;
+          let txt = "";
+          if (need) {
+            const nEs = need === "a" ? D.es(pm.a) : D.es(pm.b), nFlag = need === "a" ? D.flag(pm.a) : D.flag(pm.b);
+            const oEs = need === "a" ? D.es(pm.b) : D.es(pm.a);
+            const nPct = need === "a" ? pA : pB, oPct = need === "a" ? pB : pA;
+            const nMine = need === "a" ? aMine : bMine, oMine = need === "a" ? bMine : aMine;
+            txt = (isMe ? "Te conviene " : "Le conviene ") + nFlag + " " + nEs.toUpperCase() + ": si pasa, el top 3 se pone en " + P(nPct) + "; si pasa " + oEs + ", " + (oPct < 0.1 ? "se hunde a " : "baja a ") + P(oPct) + ".";
+            if (oMine && !nMine) txt += isMe
+              ? " (Ojo: llevas a " + oEs + " en tu cuadro, pero con ella tus rivales suman aún más que tú.)"
+              : " (Ojo: lleva a " + oEs + " en su cuadro, pero con ella sus rivales suman aún más que él.)";
+          } else {
+            txt = "Da casi igual quién pase (" + (pA != null ? P(pA) : "—") + " / " + (pB != null ? P(pB) : "—") + ").";
+          }
+          return { round: ROUND[pm.key] || pm.key, title, txt, imp,
+            impTxt: imp === "clave" ? "🔥 CLAVE" : (imp === "media" ? "importa" : ""),
+            aEs: D.es(pm.a), bEs: D.es(pm.b), delta };
         }).sort((x, y) => y.delta - x.delta);
+        const bigRows = rows.filter((r) => r.imp !== "igual");
+        const mehTxt = rows.filter((r) => r.imp === "igual").map((r) => r.aEs + "–" + r.bEs).join(" · ");
 
         // Posición actual entre familiares + hueco con el 3º (para el texto de cabecera).
         const fam = (this.ranked || []).filter((r) => !this.isGuest(r));
@@ -978,15 +1003,13 @@ window.porraApp = function () {
         const myRow = myIdx >= 0 ? fam[myIdx] : null;
         const gap = myPos && myPos > 3 && third && myRow ? third.points - myRow.points : 0;
         const pod = myRow && typeof myRow.podium === "number" ? myRow.podium : mePod / N;
-        const isMe = whoId === meId;
-        const whoName = who.name || "—";
         const posTxt = myPos ? myPos + "º" : "—";
         let line1;
         if (myPos && myPos <= 3) line1 = (isMe ? "Ahora vas " : "Ahora " + whoName + " va ") + posTxt + " — ¡dentro! Se trata de aguantar.";
         else line1 = (isMe ? "Ahora vas " : "Ahora " + whoName + " va ") + posTxt + (gap > 0 ? " — " + (isMe ? "te separan " : "le separan ") + gap + " pts del 3º (" + (third ? (third.first_name || "").trim() : "") + ")." : ".");
-        const legend = "El % = opciones de acabar top 3 si pasa ese equipo. Verde = el que " + (isMe ? "te" : "le") + " conviene · 🏆 = lo " + (isMe ? "tienes en tu" : "lleva en su") + " cuadro. Los partidos ya jugados están fijados (no se re-simulan).";
-        this.top3Analysis = { pod, sims: N, rows, myPos, inTop3: !!(myPos && myPos <= 3), gap,
-          isMe, whoName, line1, legend,
+        const line2 = "Traducción: de cada 100 finales posibles del Mundial, " + (isMe ? "acabas" : whoName + " acaba") + " en el top 3 en " + Math.round(pod * 100) + ". Abajo: qué resultado de cada cruce " + (isMe ? "te" : "le") + " sube o baja esas opciones.";
+        this.top3Analysis = { pod, sims: N, rows, bigRows, mehTxt, myPos, inTop3: !!(myPos && myPos <= 3), gap,
+          isMe, whoName, line1, line2,
           thirdName: third ? (third.first_name || "").trim() : null };
       } finally { this.top3Loading = false; }
     },
