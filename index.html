@@ -9,7 +9,7 @@
   <!-- Auto-actualizador: si hay una versión nueva publicada, recarga sola (evita caché vieja) -->
   <script>
   (function () {
-    var CUR = 108;   // versión de este index.html
+    var CUR = 109;   // versión de este index.html
     try {
       fetch("ver.txt?t=" + Date.now(), { cache: "no-store" })
         .then(function (r) { return r.ok ? r.text() : ""; })
@@ -35,7 +35,7 @@
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="Porra Mundial" />
-  <link rel="stylesheet" href="styles.css?v=108" />
+  <link rel="stylesheet" href="styles.css?v=109" />
 </head>
 <body x-data="porraApp()" x-init="init()" x-cloak>
 
@@ -1143,7 +1143,7 @@
       <span class="k27-sb-prog">🏟️ <b x-text="bracket2Picked"></b>/31 elegidos</span>
       <span class="k27-sb-status" :class="{ok:ko27Saved}" x-text="ko27Busy?'Guardando…':(ko27Saved?'✅ Guardado automáticamente':'✎ se guarda solo')"></span>
     </div>
-    <p class="k27-clickhint" x-show="!realMode && ko27Editable && viewingSelf2">👆 Toca al equipo que crees que <b>gana</b> cada cruce — avanza solo y se <b>guarda automáticamente</b> (no hay botón). Cada cruce lo puedes cambiar <b>hasta 1 hora antes de su partido</b>; después queda 🔒. Los grises se abren cuando se deciden sus equipos.</p>
+    <p class="k27-clickhint" x-show="!realMode && ko27Editable && viewingSelf2">👆 Toca los cruces <b style="color:#37d27e">resaltados en verde</b>: esos son los que puedes elegir para <b>avanzar y desbloquear la siguiente ronda</b>. Se guarda solo. Lo que ya pusiste y lo ya jugado queda <b>🔒</b>. Según elijas, se irán abriendo los siguientes.</p>
     <p class="k27-clickhint view" x-show="!realMode && !viewingSelf2">👀 Estás viendo el cuadro de <b x-text="(ko27Players.find(p=>p.id===viewId2)||{}).name"></b> — <b>solo lectura</b>. Toca <b>«Tú»</b> para volver al tuyo.</p>
     <p class="k27-clickhint frozen" x-show="!realMode && viewingSelf2 && ko27Frozen">🔒 <b>Completaste</b> tu cuadro del 28-jun (31/31): queda <b>fijo</b> y suma ronda a ronda. Ya no se toca. Puedes ver el de los demás con el selector de arriba.</p>
     <p class="k27-clickhint warn" x-show="!realMode && viewingSelf2 && !ko27Frozen && !ko27Editable && (!me || !me.id)">⚠️ Para montar tu cuadro, primero <b>entra con tu nombre</b> (pestaña <b>«Mi Porra»</b>). Luego vuelve aquí y toca a los ganadores.</p>
@@ -1252,8 +1252,8 @@
       <p class="k27-mob-champ" x-show="wcbChampion">🏆 Campeón: <span class="flag" x-text="flag(wcbChampion)"></span> <b x-text="es(wcbChampion)"></b></p>
       <div class="k27-mob-list">
         <template x-for="m in (activeCol2?activeCol2.matches:[])" :key="'mm'+(activeCol2?activeCol2.key:'')+m.match">
-          <div class="k27-mob-m" :class="{locked:!(m.a.team&&m.b.team), tlock: m.a.team&&m.b.team&&!matchEditable(m.match)}">
-            <span class="k27-mob-n"><span x-show="m.a.team&&m.b.team&&matchEditable(m.match)" x-text="'#'+m.n"></span><span x-show="!(m.a.team&&m.b.team)">🔒</span><span x-show="m.a.team&&m.b.team&&!matchEditable(m.match)">🔒</span></span>
+          <div class="k27-mob-m" :class="{locked:!(m.a.team&&m.b.team), tlock: m.a.team&&m.b.team&&!matchEditable(m.match), frontier: canPick2(m)}">
+            <span class="k27-mob-n"><span x-show="canPick2(m)" class="k27-mob-go">👆 elige</span><span x-show="!canPick2(m) && m.a.team&&m.b.team&&matchEditable(m.match)" x-text="'#'+m.n"></span><span x-show="!(m.a.team&&m.b.team)">🔒</span><span x-show="!canPick2(m) && m.a.team&&m.b.team&&!matchEditable(m.match)">🔒</span></span>
             <div class="k27-mob-pair">
               <button class="k27-mob-opt" :class="{sel:m.pick&&m.pick===m.a.team, dim:m.pick&&m.a.team&&m.pick!==m.a.team}" :disabled="!canPick2(m)" @click="canPick2(m) && pickWinner2(m.match, m.a.team)">
                 <template x-if="m.a.team"><span><span class="flag" x-text="m.a.flag"></span> <span x-text="m.a.es"></span><span class="k27-mob-ok" x-show="m.pick===m.a.team">✓</span></span></template>
@@ -2038,10 +2038,10 @@
   </div>
 
   <!-- ====== Dependencias ====== -->
-  <script src="data.js?v=108"></script>
-  <script src="engine.js?v=108"></script>
+  <script src="data.js?v=109"></script>
+  <script src="engine.js?v=109"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
-  <script src="app.js?v=108"></script>
+  <script src="app.js?v=109"></script>
   <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.1/dist/cdn.min.js"></script>
 </body>
 </html>
