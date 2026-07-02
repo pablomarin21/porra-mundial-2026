@@ -35,7 +35,7 @@
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="Porra Mundial" />
-  <link rel="stylesheet" href="styles.css?v=118" />
+  <link rel="stylesheet" href="styles.css?v=119" />
 </head>
 <body x-data="porraApp()" x-init="init()" x-cloak>
 
@@ -801,6 +801,18 @@
               <span x-text="top3Analysis.isMe ? 'Acabas en el top 3 en' : 'Acaba en el top 3 en'"></span> <span class="pb-pill pod">🥉 <b x-text="pct(top3Analysis.pod)"></b></span> de las simulaciones.
             </p>
             <p class="tiny muted" style="margin:2px 0 8px" x-text="top3Analysis.line2"></p>
+
+            <!-- 📋 EL PACK: todo lo que necesita para el top 3, de un vistazo -->
+            <div class="t3-pack" x-show="top3Analysis.plan && top3Analysis.plan.length">
+              <div class="t3-pack-h">📋 <span x-text="top3Analysis.isMe ? 'Lo que necesitas para el TOP 3' : 'Lo que necesita para el TOP 3'"></span></div>
+              <ul class="t3-pack-list">
+                <template x-for="(it,i) in top3Analysis.plan" :key="'plan'+i">
+                  <li><span class="t3-pack-ic" x-text="it.ic"></span> <span x-text="it.txt"></span></li>
+                </template>
+              </ul>
+              <p class="t3-pack-foot muted tiny">Debajo tienes el <b>detalle</b> de cada punto (por qué, y quién juega a favor o en contra).</p>
+            </div>
+
             <p class="t3-insight" x-show="top3Analysis.huntTxt" x-text="top3Analysis.huntTxt"></p>
             <p class="t3-insight" x-show="top3Analysis.threatTxt" x-text="top3Analysis.threatTxt"></p>
             <p class="t3-insight" x-show="top3Analysis.champsTxt" x-text="top3Analysis.champsTxt"></p>
@@ -2193,7 +2205,7 @@
   <script src="data.js?v=111"></script>
   <script src="engine.js?v=111"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
-  <script src="app.js?v=118"></script>
+  <script src="app.js?v=119"></script>
   <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.1/dist/cdn.min.js"></script>
 </body>
 </html>

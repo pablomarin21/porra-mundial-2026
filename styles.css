@@ -1884,3 +1884,11 @@ tr.clickrow.sel td{background:#e7f1ec}
 .t3-esp-pts{font-weight:800;font-variant-numeric:tabular-nums;color:#8a6a16;background:#fff7e6;border:1px solid #f0d79a;border-radius:999px;padding:1px 8px;font-size:.76rem}
 .t3-esp .t3-thead{gap:8px}
 .t3-esp .t3-imp{margin-left:auto}
+
+/* 📋 El pack "lo que necesitas para el TOP 3" (resumen accionable arriba) */
+.t3-pack{background:linear-gradient(180deg,#123f2f,#0e3527);border:1.5px solid var(--gold);border-radius:12px;padding:11px 13px;margin:8px 0 12px;box-shadow:0 0 0 3px rgba(245,197,66,.1)}
+.t3-pack-h{font-weight:900;color:#ffe89b;font-size:.98rem;margin-bottom:6px}
+.t3-pack-list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}
+.t3-pack-list li{display:flex;gap:8px;align-items:baseline;font-size:.9rem;line-height:1.5;color:#eaf5ef}
+.t3-pack-ic{flex:none}
+.t3-pack-foot{margin:8px 0 0}

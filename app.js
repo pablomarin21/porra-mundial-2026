@@ -1017,20 +1017,23 @@ window.porraApp = function () {
           }
           return { round: ROUND[pm.key] || pm.key, title, txt, imp,
             impTxt: imp === "clave" ? "🔥 CLAVE" : (imp === "media" ? "importa" : ""),
-            aEs: D.es(pm.a), bEs: D.es(pm.b), delta };
+            aEs: D.es(pm.a), bEs: D.es(pm.b), delta,
+            needEs: need ? (need === "a" ? D.es(pm.a) : D.es(pm.b)) : null,
+            needFlag: need ? (need === "a" ? D.flag(pm.a) : D.flag(pm.b)) : "",
+            elsePod: need ? (need === "a" ? pB : pA) : null };
         }).sort((x, y) => y.delta - x.delta);
         const bigRows = rows.filter((r) => r.imp !== "igual");
         const mehTxt = rows.filter((r) => r.imp === "igual").map((r) => r.aEs + "–" + r.bEs).join(" · ");
 
         // 🎯 Presa / 🛡️ Amenaza (nominal, sobre la clasificación actual)
-        let huntTxt = "", threatTxt = "";
+        let huntTxt = "", threatTxt = "", huntName = "", threatName = "";
         if (!inTop3Now && whoPodN > 0) {
           const best = Object.keys(outCount).sort((a, b) => outCount[b] - outCount[a])[0];
-          if (best) huntTxt = "🎯 " + (isMe ? "Tu presa: en los finales donde entras al podio, el que suele caerse es " : "Su presa: en los finales donde entra al podio, el que suele caerse es ") + (nameOf[best] || "?") + " (" + P(outCount[best] / whoPodN) + " de esos finales).";
+          if (best) { huntName = nameOf[best] || ""; huntTxt = "🎯 " + (isMe ? "Tu presa: en los finales donde entras al podio, el que suele caerse es " : "Su presa: en los finales donde entra al podio, el que suele caerse es ") + huntName + " (" + P(outCount[best] / whoPodN) + " de esos finales)."; }
         }
         if (inTop3Now && whoOutN > 0) {
           const best = Object.keys(inCount).sort((a, b) => inCount[b] - inCount[a])[0];
-          if (best) threatTxt = "🛡️ " + (isMe ? "Tu amenaza: cuando te caes del podio, quien te quita el sitio suele ser " : "Su amenaza: cuando se cae del podio, quien le quita el sitio suele ser ") + (nameOf[best] || "?") + " (" + P(inCount[best] / whoOutN) + " de esas veces).";
+          if (best) { threatName = nameOf[best] || ""; threatTxt = "🛡️ " + (isMe ? "Tu amenaza: cuando te caes del podio, quien te quita el sitio suele ser " : "Su amenaza: cuando se cae del podio, quien le quita el sitio suele ser ") + threatName + " (" + P(inCount[best] / whoOutN) + " de esas veces)."; }
         }
         // 👑 Campeones que le convienen (podio % según quién gane el Mundial)
         const champs = Object.keys(chN).filter((c) => chN[c] >= N * 0.02)
@@ -1100,8 +1103,23 @@ window.porraApp = function () {
         if (inTop3Now) line1 = (isMe ? "Ahora vas " : "Ahora " + whoName + " va ") + posTxt + " — ¡dentro! Se trata de aguantar.";
         else line1 = (isMe ? "Ahora vas " : "Ahora " + whoName + " va ") + posTxt + (gap > 0 ? " — " + (isMe ? "te separan " : "le separan ") + gap + " pts del 3º (" + (third ? (third.first_name || "").trim() : "") + ")." : ".");
         const line2 = "Traducción: de cada 100 finales posibles del Mundial, " + (isMe ? "acabas" : whoName + " acaba") + " en el top 3 en " + Math.round(pod * 100) + ". Abajo: qué resultado de cada cruce " + (isMe ? "te" : "le") + " sube o baja esas opciones.";
+        // 📋 EL PACK: todo lo que necesita para el top 3, en una lista accionable y priorizada.
+        const plan = [];
+        if (!inTop3Now && huntName) plan.push({ ic: "🎯", txt: (isMe ? "Adelantar a " : "Que adelante a ") + huntName + " (al que más veces le quita el sitio)" });
+        if (inTop3Now && threatName) plan.push({ ic: "🛡️", txt: "Aguantar por delante de " + threatName + " (su rival directo)" });
+        if (champs.length && champs[0].pPod >= (pod + 0.03)) plan.push({ ic: "🏆", txt: "Que gane el Mundial " + champs[0].flag + " " + champs[0].es + " → su mejor escenario (top 3 al " + P(champs[0].pPod) + ")" });
+        for (const r of bigRows.slice(0, 3)) {
+          if (!r.needEs) continue;
+          plan.push({ ic: "⚔️", txt: "Que en " + r.round.toLowerCase() + " pase " + r.needFlag + " " + r.needEs + (r.elsePod != null ? " (si no, top 3 baja a " + P(r.elsePod) + ")" : "") });
+        }
+        const pendEsp = especiales.filter((sp) => !sp.resolved && sp.myPick);
+        if (pendEsp.length) {
+          const lista = pendEsp.map((sp) => sp.label.replace(/^\S+\s/, "") + " " + sp.myPick + " (+" + sp.pts + (sp.exclusive ? ", exclusivo" : "") + ")").join(" · ");
+          plan.push({ ic: "🎁", txt: "Acertar especiales pendientes — hasta +" + pendMax + ": " + lista });
+        }
+
         this.top3Analysis = { pod, sims: N, rows, bigRows, mehTxt, myPos, inTop3: inTop3Now, gap,
-          isMe, whoName, line1, line2, huntTxt, threatTxt, champsTxt, especiales, espTxt,
+          isMe, whoName, line1, line2, huntTxt, threatTxt, champsTxt, especiales, espTxt, plan,
           thirdName: third ? (third.first_name || "").trim() : null };
       } finally { this.top3Loading = false; }
     },
