@@ -1040,6 +1040,57 @@ window.porraApp = function () {
           ? "👑 " + (isMe ? "Según quién gane el Mundial, tu podio: " : "Según quién gane el Mundial, su podio: ") + champs.slice(0, 3).map((c) => c.flag + " " + c.es + " → " + P(c.pPod)).join(" · ") + (champs.length > 3 ? " · peor: " + champs[champs.length - 1].flag + " " + champs[champs.length - 1].es + " → " + P(champs[champs.length - 1].pPod) : "") + "."
           : "";
 
+        // 🎁 ESPECIALES por decidir (pichichi/asistente/portero/revelación/decepción/sidebets).
+        // Suman MUCHO y aún no están resueltos: para "qué tiene que pasar" son puntos en juego.
+        const EA = this.extrasActual || {};
+        const SPECIALS = [
+          { key: "pichichi", label: "⚽ Máximo goleador", pts: S.pichichi, kind: "player" },
+          { key: "asistente", label: "🅰️ Máximo asistente", pts: S.asistente, kind: "player" },
+          { key: "portero", label: "🧤 Mejor portero", pts: S.portero || 0, kind: "player" },
+          { key: "revelacion", label: "✨ Revelación", pts: S.revelacion, kind: "team" },
+          { key: "decepcion", label: "💀 Decepción", pts: S.decepcion, kind: "team" },
+          { key: "hattrick", label: "🎩 Hat-trick", pts: S.hattrick, kind: "sidebet" },
+          { key: "dobleRoja", label: "🟥 Doble roja", pts: S.dobleRoja, kind: "sidebet" },
+        ];
+        const rawExtras = (id) => { const e = (this.entries || []).find((x) => x.id === id); return (e && e.picks && e.picks.extras) || {}; };
+        const pickOf = (ex, sp) => sp.kind === "sidebet" ? ((ex.sidebets || {})[sp.key] || "") : (ex[sp.key] || "");
+        const keyOf = (val, sp) => { const v = (val || "").toString().trim(); if (!v) return ""; return sp.kind === "player" ? this._surKey(v) : this._norm(v); };
+        const actOf = (sp) => sp.kind === "sidebet" ? ((EA.sidebets || {})[sp.key] || "") : (EA[sp.key] || "");
+        const teamEsF = (t) => { try { return D.flag(t) + " " + D.es(t); } catch (e) { return t; } };
+        const sbLabel = (v) => v === "si" ? "Sí" : (v === "no" ? "No" : v);
+        const dispOf = (v, sp) => sp.kind === "team" ? teamEsF(v) : (sp.kind === "sidebet" ? sbLabel(v) : v);
+        const myExtras = rawExtras(whoId);
+        let pendMax = 0, exclPts = 0;
+        const especiales = [];
+        for (const sp of SPECIALS) {
+          const myVal = pickOf(myExtras, sp);
+          const act = actOf(sp);
+          const resolved = !!(act && act.toString().trim());
+          if (!myVal && !resolved) continue;
+          const myKey = keyOf(myVal, sp);
+          const row = { label: sp.label, pts: sp.pts, myPick: myVal ? dispOf(myVal, sp) : "", resolved };
+          if (resolved) {
+            row.hit = !!(myKey && myKey === keyOf(act, sp));
+            row.actual = dispOf(act, sp);
+          } else {
+            const share = [], diff = [];
+            for (const e of entries) {
+              if (e.id === whoId) continue;
+              const ev = pickOf(rawExtras(e.id), sp); const ek = keyOf(ev, sp);
+              if (!ek) continue;
+              if (myKey && ek === myKey) share.push(e.name);
+              else diff.push(e.name + " (" + dispOf(ev, sp) + ")");
+            }
+            row.share = share; row.diff = diff;
+            row.exclusive = !!(myKey && share.length === 0);
+            if (myKey) { pendMax += sp.pts; if (row.exclusive) exclPts += sp.pts; }
+          }
+          especiales.push(row);
+        }
+        const espTxt = pendMax > 0
+          ? "🎁 En especiales por decidir " + (isMe ? "te quedan" : "le quedan") + " hasta +" + pendMax + " en juego" + (exclPts > 0 ? " (+" + exclPts + " que nadie más tiene → ventaja directa si acierta" + (isMe ? "s" : "") + ")" : "") + "."
+          : "";
+
         const third = fam[2] || null;
         const myRow = myIdx >= 0 ? fam[myIdx] : null;
         const gap = myPos && myPos > 3 && third && myRow ? third.points - myRow.points : 0;
@@ -1050,7 +1101,7 @@ window.porraApp = function () {
         else line1 = (isMe ? "Ahora vas " : "Ahora " + whoName + " va ") + posTxt + (gap > 0 ? " — " + (isMe ? "te separan " : "le separan ") + gap + " pts del 3º (" + (third ? (third.first_name || "").trim() : "") + ")." : ".");
         const line2 = "Traducción: de cada 100 finales posibles del Mundial, " + (isMe ? "acabas" : whoName + " acaba") + " en el top 3 en " + Math.round(pod * 100) + ". Abajo: qué resultado de cada cruce " + (isMe ? "te" : "le") + " sube o baja esas opciones.";
         this.top3Analysis = { pod, sims: N, rows, bigRows, mehTxt, myPos, inTop3: inTop3Now, gap,
-          isMe, whoName, line1, line2, huntTxt, threatTxt, champsTxt,
+          isMe, whoName, line1, line2, huntTxt, threatTxt, champsTxt, especiales, espTxt,
           thirdName: third ? (third.first_name || "").trim() : null };
       } finally { this.top3Loading = false; }
     },

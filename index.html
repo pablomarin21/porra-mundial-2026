@@ -35,7 +35,7 @@
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="Porra Mundial" />
-  <link rel="stylesheet" href="styles.css?v=117" />
+  <link rel="stylesheet" href="styles.css?v=118" />
 </head>
 <body x-data="porraApp()" x-init="init()" x-cloak>
 
@@ -820,6 +820,37 @@
             <p class="tiny muted" x-show="!top3Analysis.rows.length">No queda ningún cruce con los dos equipos decididos: se actualizará cuando avance el cuadro.</p>
             <p class="t3-meh" x-show="top3Analysis.mehTxt">🤷 El resto apenas cambia nada: <span x-text="top3Analysis.mehTxt"></span>.</p>
             <p class="tiny muted" style="margin-top:6px">🏆 = equipo que lleva en su cuadro · Los partidos ya jugados están fijados.</p>
+
+            <!-- 🎁 ESPECIALES por decidir (máximo goleador, asistente, portero, revelación…) -->
+            <template x-if="top3Analysis.especiales && top3Analysis.especiales.length">
+              <div class="t3-esp">
+                <div class="pb-h">🎁 Especiales — puntos que aún están en juego <span class="muted tiny">(suman mucho al final)</span></div>
+                <p class="t3-insight" x-show="top3Analysis.espTxt" x-text="top3Analysis.espTxt"></p>
+                <div class="t3-rows">
+                  <template x-for="(sp,i) in top3Analysis.especiales" :key="'esp'+i">
+                    <div class="t3-row" :class="{clave:sp.exclusive && !sp.resolved}">
+                      <div class="t3-thead">
+                        <span class="t3-esp-cat" x-text="sp.label"></span>
+                        <span class="t3-esp-pts" x-text="'+'+sp.pts"></span>
+                        <span class="t3-imp clave" x-show="sp.exclusive && !sp.resolved">exclusivo tuyo</span>
+                        <span class="t3-imp" style="background:#dff7e6;color:#14532d;border:1px solid #9fd9b4" x-show="sp.resolved && sp.hit">✓ acertado</span>
+                        <span class="t3-imp" style="background:#fdeaea;color:#b03024;border:1px solid #f0b3aa" x-show="sp.resolved && !sp.hit">✗ fallado</span>
+                      </div>
+                      <div class="t3-txt">
+                        <template x-if="!sp.myPick"><span class="muted">No pusiste nada aquí — 0 puntos posibles.</span></template>
+                        <template x-if="sp.myPick && sp.resolved">
+                          <span>Pusiste <b x-text="sp.myPick"></b>. <span x-show="!sp.hit">El bueno fue <b x-text="sp.actual"></b>.</span></span>
+                        </template>
+                        <template x-if="sp.myPick && !sp.resolved">
+                          <span>Pusiste <b x-text="sp.myPick"></b> <span class="muted">(pendiente)</span>.<template x-if="sp.exclusive"><b class="t3-good-txt" x-text="' Nadie más lo tiene → +'+sp.pts+' solo para '+(top3Analysis.isMe?'ti si aciertas':'él si acierta')+'.'"></b></template><template x-if="!sp.exclusive && sp.share.length"><span x-text="' Lo comparten: '+sp.share.join(', ')+'.'"></span></template><template x-if="sp.diff.length"><span class="muted" x-text="' Con otro: '+sp.diff.join(' · ')+'.'"></span></template></span>
+                        </template>
+                      </div>
+                    </div>
+                  </template>
+                </div>
+              </div>
+            </template>
+
             <p class="tiny muted pb-foot">🔄 Se recalcula con cada partido. <button class="btn mini ghost" @click="computeTop3()" :disabled="top3Loading">↻ recalcular</button></p>
           </div>
         </template>
@@ -2162,7 +2193,7 @@
   <script src="data.js?v=111"></script>
   <script src="engine.js?v=111"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
-  <script src="app.js?v=117"></script>
+  <script src="app.js?v=118"></script>
   <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.1/dist/cdn.min.js"></script>
 </body>
 </html>

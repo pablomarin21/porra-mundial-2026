@@ -1877,3 +1877,10 @@ tr.clickrow.sel td{background:#e7f1ec}
 
 /* insights del análisis TOP 3 (presa/amenaza/campeones) */
 .t3-insight{font-size:.86rem;background:rgba(255,255,255,.06);border-left:3px solid var(--gold);border-radius:0 9px 9px 0;padding:7px 11px;margin:6px 0;color:#eaf5ef;line-height:1.55}
+
+/* especiales dentro del análisis TOP 3 */
+.t3-esp{margin-top:12px}
+.t3-esp-cat{font-weight:800;font-size:.9rem}
+.t3-esp-pts{font-weight:800;font-variant-numeric:tabular-nums;color:#8a6a16;background:#fff7e6;border:1px solid #f0d79a;border-radius:999px;padding:1px 8px;font-size:.76rem}
+.t3-esp .t3-thead{gap:8px}
+.t3-esp .t3-imp{margin-left:auto}
