@@ -617,6 +617,7 @@ window.porraApp = function () {
     async init() {
       try { this.recent = JSON.parse(localStorage.getItem("porra_recent") || "[]"); } catch (e) { this.recent = []; }
       try { this._matchCache = JSON.parse(localStorage.getItem("porra_matchdata") || "{}"); } catch (e) { this._matchCache = {}; }
+      try { const c = JSON.parse(localStorage.getItem("porra_espn_v1") || "null"); if (c && Array.isArray(c.events) && c.events.length) this.espnEvents = c.events; } catch (e) {}
       this.rebuild();
       this.nowTs = Date.now();
       // Carril de pestañas móvil: centrar la pestaña activa al cambiar (si no, queda cortada).
@@ -661,7 +662,13 @@ window.porraApp = function () {
         try {
           const r = await fetch("https://site.api.espn.com/apis/site/v2/sports/soccer/fifa.world/scoreboard?dates=20260611-20260719&limit=200");
           const j = await r.json();
-          if (j && j.events) { this.espnEvents = j.events; this.espnAt = Date.now(); }
+          if (j && j.events) {
+            this.espnEvents = j.events; this.espnAt = Date.now();
+            // caché de arranque: ~1MB, guardado como mucho cada 5 min (quota-safe)
+            if (!_MEMO.espnSavedAt || Date.now() - _MEMO.espnSavedAt > 300000) {
+              try { localStorage.setItem("porra_espn_v1", JSON.stringify({ at: Date.now(), events: j.events })); _MEMO.espnSavedAt = Date.now(); } catch (e) {}
+            }
+          }
         } catch (e) { /* mantener datos previos si falla */ }
         finally { this.liveBusy = false; this._espnInFlight = null; this.computeLive(); }
       })();
@@ -912,6 +919,15 @@ window.porraApp = function () {
         }));
         const who = entries.find((e) => e.id === whoId);
         if (!who || entries.length < 4) { this.top3Analysis = { none: true }; return; }
+        const nameOf = {}; entries.forEach((e) => (nameOf[e.id] = e.name));
+
+        // Clasificación ACTUAL (para saber a quién caza / quién le amenaza).
+        const fam = (this.ranked || []).filter((r) => !this.isGuest(r));
+        const myIdx = fam.findIndex((r) => r.id === whoId);
+        const myPos = myIdx >= 0 ? myIdx + 1 : null;
+        const inTop3Now = !!(myPos && myPos <= 3);
+        const top3Ids = fam.slice(0, 3).map((r) => r.id).filter((id) => id !== whoId);
+        const outsideIds = fam.slice(3).map((r) => r.id).filter((id) => id !== whoId);
 
         // Cuadro real: ronda de cada partido + ganador si ya se decidió (DB > ESPN reached).
         const stageOf = {};
@@ -934,7 +950,6 @@ window.porraApp = function () {
           const a = win[m.a] || null, b = win[m.b] || null;
           teams[m.match] = { a, b }; win[m.match] = decided(m.match, a, b);
         }
-        // Fijar lo ya decidido en el mapa de simulación + lista de cruces pendientes.
         const pend = [];
         for (const mk of Object.keys(stageOf)) {
           const n = Number(mk), t = teams[n];
@@ -943,28 +958,36 @@ window.porraApp = function () {
         }
         pend.sort((x, y) => x.mk - y.mk);
 
+        // Simulación: además del podio de "who", registramos qué rivales entran/caen,
+        // qué campeón le conviene, y cuántos puntos saca CADA jugador según quién pase cada cruce.
         const N = 3000;
-        let mePod = 0;
-        const agg = {}; pend.forEach((p) => (agg[p.mk] = { a: { n: 0, pod: 0 }, b: { n: 0, pod: 0 } }));
+        let mePod = 0, whoPodN = 0, whoOutN = 0;
+        const outCount = {}, inCount = {}, chN = {}, chPod = {};
+        const agg = {}; pend.forEach((p) => (agg[p.mk] = { a: { n: 0, pod: 0, sum: {} }, b: { n: 0, pod: 0, sum: {} } }));
         for (let s = 0; s < N; s++) {
           const oc = Eng.simulateOutcome(simMap, Math.random);
-          let myP = 0; const ps = [];
-          for (const e of entries) { const p = Eng.scoreEntry(e.dp, oc, S) + e.extra; ps.push(p); if (e.id === whoId) myP = p; }
-          let above = 0; for (const p of ps) { if (p > myP) above++; }
-          const pod = above + 1 <= 3;
-          if (pod) mePod++;
+          const pts = [];
+          for (const e of entries) pts.push({ id: e.id, p: Eng.scoreEntry(e.dp, oc, S) + e.extra });
+          const podSet = new Set();
+          for (const x of pts) { let above = 0; for (const y of pts) { if (y.p > x.p) above++; } if (above < 3) podSet.add(x.id); }
+          const pod = podSet.has(whoId);
+          if (pod) { mePod++; whoPodN++; for (const r of top3Ids) { if (!podSet.has(r)) outCount[r] = (outCount[r] || 0) + 1; } }
+          else { whoOutN++; for (const p of outsideIds) { if (podSet.has(p)) inCount[p] = (inCount[p] || 0) + 1; } }
+          const ch = oc.reached.champion;
+          if (ch) { chN[ch] = (chN[ch] || 0) + 1; if (pod) chPod[ch] = (chPod[ch] || 0) + 1; }
           for (const pm of pend) {
             const R = pm.key === "champion" ? (oc.reached.champion ? new Set([oc.reached.champion]) : new Set()) : (oc.reached[pm.key] || new Set());
             const slot = R.has(pm.a) ? agg[pm.mk].a : (R.has(pm.b) ? agg[pm.mk].b : null);
-            if (slot) { slot.n++; if (pod) slot.pod++; }
+            if (slot) { slot.n++; if (pod) slot.pod++; for (const x of pts) slot.sum[x.id] = (slot.sum[x.id] || 0) + x.p; }
           }
         }
+
         const mine = (key, t) => key === "champion" ? who.dp.champion === t : !!(who.dp[key] && who.dp[key].has && who.dp[key].has(t));
         const ROUND = { octavos: "Octavos", cuartos: "Cuartos", semis: "Semis", final: "Final", champion: "Campeón" };
         const isMe = whoId === meId;
         const whoName = who.name || "—";
         const P = (x) => Math.round(x * 100) + "%";
-        // Cada cruce, en UNA frase entendible: a quién necesita y qué pasa si no.
+        // Cada cruce, en UNA frase: a quién necesita, qué pasa si no, y POR QUÉ (rivales afectados).
         const rows = pend.map((pm) => {
           const A = agg[pm.mk].a, B = agg[pm.mk].b;
           const pA = A.n ? A.pod / A.n : null, pB = B.n ? B.pod / B.n : null;
@@ -972,9 +995,7 @@ window.porraApp = function () {
           const delta = pA != null && pB != null ? Math.abs(pA - pB) : 0;
           const need = pA == null || pB == null ? null : (pA - pB > 0.005 ? "a" : (pB - pA > 0.005 ? "b" : null));
           const imp = delta >= 0.15 ? "clave" : (delta >= 0.04 ? "media" : "igual");
-          const aTag = D.flag(pm.a) + " " + D.es(pm.a) + (aMine ? " 🏆" : "");
-          const bTag = D.flag(pm.b) + " " + D.es(pm.b) + (bMine ? " 🏆" : "");
-          const title = aTag + "  vs  " + bTag;
+          const title = D.flag(pm.a) + " " + D.es(pm.a) + (aMine ? " 🏆" : "") + "  vs  " + D.flag(pm.b) + " " + D.es(pm.b) + (bMine ? " 🏆" : "");
           let txt = "";
           if (need) {
             const nEs = need === "a" ? D.es(pm.a) : D.es(pm.b), nFlag = need === "a" ? D.flag(pm.a) : D.flag(pm.b);
@@ -982,9 +1003,15 @@ window.porraApp = function () {
             const nPct = need === "a" ? pA : pB, oPct = need === "a" ? pB : pA;
             const nMine = need === "a" ? aMine : bMine, oMine = need === "a" ? bMine : aMine;
             txt = (isMe ? "Te conviene " : "Le conviene ") + nFlag + " " + nEs.toUpperCase() + ": si pasa, el top 3 se pone en " + P(nPct) + "; si pasa " + oEs + ", " + (oPct < 0.1 ? "se hunde a " : "baja a ") + P(oPct) + ".";
-            if (oMine && !nMine) txt += isMe
-              ? " (Ojo: llevas a " + oEs + " en tu cuadro, pero con ella tus rivales suman aún más que tú.)"
-              : " (Ojo: lleva a " + oEs + " en su cuadro, pero con ella sus rivales suman aún más que él.)";
+            // ¿Por qué? Qué rivales suman más de media con el equipo que NO le conviene.
+            const nSlot = need === "a" ? A : B, oSlot = need === "a" ? B : A;
+            if (nSlot.n && oSlot.n) {
+              const gains = entries.filter((e) => e.id !== whoId).map((e) => ({
+                name: nameOf[e.id], g: (oSlot.sum[e.id] || 0) / oSlot.n - (nSlot.sum[e.id] || 0) / nSlot.n,
+              })).filter((x) => x.g >= 3).sort((x, y) => y.g - x.g).slice(0, 2);
+              if (gains.length) txt += " ¿Por qué? Con " + oEs + " " + gains.map((x) => x.name + " suma +" + Math.round(x.g)).join(" y ") + " de media.";
+              else if (oMine && !nMine) txt += " (Lleva a " + oEs + " en su cuadro, pero con ella los rivales recortan más.)";
+            }
           } else {
             txt = "Da casi igual quién pase (" + (pA != null ? P(pA) : "—") + " / " + (pB != null ? P(pB) : "—") + ").";
           }
@@ -995,21 +1022,35 @@ window.porraApp = function () {
         const bigRows = rows.filter((r) => r.imp !== "igual");
         const mehTxt = rows.filter((r) => r.imp === "igual").map((r) => r.aEs + "–" + r.bEs).join(" · ");
 
-        // Posición actual entre familiares + hueco con el 3º (para el texto de cabecera).
-        const fam = (this.ranked || []).filter((r) => !this.isGuest(r));
-        const myIdx = fam.findIndex((r) => r.id === whoId);
-        const myPos = myIdx >= 0 ? myIdx + 1 : null;
+        // 🎯 Presa / 🛡️ Amenaza (nominal, sobre la clasificación actual)
+        let huntTxt = "", threatTxt = "";
+        if (!inTop3Now && whoPodN > 0) {
+          const best = Object.keys(outCount).sort((a, b) => outCount[b] - outCount[a])[0];
+          if (best) huntTxt = "🎯 " + (isMe ? "Tu presa: en los finales donde entras al podio, el que suele caerse es " : "Su presa: en los finales donde entra al podio, el que suele caerse es ") + (nameOf[best] || "?") + " (" + P(outCount[best] / whoPodN) + " de esos finales).";
+        }
+        if (inTop3Now && whoOutN > 0) {
+          const best = Object.keys(inCount).sort((a, b) => inCount[b] - inCount[a])[0];
+          if (best) threatTxt = "🛡️ " + (isMe ? "Tu amenaza: cuando te caes del podio, quien te quita el sitio suele ser " : "Su amenaza: cuando se cae del podio, quien le quita el sitio suele ser ") + (nameOf[best] || "?") + " (" + P(inCount[best] / whoOutN) + " de esas veces).";
+        }
+        // 👑 Campeones que le convienen (podio % según quién gane el Mundial)
+        const champs = Object.keys(chN).filter((c) => chN[c] >= N * 0.02)
+          .map((c) => ({ es: D.es(c), flag: D.flag(c), pPod: (chPod[c] || 0) / chN[c] }))
+          .sort((a, b) => b.pPod - a.pPod);
+        const champsTxt = champs.length
+          ? "👑 " + (isMe ? "Según quién gane el Mundial, tu podio: " : "Según quién gane el Mundial, su podio: ") + champs.slice(0, 3).map((c) => c.flag + " " + c.es + " → " + P(c.pPod)).join(" · ") + (champs.length > 3 ? " · peor: " + champs[champs.length - 1].flag + " " + champs[champs.length - 1].es + " → " + P(champs[champs.length - 1].pPod) : "") + "."
+          : "";
+
         const third = fam[2] || null;
         const myRow = myIdx >= 0 ? fam[myIdx] : null;
         const gap = myPos && myPos > 3 && third && myRow ? third.points - myRow.points : 0;
         const pod = myRow && typeof myRow.podium === "number" ? myRow.podium : mePod / N;
         const posTxt = myPos ? myPos + "º" : "—";
         let line1;
-        if (myPos && myPos <= 3) line1 = (isMe ? "Ahora vas " : "Ahora " + whoName + " va ") + posTxt + " — ¡dentro! Se trata de aguantar.";
+        if (inTop3Now) line1 = (isMe ? "Ahora vas " : "Ahora " + whoName + " va ") + posTxt + " — ¡dentro! Se trata de aguantar.";
         else line1 = (isMe ? "Ahora vas " : "Ahora " + whoName + " va ") + posTxt + (gap > 0 ? " — " + (isMe ? "te separan " : "le separan ") + gap + " pts del 3º (" + (third ? (third.first_name || "").trim() : "") + ")." : ".");
         const line2 = "Traducción: de cada 100 finales posibles del Mundial, " + (isMe ? "acabas" : whoName + " acaba") + " en el top 3 en " + Math.round(pod * 100) + ". Abajo: qué resultado de cada cruce " + (isMe ? "te" : "le") + " sube o baja esas opciones.";
-        this.top3Analysis = { pod, sims: N, rows, bigRows, mehTxt, myPos, inTop3: !!(myPos && myPos <= 3), gap,
-          isMe, whoName, line1, line2,
+        this.top3Analysis = { pod, sims: N, rows, bigRows, mehTxt, myPos, inTop3: inTop3Now, gap,
+          isMe, whoName, line1, line2, huntTxt, threatTxt, champsTxt,
           thirdName: third ? (third.first_name || "").trim() : null };
       } finally { this.top3Loading = false; }
     },
@@ -1156,9 +1197,8 @@ window.porraApp = function () {
         this.loadMine(pool.code);
         this.phase = this.me.id ? "hub" : "welcome"; this.gIdx = 0; this.chosenNew = false; this.confirmClaim = null; this.wmode = "choose"; this.entriesLoaded = false;
         if (this.me.id) this.tab = "leaderboard";   // quien ya juega entra directo a la Clasificación en directo
-        await this.loadExtrasActual();
-        await this.loadResults();
-        await this.loadEntries();
+        await Promise.all([this.loadExtrasActual(), this.loadResults(), this.loadEntries()]);
+        if (this.espnEvents.length) { try { this.computeLive(); } catch (e) {} }
         this.loadAvatars();
         // Si el CUADRO DEL 28-JUN está abierto y aún NO lo has empezado, entras DIRECTO ahí
         // (para que nadie se lo pierda). Si ya lo empezaste, entras a la Clasificación.
@@ -1990,6 +2030,18 @@ window.porraApp = function () {
     async loadBoard() {
       if (!this.pool) return;
       this.probBusy = true;
+      // CACHE-FIRST: la edge puede tardar varios segundos; pintamos la última
+      // clasificación conocida al instante y la refrescamos por detrás (shimmer activo).
+      if (!this.ranked.length) {
+        try {
+          const c = JSON.parse(localStorage.getItem("porra_board_v1") || "null");
+          if (c && Array.isArray(c.rows) && c.rows.length) {
+            this.usingServerBoard = true; this.boardLocked = !!c.locked;
+            this.ranked = c.rows; this.boardIncomplete = c.incomplete || 0;
+            this.applyTiebreak();
+          }
+        } catch (e) {}
+      }
       let ok = false;
       try {
         const { data, error } = await sb.functions.invoke("porra-prob", { body: { code: this.pool.code } });
@@ -2000,6 +2052,7 @@ window.porraApp = function () {
           this.ranked = data.rows.map((r) => ({ id: r.id, first_name: r.first_name, last_name: r.last_name, points: r.points, win: r.win, podium: r.podium, avg: r.avg, complete: r.complete }));
           this.boardIncomplete = data.incomplete || 0;
           ok = true;
+          try { localStorage.setItem("porra_board_v1", JSON.stringify({ at: Date.now(), locked: this.boardLocked, incomplete: this.boardIncomplete, rows: this.ranked })); } catch (e) {}
         }
       } catch (e) { /* fallback abajo */ }
       // marcadores en vivo + picks (no deben afectar a la tabla del servidor)

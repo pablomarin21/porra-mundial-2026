@@ -1874,3 +1874,6 @@ tr.clickrow.sel td{background:#e7f1ec}
 /* selector de jugador del análisis TOP 3 */
 .t3-whobar{display:flex;align-items:center;gap:9px;margin:4px 0 10px;font-size:.86rem;font-weight:700;color:#cfe7dc;flex-wrap:wrap}
 .t3-whosel{flex:0 1 auto;width:auto;min-width:150px;padding:8px 10px;border-radius:9px;border:1.5px solid #2d6b52;background:#0f4231;color:#fff;font-weight:700;font-size:.9rem}
+
+/* insights del análisis TOP 3 (presa/amenaza/campeones) */
+.t3-insight{font-size:.86rem;background:rgba(255,255,255,.06);border-left:3px solid var(--gold);border-radius:0 9px 9px 0;padding:7px 11px;margin:6px 0;color:#eaf5ef;line-height:1.55}
