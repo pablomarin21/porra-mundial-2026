@@ -35,7 +35,7 @@
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="Porra Mundial" />
-  <link rel="stylesheet" href="styles.css?v=119" />
+  <link rel="stylesheet" href="styles.css?v=120" />
 </head>
 <body x-data="porraApp()" x-init="init()" x-cloak>
 
@@ -2173,9 +2173,10 @@
   <div class="modal-bg" x-show="showInstall" x-transition.opacity @click.self="closeInstall()">
     <div class="modal">
       <div class="modal-head">
-        <h3>📲 Pon la porra en tu móvil</h3>
+        <h3 x-text="installForNotif ? '🔔 Para recibir los avisos' : '📲 Pon la porra en tu móvil'"></h3>
         <button class="modal-x" @click="closeInstall()">✕</button>
       </div>
+      <div class="nm-ios-note" x-show="installForNotif || isIOS">🔔 En el iPhone los <b>avisos de la porra</b> (finales, clasificación, resumen del día…) <b>solo funcionan con la app instalada</b>. Instálala (son 2 pasos) y al abrirla te saltará el permiso de avisos.</div>
       <p class="muted">Añádela a la pantalla de inicio y tendrás el icono <b>⚽ Porra 2026</b> como una app — sin descargar nada y sin ocupar espacio.</p>
       <template x-if="deferredPrompt">
         <button class="btn gold block big" @click="installApp()">⬇️ Instalar ahora</button>
@@ -2205,7 +2206,7 @@
   <script src="data.js?v=111"></script>
   <script src="engine.js?v=111"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
-  <script src="app.js?v=119"></script>
+  <script src="app.js?v=120"></script>
   <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.1/dist/cdn.min.js"></script>
 </body>
 </html>

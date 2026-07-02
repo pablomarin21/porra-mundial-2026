@@ -1892,3 +1892,6 @@ tr.clickrow.sel td{background:#e7f1ec}
 .t3-pack-list li{display:flex;gap:8px;align-items:baseline;font-size:.9rem;line-height:1.5;color:#eaf5ef}
 .t3-pack-ic{flex:none}
 .t3-pack-foot{margin:8px 0 0}
+
+/* aviso en el modal de instalar cuando viene por notificaciones (iOS) */
+.nm-ios-note{background:#fff4e3;border:1px solid #f0d2a0;color:#8a5a12;border-radius:10px;padding:9px 11px;margin:4px 0 10px;font-size:.86rem;line-height:1.5}

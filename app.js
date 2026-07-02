@@ -94,7 +94,7 @@ window.porraApp = function () {
     // ui
     toasts: [], busy: false, probBusy: false, syncBusy: false, syncMsg: "",
     showInstall: false, deferredPrompt: null,
-    pushSupported: false, pushOn: false, pushBusy: false, notifBusy: false, notifTitle: "", notifBody: "", showNotifModal: false,
+    pushSupported: false, pushOn: false, pushBusy: false, notifBusy: false, notifTitle: "", notifBody: "", showNotifModal: false, installForNotif: false,
     // pronósticos
     groups: emptyGroups(), thirds: [], bracket: {}, _cols: [], _champion: null,
     extras: { revelacion: "", decepcion: "", pichichi: "", asistente: "", portero: "", sidebets: {} },
@@ -332,7 +332,15 @@ window.porraApp = function () {
     // ---------- Notificaciones push ----------
     async initPush() {
       this.pushSupported = ("serviceWorker" in navigator) && ("PushManager" in window) && ("Notification" in window);
-      if (!this.pushSupported) return;
+      if (!this.pushSupported) {
+        // iPhone/iPad: Apple SOLO permite avisos web si la app está INSTALADA en la pantalla
+        // de inicio. Si la abren desde Safari/WhatsApp sin instalar, el modal de avisos no
+        // puede funcionar → les invitamos a instalar (que es el paso previo para los avisos).
+        if (this.isIOS && !this.isStandalone && !sessionStorage.getItem("porra_notif_dismissed")) {
+          setTimeout(() => { if (!this.showInstall) { this.installForNotif = true; this.showInstall = true; } }, 2600);
+        }
+        return;
+      }
       try {
         const reg = await navigator.serviceWorker.register("sw.js?v=111");
         const sub = await reg.pushManager.getSubscription();
@@ -1230,7 +1238,7 @@ window.porraApp = function () {
       try { await this.deferredPrompt.userChoice; } catch (e) {}
       this.deferredPrompt = null; this.showInstall = false;
     },
-    closeInstall() { this.showInstall = false; try { localStorage.setItem("porra_install_seen", "1"); } catch (e) {} },
+    closeInstall() { this.showInstall = false; try { localStorage.setItem("porra_install_seen", "1"); if (this.installForNotif) sessionStorage.setItem("porra_notif_dismissed", "1"); } catch (e) {} this.installForNotif = false; },
 
     // ---------- toasts / rpc ----------
     toast(msg, kind = "ok") { const id = Math.random().toString(36).slice(2); this.toasts.push({ id, msg, kind }); setTimeout(() => { this.toasts = this.toasts.filter((t) => t.id !== id); }, 3800); },
