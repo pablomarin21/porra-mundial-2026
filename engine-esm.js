@@ -491,6 +491,20 @@ const ENGINE=(function(DATA){
   }
 
   // -------- outcome en vivo a partir de los datos de ESPN (+ correcciones manuales) --------
+  // Ronda KO a partir del slug oficial de ESPN (ev.season.slug). Robusto: sobrevive a
+  // penaltis y NO depende de fechas (las ventanas por día se solapan en los cambios de ronda).
+  // Devuelve la ronda a la que ENTRA el ganador (reached), null si no es KO puntuable.
+  function koReachedKey(slug) {
+    const s = (slug || "").toLowerCase();
+    if (s.indexOf("round-of-32") >= 0) return "octavos";  // gana 1/16 → llega a octavos
+    if (s.indexOf("round-of-16") >= 0) return "cuartos";  // gana octavos → llega a cuartos
+    if (s.indexOf("quarter") >= 0) return "semis";        // gana cuartos → llega a semis
+    if (s.indexOf("semi") >= 0) return "final";           // gana semis → llega a la final
+    if (s.indexOf("third") >= 0 || s.indexOf("3rd") >= 0) return null; // 3er puesto: no puntúa
+    if (s.indexOf("final") >= 0) return "champion";       // gana la final → campeón
+    return null;
+  }
+
   function outcomeFromEspn(events, dbResults, extrasActual) {
     dbResults = dbResults || {};
     const pairToFx = {};
@@ -510,12 +524,11 @@ const ENGINE=(function(DATA){
       const inPlay = stype.state === "in";
       const date = (ev.date || "").slice(0, 10);
       const sA = parseInt(A.score, 10), sB = parseInt(B.score, 10);
-      const koWin = DATA.KO_WINDOWS.find((w) => date >= w.from && date <= w.to);
+      const slug = ((ev.season && ev.season.slug) || "").toLowerCase();
+      const reachedKey = koReachedKey(slug);   // ronda KO según ESPN (null si grupo/3er/otro)
       const fx = pairToFx[[tA, tB].slice().sort().join("|")];
-      // Es un partido de GRUPO si los dos equipos forman un cruce de grupo y aún no está registrado
-      // (independiente de la fecha: la última jornada de grupos puede caer el mismo día que empiezan
-      //  los 1/16). Si el cruce ya está registrado y estamos en ventana KO, es una eliminatoria.
-      if (fx && !groupMap[fx.code]) {
+      // GRUPO: par de un cruce de grupo, aún no registrado, y ESPN NO lo marca como ronda KO.
+      if (fx && !groupMap[fx.code] && !reachedKey) {
         if (completed && !isNaN(sA) && !isNaN(sB)) {
           const home = fx.home === tA ? sA : sB, away = fx.home === tA ? sB : sA;
           groupMap[fx.code] = { played: true, home_score: home, away_score: away };
@@ -523,9 +536,15 @@ const ENGINE=(function(DATA){
           const home = fx.home === tA ? sA : sB, away = fx.home === tA ? sB : sA;
           liveExtra[fx.code] = { played: true, home_score: home, away_score: away, _live: true, status: stype.shortDetail || stype.detail || stype.description || "" };
         }
-      } else if (koWin && completed) {
-        let w = A.winner ? tA : (B.winner ? tB : (!isNaN(sA) && !isNaN(sB) ? (sA > sB ? tA : (sB > sA ? tB : null)) : null));
-        if (w) { if (koWin.reached === "champion") ko.champion = w; else ko[koWin.reached].add(w); }
+      } else if (completed) {
+        // ELIMINATORIA: la ronda la da ESPN (season.slug), no la fecha. Si por lo que sea no
+        // viniera slug, caemos a la ventana por fecha como último recurso.
+        let rk = reachedKey;
+        if (!rk && !slug) { const koWin = DATA.KO_WINDOWS.find((w) => date >= w.from && date <= w.to); rk = koWin ? koWin.reached : null; }
+        if (rk) {
+          let w = A.winner ? tA : (B.winner ? tB : (!isNaN(sA) && !isNaN(sB) ? (sA > sB ? tA : (sB > sA ? tB : null)) : null));
+          if (w) { if (rk === "champion") ko.champion = w; else ko[rk].add(w); }
+        }
       }
     }
     // correcciones manuales (DB) de grupos

@@ -537,11 +537,13 @@ window.porraApp = function () {
     get todayKey() { return this._dayKey(new Date(this.nowTs || Date.now()).toISOString()); },
     // ---- ⚡ PARTIDOS DE HOY (eliminatorias): qué puede sumar cada uno según el resultado ----
     _koStage(match) {
-      if (match >= 73 && match <= 88) return { key: "octavos", pts: this.settings.octavos, bonus: 2, round: "Octavos" };
-      if (match >= 89 && match <= 96) return { key: "cuartos", pts: this.settings.cuartos, bonus: 4, round: "Cuartos" };
-      if (match >= 97 && match <= 100) return { key: "semis", pts: this.settings.semis, bonus: 5, round: "Semis" };
-      if (match === 101 || match === 102) return { key: "final", pts: this.settings.finalists, bonus: 8, round: "Final" };
-      if (match === 104) return { key: "champion", pts: this.settings.champion, bonus: 13, round: "Campeón" };
+      // key/pts = ronda a la que ENTRA el ganador (así puntúa el motor); round = la ronda que
+      // es ESE partido (etiqueta correcta para mostrar: 73-88 son dieciseisavos, no octavos).
+      if (match >= 73 && match <= 88) return { key: "octavos", pts: this.settings.octavos, bonus: 2, round: "Dieciseisavos" };
+      if (match >= 89 && match <= 96) return { key: "cuartos", pts: this.settings.cuartos, bonus: 4, round: "Octavos" };
+      if (match >= 97 && match <= 100) return { key: "semis", pts: this.settings.semis, bonus: 5, round: "Cuartos" };
+      if (match === 101 || match === 102) return { key: "final", pts: this.settings.finalists, bonus: 8, round: "Semifinal" };
+      if (match === 104) return { key: "champion", pts: this.settings.champion, bonus: 13, round: "Final" };
       return null;
     },
     // Jornada futbolística en hora de España: [hoy 06:00, mañana 06:00). Así la MADRUGADA del día
