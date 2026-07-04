@@ -1739,19 +1739,39 @@ window.porraApp = function () {
     },
     refreshLiveBracket() {
       const RES = this._resMap;
+      // Los ganadores KO vienen de ESPN en oc.reached (conjuntos por ronda), NO de la DB (vacía).
+      const reached = (this.outcome && this.outcome.reached) || {};
+      const inSet = (name, t) => { const s = reached[name]; return !!(t && s && s.has && s.has(t)); };
       const standings = {}; let complete = true;
       for (const L of D.GROUP_LETTERS) { const s = Eng.groupStandings(L, RES, false, null); standings[L] = s; if (!s._complete) complete = false; }
-      const wOf = (n) => { const r = RES[n] || RES[String(n)]; return r && r.played && r.winner ? r.winner : null; };
-      const tbm = {};
       let built = null;
       if (complete) { try { built = Eng.buildR32Teams(Eng.computeQualifiers(standings)); } catch (e) {} }
       const stored = (n) => RES[String(n)];
-      for (const m of D.R32) { const r = stored(m.match); tbm[m.match] = r && r.home_team ? { a: r.home_team, b: r.away_team } : (built ? built.teams[m.match] : { a: null, b: null }); }
-      const winnerOf = {}; for (const m of D.R32) winnerOf[m.match] = wOf(m.match);
-      for (const list of [D.R16, D.QF, D.SF, [D.FINAL]]) for (const m of list) {
+      const tbm = {}, winnerOf = {};
+      // Ganador de un cruce = corrección manual (DB) o el equipo del cruce que ESPN ya tiene en
+      // el conjunto "reached" de la ronda a la que ENTRA el ganador.
+      const winOf = (pair, reachName, dbWin) => dbWin || (inSet(reachName, pair.a) ? pair.a : (inSet(reachName, pair.b) ? pair.b : null));
+      // 1/16: la pareja sale de los grupos; ganar → reached.octavos.
+      for (const m of D.R32) {
         const r = stored(m.match);
-        tbm[m.match] = { a: r && r.home_team ? r.home_team : (winnerOf[m.a] || null), b: r && r.away_team ? r.away_team : (winnerOf[m.b] || null) };
-        winnerOf[m.match] = wOf(m.match);
+        const pair = r && r.home_team ? { a: r.home_team, b: r.away_team } : (built ? built.teams[m.match] : { a: null, b: null });
+        tbm[m.match] = pair;
+        winnerOf[m.match] = winOf(pair, "octavos", r && r.winner);
+      }
+      // Rondas siguientes: la pareja son los ganadores de la ronda anterior; ganar → reached de ESA ronda.
+      const rounds = [{ list: D.R16, reach: "cuartos" }, { list: D.QF, reach: "semis" }, { list: D.SF, reach: "final" }];
+      for (const rd of rounds) for (const m of rd.list) {
+        const r = stored(m.match);
+        const pair = { a: (r && r.home_team) || winnerOf[m.a] || null, b: (r && r.away_team) || winnerOf[m.b] || null };
+        tbm[m.match] = pair;
+        winnerOf[m.match] = winOf(pair, rd.reach, r && r.winner);
+      }
+      // Final: el ganador es el campeón (reached.champion) o la corrección de DB.
+      { const m = D.FINAL; const r = stored(m.match);
+        const pair = { a: (r && r.home_team) || winnerOf[m.a] || null, b: (r && r.away_team) || winnerOf[m.b] || null };
+        tbm[m.match] = pair;
+        const champ = reached.champion || (r && r.winner) || null;
+        winnerOf[m.match] = (champ && (champ === pair.a || champ === pair.b)) ? champ : ((r && r.winner) || null);
       }
       this.liveBr = { teamsByMatch: tbm, winnerOf, complete };
     },
