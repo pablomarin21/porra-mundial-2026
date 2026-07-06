@@ -449,7 +449,8 @@ table.mini tr.qual{background:#eafaf0} table.mini tr.third{background:#fff7e3}
 .kt-scol{display:flex;align-items:center;gap:5px;justify-content:center;font-weight:800;color:#37474f;text-align:center;padding:3px 6px;border-radius:8px}
 .kt-scol.win{background:#dff7e6;color:#14532d}
 /* valor por jugador y equipo: +N o «·» */
-.kt-sv{text-align:center;font-weight:800;font-variant-numeric:tabular-nums;font-size:.92rem;color:#8a95a3;padding:4px 6px;border-radius:8px;background:#f1f5f4}
+.kt-sv{display:flex;align-items:center;justify-content:center;gap:4px;text-align:center;font-weight:800;font-variant-numeric:tabular-nums;font-size:.92rem;color:#8a95a3;padding:4px 6px;border-radius:8px;background:#f1f5f4}
+.kt-svic{font-size:.82rem;flex:none;line-height:1}
 .kt-sv.best{background:#dff7e6;color:#14532d;box-shadow:inset 0 0 0 1.5px #9fd9b4}
 .kt-sv.win{outline:2px solid var(--gold)}
 .kt-good-txt{color:#1c6e44}

@@ -35,7 +35,7 @@
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="Porra Mundial" />
-  <link rel="stylesheet" href="styles.css?v=124" />
+  <link rel="stylesheet" href="styles.css?v=125" />
 </head>
 <body x-data="porraApp()" x-init="init()" x-cloak>
 
@@ -636,12 +636,12 @@
             <template x-for="p in m.players" :key="'ktlp'+m.match+p.id">
               <div class="kt-prow" :class="{me:p.isMe, zero:p.max===0}">
                 <span class="kt-pn" x-text="p.name"></span>
-                <span class="kt-sv" :class="{best:(p.best==='a'||p.best==='both')&&p.sumA>0, win:(m.live||m.done)&&m.leader===m.teamA}" x-text="p.sumA>0?'+'+p.sumA:'·'"></span>
-                <span class="kt-sv" :class="{best:(p.best==='b'||p.best==='both')&&p.sumB>0, win:(m.live||m.done)&&m.leader===m.teamB}" x-text="p.sumB>0?'+'+p.sumB:'·'"></span>
+                <span class="kt-sv" :class="{best:(p.best==='a'||p.best==='both')&&p.sumA>0, win:(m.live||m.done)&&m.leader===m.teamA}"><small class="kt-svic" x-show="p.sumA>0" x-text="p.icA"></small><span x-text="p.sumA>0?'+'+p.sumA:'·'"></span></span>
+                <span class="kt-sv" :class="{best:(p.best==='b'||p.best==='both')&&p.sumB>0, win:(m.live||m.done)&&m.leader===m.teamB}"><small class="kt-svic" x-show="p.sumB>0" x-text="p.icB"></small><span x-text="p.sumB>0?'+'+p.sumB:'·'"></span></span>
               </div>
             </template>
           </div>
-          <div class="kt-foot muted tiny">Estamos en <b x-text="m.round"></b>: ganar este cruce vale 🏆 +<span x-text="m.pts"></span> (cuadro de antes) · 🗓️ +<span x-text="m.bonus"></span> (2º cuadro) → con los dos, +<span x-text="m.pts+m.bonus"></span>. Cada número de arriba = lo que suma esa persona <b>si gana ese equipo</b> (<b class="kt-good-txt">verde</b> = lo que más le conviene, «·» = no suma). Cuanto más avanza el Mundial, <b>más paga cada ronda</b> (cuartos, semis y final valen más).</div>
+          <div class="kt-foot muted tiny">Estamos en <b x-text="m.round"></b>: ganar este cruce vale 🏆 +<span x-text="m.pts"></span> (cuadro de antes) · 🗓️ +<span x-text="m.bonus"></span> (2º cuadro) → con los dos, +<span x-text="m.pts+m.bonus"></span>. El icono de cada casilla dice <b>de dónde sale</b>: 🏆 = solo lo tienes en el cuadro de antes · 🗓️ = solo en el 2º · 🏆🗓️ = en los dos. <b class="kt-good-txt">Verde</b> = lo que más le conviene · «·» = no suma. Cuanto más avanza el Mundial, <b>más paga cada ronda</b>.</div>
         </div>
       </template>
     </div>
@@ -1762,12 +1762,12 @@
             <template x-for="p in m.players" :key="'ktp'+m.match+p.id">
               <div class="kt-prow" :class="{me:p.isMe, zero:p.max===0}">
                 <span class="kt-pn" x-text="p.name"></span>
-                <span class="kt-sv" :class="{best:(p.best==='a'||p.best==='both')&&p.sumA>0, win:(m.live||m.done)&&m.leader===m.teamA}" x-text="p.sumA>0?'+'+p.sumA:'·'"></span>
-                <span class="kt-sv" :class="{best:(p.best==='b'||p.best==='both')&&p.sumB>0, win:(m.live||m.done)&&m.leader===m.teamB}" x-text="p.sumB>0?'+'+p.sumB:'·'"></span>
+                <span class="kt-sv" :class="{best:(p.best==='a'||p.best==='both')&&p.sumA>0, win:(m.live||m.done)&&m.leader===m.teamA}"><small class="kt-svic" x-show="p.sumA>0" x-text="p.icA"></small><span x-text="p.sumA>0?'+'+p.sumA:'·'"></span></span>
+                <span class="kt-sv" :class="{best:(p.best==='b'||p.best==='both')&&p.sumB>0, win:(m.live||m.done)&&m.leader===m.teamB}"><small class="kt-svic" x-show="p.sumB>0" x-text="p.icB"></small><span x-text="p.sumB>0?'+'+p.sumB:'·'"></span></span>
               </div>
             </template>
           </div>
-          <div class="kt-foot muted tiny">Estamos en <b x-text="m.round"></b>: ganar este cruce vale 🏆 +<span x-text="m.pts"></span> (cuadro de antes) · 🗓️ +<span x-text="m.bonus"></span> (2º cuadro) → con los dos, +<span x-text="m.pts+m.bonus"></span>. Cada número de arriba = lo que suma esa persona <b>si gana ese equipo</b> (<b class="kt-good-txt">verde</b> = lo que más le conviene, «·» = no suma). Cuanto más avanza el Mundial, <b>más paga cada ronda</b> (cuartos, semis y final valen más).</div>
+          <div class="kt-foot muted tiny">Estamos en <b x-text="m.round"></b>: ganar este cruce vale 🏆 +<span x-text="m.pts"></span> (cuadro de antes) · 🗓️ +<span x-text="m.bonus"></span> (2º cuadro) → con los dos, +<span x-text="m.pts+m.bonus"></span>. El icono de cada casilla dice <b>de dónde sale</b>: 🏆 = solo lo tienes en el cuadro de antes · 🗓️ = solo en el 2º · 🏆🗓️ = en los dos. <b class="kt-good-txt">Verde</b> = lo que más le conviene · «·» = no suma. Cuanto más avanza el Mundial, <b>más paga cada ronda</b>.</div>
         </div>
       </template>
     </div>
@@ -2196,9 +2196,9 @@
 
   <!-- ====== Dependencias ====== -->
   <script src="data.js?v=121"></script>
-  <script src="engine.js?v=124"></script>
+  <script src="engine.js?v=125"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
-  <script src="app.js?v=124"></script>
+  <script src="app.js?v=125"></script>
   <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.1/dist/cdn.min.js"></script>
 </body>
 </html>

@@ -584,10 +584,13 @@ window.porraApp = function () {
           // Clave: un jugador puede tener a AMBOS en su cuadro original (venían por llaves
           // distintas y aquí chocan) → el original suma gane quien gane. Por eso hay que
           // mostrar el total por CADA equipo, no un solo chip (antes engañaba).
-          const sumFor = (t) => (hasMain(p.dp, t) ? st.pts : 0) + (p.b2[mk] === t ? st.bonus : 0);
-          const sumA = sumFor(teamA), sumB = sumFor(teamB);
-          const max = Math.max(sumA, sumB);
-          return { id: p.id, name: p.name, isMe: p.isMe, sumA, sumB, max,
+          // Por cada equipo: cuánto suma Y de qué cuadro sale (🏆 original, 🗓️ 2º, 🏆🗓️ los dos)
+          // → así se justifica por qué uno saca +7 (lo tenía en el de antes) y otro +4 (solo en el 2º).
+          const cell = (t) => { const o = hasMain(p.dp, t), b = (p.b2[mk] === t);
+            return { sum: (o ? st.pts : 0) + (b ? st.bonus : 0), ic: o && b ? "🏆🗓️" : (o ? "🏆" : (b ? "🗓️" : "")) }; };
+          const cA = cell(teamA), cB = cell(teamB);
+          const sumA = cA.sum, sumB = cB.sum, max = Math.max(sumA, sumB);
+          return { id: p.id, name: p.name, isMe: p.isMe, sumA, icA: cA.ic, sumB, icB: cB.ic, max,
             best: sumA === sumB ? (sumA > 0 ? "both" : "none") : (sumA > sumB ? "a" : "b") };
         }).sort((a, b) => (b.isMe - a.isMe) || (b.max - a.max) || a.name.localeCompare(b.name));
         out.push({ match: Number(mk), kickoffSpain: this.madridTime(iso), ts, round: st.round, stageKey: st.key,
