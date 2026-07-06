@@ -35,7 +35,7 @@
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="Porra Mundial" />
-  <link rel="stylesheet" href="styles.css?v=123" />
+  <link rel="stylesheet" href="styles.css?v=124" />
 </head>
 <body x-data="porraApp()" x-init="init()" x-cloak>
 
@@ -641,7 +641,7 @@
               </div>
             </template>
           </div>
-          <div class="kt-foot muted tiny">Cada número = lo que suma esa persona <b>si gana ese equipo</b>, juntando sus dos cuadros (🏆 el de antes + 🗓️ el del 28-jun). <b class="kt-good-txt">Verde</b> = lo que más le conviene · «·» = no suma.</div>
+          <div class="kt-foot muted tiny">Estamos en <b x-text="m.round"></b>: ganar este cruce vale 🏆 +<span x-text="m.pts"></span> (cuadro de antes) · 🗓️ +<span x-text="m.bonus"></span> (2º cuadro) → con los dos, +<span x-text="m.pts+m.bonus"></span>. Cada número de arriba = lo que suma esa persona <b>si gana ese equipo</b> (<b class="kt-good-txt">verde</b> = lo que más le conviene, «·» = no suma). Cuanto más avanza el Mundial, <b>más paga cada ronda</b> (cuartos, semis y final valen más).</div>
         </div>
       </template>
     </div>
@@ -1767,7 +1767,7 @@
               </div>
             </template>
           </div>
-          <div class="kt-foot muted tiny">Cada número = lo que suma esa persona <b>si gana ese equipo</b>, juntando sus dos cuadros (🏆 el de antes + 🗓️ el del 28-jun). <b class="kt-good-txt">Verde</b> = lo que más le conviene · «·» = no suma.</div>
+          <div class="kt-foot muted tiny">Estamos en <b x-text="m.round"></b>: ganar este cruce vale 🏆 +<span x-text="m.pts"></span> (cuadro de antes) · 🗓️ +<span x-text="m.bonus"></span> (2º cuadro) → con los dos, +<span x-text="m.pts+m.bonus"></span>. Cada número de arriba = lo que suma esa persona <b>si gana ese equipo</b> (<b class="kt-good-txt">verde</b> = lo que más le conviene, «·» = no suma). Cuanto más avanza el Mundial, <b>más paga cada ronda</b> (cuartos, semis y final valen más).</div>
         </div>
       </template>
     </div>
@@ -2196,9 +2196,9 @@
 
   <!-- ====== Dependencias ====== -->
   <script src="data.js?v=121"></script>
-  <script src="engine.js?v=123"></script>
+  <script src="engine.js?v=124"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
-  <script src="app.js?v=123"></script>
+  <script src="app.js?v=124"></script>
   <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.1/dist/cdn.min.js"></script>
 </body>
 </html>
