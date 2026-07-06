@@ -35,7 +35,7 @@
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="Porra Mundial" />
-  <link rel="stylesheet" href="styles.css?v=121" />
+  <link rel="stylesheet" href="styles.css?v=123" />
 </head>
 <body x-data="porraApp()" x-init="init()" x-cloak>
 
@@ -627,25 +627,21 @@
             <span class="kt-chip cuadro"><small>🏆</small> el de antes del Mundial <span class="kt-pt" x-text="'+'+m.pts"></span></span>
             <span class="kt-chip bonus"><small>🗓️</small> el 2º, del 28-jun <span class="kt-pt" x-text="'+'+m.bonus"></span></span>
           </div>
+          <div class="kt-suh">
+            <span class="kt-pn">Cuánto suma cada uno…</span>
+            <span class="kt-scol" :class="{win:(m.live||m.done)&&m.leader===m.teamA}">si gana <span class="flag" x-text="m.teamAflag"></span> <b x-text="m.teamAes"></b></span>
+            <span class="kt-scol" :class="{win:(m.live||m.done)&&m.leader===m.teamB}">si gana <span class="flag" x-text="m.teamBflag"></span> <b x-text="m.teamBes"></b></span>
+          </div>
           <div class="kt-players">
             <template x-for="p in m.players" :key="'ktlp'+m.match+p.id">
-              <div class="kt-prow" :class="{me:p.isMe, zero:!p.picks.length}">
+              <div class="kt-prow" :class="{me:p.isMe, zero:p.max===0}">
                 <span class="kt-pn" x-text="p.name"></span>
-                <span class="kt-pk">
-                  <template x-if="p.same">
-                    <span class="kt-chip both" :class="(m.live||m.done)&&m.leader ? (p.sameT===m.leader?'hit':'miss') : ''"><small>🏆🗓️</small> <span class="flag" x-text="p.sameFlag"></span> <b x-text="p.sameEs"></b><span class="kt-pt" x-text="'+'+p.total"></span></span>
-                  </template>
-                  <template x-if="!p.same">
-                    <template x-for="(pk,pi) in p.picks" :key="'pkl'+m.match+p.id+pi">
-                      <span class="kt-chip" :class="[pk.k, (m.live||m.done)&&m.leader ? (pk.t===m.leader?'hit':'miss') : '']"><small x-text="pk.ic"></small> <span class="flag" x-text="pk.flag"></span> <b x-text="pk.es"></b><span class="kt-pt" x-text="'+'+pk.pts"></span></span>
-                    </template>
-                    <span class="kt-none" x-show="!p.picks.length">no puso a ninguno de estos dos equipos</span>
-                  </template>
-                </span>
+                <span class="kt-sv" :class="{best:(p.best==='a'||p.best==='both')&&p.sumA>0, win:(m.live||m.done)&&m.leader===m.teamA}" x-text="p.sumA>0?'+'+p.sumA:'·'"></span>
+                <span class="kt-sv" :class="{best:(p.best==='b'||p.best==='both')&&p.sumB>0, win:(m.live||m.done)&&m.leader===m.teamB}" x-text="p.sumB>0?'+'+p.sumB:'·'"></span>
               </div>
             </template>
           </div>
-          <div class="kt-foot muted tiny">Suma quien tenga al <b>ganador del cruce</b> en su cuadro: 🏆 +<span x-text="m.pts"></span> · 🗓️ +<span x-text="m.bonus"></span> · con los dos, +<span x-text="m.pts+m.bonus"></span>.</div>
+          <div class="kt-foot muted tiny">Cada número = lo que suma esa persona <b>si gana ese equipo</b>, juntando sus dos cuadros (🏆 el de antes + 🗓️ el del 28-jun). <b class="kt-good-txt">Verde</b> = lo que más le conviene · «·» = no suma.</div>
         </div>
       </template>
     </div>
@@ -1757,25 +1753,21 @@
             <span class="kt-chip cuadro"><small>🏆</small> el de antes del Mundial <span class="kt-pt" x-text="'+'+m.pts"></span></span>
             <span class="kt-chip bonus"><small>🗓️</small> el 2º, del 28-jun <span class="kt-pt" x-text="'+'+m.bonus"></span></span>
           </div>
+          <div class="kt-suh">
+            <span class="kt-pn">Cuánto suma cada uno…</span>
+            <span class="kt-scol" :class="{win:(m.live||m.done)&&m.leader===m.teamA}">si gana <span class="flag" x-text="m.teamAflag"></span> <b x-text="m.teamAes"></b></span>
+            <span class="kt-scol" :class="{win:(m.live||m.done)&&m.leader===m.teamB}">si gana <span class="flag" x-text="m.teamBflag"></span> <b x-text="m.teamBes"></b></span>
+          </div>
           <div class="kt-players">
             <template x-for="p in m.players" :key="'ktp'+m.match+p.id">
-              <div class="kt-prow" :class="{me:p.isMe, zero:!p.picks.length}">
+              <div class="kt-prow" :class="{me:p.isMe, zero:p.max===0}">
                 <span class="kt-pn" x-text="p.name"></span>
-                <span class="kt-pk">
-                  <template x-if="p.same">
-                    <span class="kt-chip both" :class="(m.live||m.done)&&m.leader ? (p.sameT===m.leader?'hit':'miss') : ''"><small>🏆🗓️</small> <span class="flag" x-text="p.sameFlag"></span> <b x-text="p.sameEs"></b><span class="kt-pt" x-text="'+'+p.total"></span></span>
-                  </template>
-                  <template x-if="!p.same">
-                    <template x-for="(pk,pi) in p.picks" :key="'pk'+m.match+p.id+pi">
-                      <span class="kt-chip" :class="[pk.k, (m.live||m.done)&&m.leader ? (pk.t===m.leader?'hit':'miss') : '']"><small x-text="pk.ic"></small> <span class="flag" x-text="pk.flag"></span> <b x-text="pk.es"></b><span class="kt-pt" x-text="'+'+pk.pts"></span></span>
-                    </template>
-                    <span class="kt-none" x-show="!p.picks.length">no puso a ninguno de estos dos equipos</span>
-                  </template>
-                </span>
+                <span class="kt-sv" :class="{best:(p.best==='a'||p.best==='both')&&p.sumA>0, win:(m.live||m.done)&&m.leader===m.teamA}" x-text="p.sumA>0?'+'+p.sumA:'·'"></span>
+                <span class="kt-sv" :class="{best:(p.best==='b'||p.best==='both')&&p.sumB>0, win:(m.live||m.done)&&m.leader===m.teamB}" x-text="p.sumB>0?'+'+p.sumB:'·'"></span>
               </div>
             </template>
           </div>
-          <div class="kt-foot muted tiny">Suma quien tenga al <b>ganador del cruce</b> en su cuadro: 🏆 +<span x-text="m.pts"></span> · 🗓️ +<span x-text="m.bonus"></span> · con los dos, +<span x-text="m.pts+m.bonus"></span>.</div>
+          <div class="kt-foot muted tiny">Cada número = lo que suma esa persona <b>si gana ese equipo</b>, juntando sus dos cuadros (🏆 el de antes + 🗓️ el del 28-jun). <b class="kt-good-txt">Verde</b> = lo que más le conviene · «·» = no suma.</div>
         </div>
       </template>
     </div>
@@ -2204,9 +2196,9 @@
 
   <!-- ====== Dependencias ====== -->
   <script src="data.js?v=121"></script>
-  <script src="engine.js?v=121"></script>
+  <script src="engine.js?v=123"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
-  <script src="app.js?v=122"></script>
+  <script src="app.js?v=123"></script>
   <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.1/dist/cdn.min.js"></script>
 </body>
 </html>

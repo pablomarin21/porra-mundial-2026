@@ -578,16 +578,17 @@ window.porraApp = function () {
         const hasMain = (P, t) => champ ? (P.champion === t) : !!(P[st.key] && P[st.key].has && P[st.key].has(t));
         const hasBon = (P, t) => champ ? (P.b2 && P.b2.champion === t) : !!(P.b2 && P.b2[st.key] && P.b2[st.key].has && P.b2[st.key].has(t));
         const rows = players.map((p) => {
-          // QUÉ PUSO cada uno para ESTE partido: el equipo que tiene avanzando en cada cuadro
-          const iniT = hasMain(p.dp, teamA) ? teamA : (hasMain(p.dp, teamB) ? teamB : null);     // cuadro de antes del Mundial
-          const bonT = (p.b2[mk] === teamA || p.b2[mk] === teamB) ? p.b2[mk] : null;              // su pick del 28-jun para este cruce
-          const same = !!(iniT && bonT && iniT === bonT);
-          const picks = [];
-          if (iniT) picks.push({ k: "cuadro", ic: "🏆", t: iniT, es: D.es(iniT), flag: D.flag(iniT), pts: st.pts });
-          if (bonT) picks.push({ k: "bonus", ic: "🗓️", t: bonT, es: D.es(bonT), flag: D.flag(bonT), pts: st.bonus });
-          const total = (iniT ? st.pts : 0) + (bonT ? st.bonus : 0);
-          return { id: p.id, name: p.name, isMe: p.isMe, picks, same, sameT: same ? iniT : null,
-            sameEs: same ? D.es(iniT) : null, sameFlag: same ? D.flag(iniT) : null, total, max: total };
+          // Cuánto SUMA cada uno si gana A o si gana B, juntando sus 2 cuadros:
+          // 🏆 el original (si tiene a ese equipo llegando a la ronda, +st.pts) y
+          // 🗓️ el del 28-jun (si su pick de ESTE cruce es ese equipo, +st.bonus).
+          // Clave: un jugador puede tener a AMBOS en su cuadro original (venían por llaves
+          // distintas y aquí chocan) → el original suma gane quien gane. Por eso hay que
+          // mostrar el total por CADA equipo, no un solo chip (antes engañaba).
+          const sumFor = (t) => (hasMain(p.dp, t) ? st.pts : 0) + (p.b2[mk] === t ? st.bonus : 0);
+          const sumA = sumFor(teamA), sumB = sumFor(teamB);
+          const max = Math.max(sumA, sumB);
+          return { id: p.id, name: p.name, isMe: p.isMe, sumA, sumB, max,
+            best: sumA === sumB ? (sumA > 0 ? "both" : "none") : (sumA > sumB ? "a" : "b") };
         }).sort((a, b) => (b.isMe - a.isMe) || (b.max - a.max) || a.name.localeCompare(b.name));
         out.push({ match: Number(mk), kickoffSpain: this.madridTime(iso), ts, round: st.round, stageKey: st.key,
           pts: st.pts, bonus: st.bonus,
@@ -602,7 +603,7 @@ window.porraApp = function () {
         if ((card.live || card.done) && card.hs != null && card.as != null && Number(card.hs) !== Number(card.as)) {
           card.leader = Number(card.hs) > Number(card.as) ? card.teamA : card.teamB;
           const gains = card.players
-            .map((p) => { const g = p.picks.filter((pk) => pk.t === card.leader).reduce((s, pk) => s + pk.pts, 0); return g > 0 ? p.name + " +" + g : null; })
+            .map((p) => { const g = card.leader === card.teamA ? p.sumA : p.sumB; return g > 0 ? p.name + " +" + g : null; })
             .filter(Boolean);
           card.nowWho = gains.length ? gains.join(" · ") : "nadie";
         }
