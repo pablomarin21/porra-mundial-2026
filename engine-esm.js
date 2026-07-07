@@ -581,6 +581,9 @@ const ENGINE=(function(DATA){
       const r = dbResults[k]; if (!r || !r.played || !r.winner) continue;
       const rr = roundOf[k] || roundOf[Number(k)]; if (!rr) continue;
       if (rr === "champion") ko.champion = r.winner; else ko[rr].add(r.winner);
+      // el perdedor de una corrección KO también cuenta como eliminado (para 'decepción')
+      const loser = r.winner === r.home_team ? r.away_team : (r.winner === r.away_team ? r.home_team : null);
+      if (loser) koLosers.add(loser);
     }
     oc.reached = {
       octavos: ko.octavos, cuartos: ko.cuartos, semis: ko.semis, final: ko.final, champion: ko.champion,

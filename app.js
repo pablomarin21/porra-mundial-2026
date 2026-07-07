@@ -1393,7 +1393,7 @@ window.porraApp = function () {
       });
     },
     async loadExtrasActual() {
-      try { this.extrasActual = (await this.rpc("porra_get_extras", {})) || {}; this._extrasLoaded = true; } catch (e) { this.extrasActual = {}; }
+      try { this.extrasActual = (await this.rpc("porra_get_extras", {})) || {}; this._extrasLoaded = true; } catch (e) { if (!this._extrasLoaded) this.extrasActual = {}; }   // en fallo tras éxito previo, conservar el bueno (no doblar)
       this.extrasActualEdit = Object.assign({ revelacion: "", decepcion: "", pichichi: "", asistente: "", portero: "", sidebets: {} }, this.extrasActual, { sidebets: Object.assign({}, this.extrasActual.sidebets || {}) });
     },
     async saveExtrasActual() {
@@ -2215,10 +2215,12 @@ window.porraApp = function () {
         const serverDec = (pick) => Array.isArray(ad) ? (ad.indexOf(pick) >= 0 ? pts : 0) : ((ad && pick === ad) ? pts : 0);
         const byId = {}; (this.entries || []).forEach((e) => { byId[e.id] = e; });
         (this.ranked || []).forEach((r) => {
+          // IDEMPOTENTE: recalcula SIEMPRE desde el punto BASE del server (_srvPts), nunca acumula,
+          // así dos loadBoard solapados (timer 60s / visibilitychange) no doblan la decepción.
+          if (r._srvPts == null) r._srvPts = r.points || 0;
           const e = byId[r.id]; const pick = e && e.picks && e.picks.extras && e.picks.extras.decepcion;
-          if (!pick) return;
-          const delta = (conf.has(pick) ? pts : 0) - serverDec(pick);
-          if (delta) r.points = (r.points || 0) + delta;
+          const delta = pick ? ((conf.has(pick) ? pts : 0) - serverDec(pick)) : 0;
+          r.points = r._srvPts + delta;
         });
       } catch (e) {}
     },
