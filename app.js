@@ -189,8 +189,11 @@ window.porraApp = function () {
       const a = this.extrasActual || {};
       const oc = this.outcome;
       let esp = 0;
+      const R = oc && oc.reached;
+      const octPend = !!(R && [...(R.octavos || [])].some((t) => !R.cuartos.has(t) && !((oc.koLosers) || new Set()).has(t)));  // ¿queda algún vivo en octavos?
       for (const k of ["revelacion", "decepcion", "pichichi", "asistente", "portero"]) {
         if (k === "decepcion") { if (oc && oc.decepcionPending && oc.decepcionPending.size) esp += (S.decepcion || 0); continue; }  // ya resuelta salvo favoritos vivos
+        if (k === "revelacion") { if (octPend) esp += (S.revelacion || 0); continue; }  // en juego mientras haya humildes que puedan llegar a cuartos
         if (!a[k]) esp += (S[k] || 0);
       }
       const fam = (this.ranked || []).filter((e) => !this.isGuest(e)).map((e) => e.points).filter((p) => p != null);
@@ -943,8 +946,8 @@ window.porraApp = function () {
       if (!this.top3Who && meId) this.top3Who = meId;
       const whoId = this.top3Who || meId;
       if (this.top3Loading) return;
-      this.top3Loading = true; this.top3Analysis = null;
-      await new Promise((r) => setTimeout(r, 40));
+      this.top3Loading = true;   // el x-if ya oculta el bloque mientras carga; NO anular top3Analysis
+      await new Promise((r) => setTimeout(r, 40));                     // (evitar transición obj→null que dispara el race del x-if)
       try {
         if (!whoId) { this.top3Analysis = { none: true }; return; }
         const S = this.settings;
@@ -1102,24 +1105,34 @@ window.porraApp = function () {
         const myExtras = rawExtras(whoId);
         let pendMax = 0, exclPts = 0;
         const especiales = [];
-        const decConf = (this.outcome && this.outcome.decepcionConfirmed) || new Set();
-        const decPend = (this.outcome && this.outcome.decepcionPending) || new Set();
+        const ocT = this.outcome || {};
+        const decConf = ocT.decepcionConfirmed || new Set();
+        const decPend = ocT.decepcionPending || new Set();
+        const revCuartos = (ocT.reached && ocT.reached.cuartos) || new Set();
+        const revOctavos = (ocT.reached && ocT.reached.octavos) || new Set();
+        const koOut = ocT.koLosers || new Set();
         for (const sp of SPECIALS) {
           const myVal = pickOf(myExtras, sp);
           let act = actOf(sp);
           let resolved = !!(act && act.toString().trim());
-          let forcedHit = null;   // decepción por regla: true=acertó (favorito caído), false=ya no puede serlo
+          let forcedHit = null;   // por regla: true=acertó, false=ya no puede
           if (sp.key === "decepcion") {
-            if (myVal && decConf.has(myVal)) { resolved = true; forcedHit = true; act = myVal; }         // ganada
+            if (myVal && decConf.has(myVal)) { resolved = true; forcedHit = true; act = myVal; }         // ganada (favorito caído)
             else if (myVal && decPend.has(myVal)) { resolved = false; }                                    // en juego (Argentina)
             else if (myVal) { resolved = true; forcedHit = false; act = ""; }                              // su equipo ya no puede decepcionar
+          } else if (sp.key === "revelacion") {
+            if (myVal && revCuartos.has(myVal)) { resolved = true; forcedHit = true; act = myVal; }        // llegó a cuartos → revelación
+            else if (myVal && revOctavos.has(myVal) && !koOut.has(myVal)) { resolved = false; }            // vivo, aún puede llegar
+            else if (myVal) { resolved = true; forcedHit = false; act = ""; }                              // cayó antes de cuartos
           }
           if (!myVal && !resolved) continue;
           const myKey = keyOf(myVal, sp);
           const row = { label: sp.label, pts: sp.pts, myPick: myVal ? dispOf(myVal, sp) : "", resolved };
           if (resolved) {
             row.hit = forcedHit !== null ? forcedHit : !!(myKey && myKey === keyOf(act, sp));
-            row.actual = sp.key === "decepcion" ? (forcedHit ? teamEsF(myVal) : "no fue decepción") : dispOf(act, sp);
+            row.actual = sp.key === "decepcion" ? (forcedHit ? teamEsF(myVal) : "no fue decepción")
+                       : sp.key === "revelacion" ? (forcedHit ? teamEsF(myVal) : "no llegó a cuartos")
+                       : dispOf(act, sp);
           } else {
             const share = [], diff = [];
             for (const e of entries) {
@@ -2181,7 +2194,7 @@ window.porraApp = function () {
         const { data, error } = await sb.functions.invoke("porra-prob", { body: { code: this.pool.code } });
         if (!error && data && !data.error && Array.isArray(data.rows)) {
           this.usingServerBoard = true;
-          this._serverHasDecepcion = !!data.decepcionRuling;   // edge nuevo ya aplica la regla → no doblar
+          this._serverHasRuling = !!data.rulingApplied;   // edge nuevo ya aplica las reglas → no doblar
           this.boardLocked = !!data.locked;
           this.simN = data.sims || 4000; this.lastProb = true;
           this.ranked = data.rows.map((r) => ({ id: r.id, first_name: r.first_name, last_name: r.last_name, points: r.points, win: r.win, podium: r.podium, avg: r.avg, complete: r.complete }));
@@ -2194,32 +2207,34 @@ window.porraApp = function () {
       try { await this.loadResults(); if (ok) await this.loadEntries({ recompute: false }); } catch (e) {}
       if (!ok) { this.usingServerBoard = false; try { await this.refreshBoard(); } catch (e) {} }
       try { await this.fetchEspn(false); } catch (e) {}   // refresca outcome + explicación (computeLive)
-      this._applyDecepcionPatch();   // suma la "selección decepción" (el edge viejo no la aplica)
+      this._applySpecialsPatch();   // suma decepción + revelación (el edge viejo no las aplica)
       this.applyTiebreak();   // reordena empates por el sistema de puntuación
       this.probBusy = false;
     },
-    // El board del servidor (edge pinado viejo) NO aplica la regla de "selección decepción"
-    // (favoritos caídos antes de cuartos). La sumamos aquí sobre los puntos del servidor para que
-    // los TOTALES cuadren con el desglose por persona (que ya la incluye vía scoreExtras+oc).
-    // Cuando el edge se actualice devolverá decepcionRuling=true y dejamos de sumarla (anti-doble).
-    _applyDecepcionPatch() {
+    // El board del servidor (edge pinado viejo) NO aplica las reglas nuevas de especiales:
+    // decepción (favorito caído antes de cuartos) ni revelación (humilde que llega a cuartos+).
+    // Sumamos el DELTA (extras con la regla nueva − extras que el edge viejo ya cuenta) sobre los
+    // puntos del server para que los TOTALES cuadren con el desglose por persona (que ya las incluye).
+    // Cuando el edge se actualice devolverá rulingApplied=true y dejamos de sumarlo (anti-doble).
+    _applySpecialsPatch() {
       try {
-        if (!this.usingServerBoard || this._serverHasDecepcion) return;   // recompute local o edge nuevo: ya incluida
+        if (!this.usingServerBoard || this._serverHasRuling) return;   // recompute local o edge nuevo: ya incluidas
         if (!this._extrasLoaded) return;   // sin extrasActual no sabemos qué contó el server → no arriesgar a doblar
-        const oc = this.outcome; const conf = oc && oc.decepcionConfirmed;
-        if (!conf || !conf.size) return;
-        const pts = (this.settings && this.settings.decepcion) || 0; if (!pts) return;
-        // El edge VIEJO ya cuenta la decepción del fallo del admin (extrasActual.decepcion, 1 equipo).
-        // Sumamos solo el DELTA de la regla nueva para NO doblar a quien ya la tiene (p.ej. Germany).
-        const ad = (this.extrasActual || {}).decepcion;
-        const serverDec = (pick) => Array.isArray(ad) ? (ad.indexOf(pick) >= 0 ? pts : 0) : ((ad && pick === ad) ? pts : 0);
+        const oc = this.outcome; if (!oc) return;
+        const S = this.settings; const EA = this.extrasActual || {};
         const byId = {}; (this.entries || []).forEach((e) => { byId[e.id] = e; });
         (this.ranked || []).forEach((r) => {
           // IDEMPOTENTE: recalcula SIEMPRE desde el punto BASE del server (_srvPts), nunca acumula,
-          // así dos loadBoard solapados (timer 60s / visibilitychange) no doblan la decepción.
+          // así dos loadBoard solapados (timer 60s / visibilitychange) no doblan los puntos.
           if (r._srvPts == null) r._srvPts = r.points || 0;
-          const e = byId[r.id]; const pick = e && e.picks && e.picks.extras && e.picks.extras.decepcion;
-          const delta = pick ? ((conf.has(pick) ? pts : 0) - serverDec(pick)) : 0;
+          const e = byId[r.id]; let delta = 0;
+          if (e && e.picks && e.picks.extras) {
+            try {
+              const neo = Eng.scoreExtras(e.picks.extras, EA, S, oc).total;   // regla nueva (decepción + revelación)
+              const old = Eng.scoreExtras(e.picks.extras, EA, S).total;       // lo que el edge viejo ya cuenta (sin oc)
+              delta = neo - old;
+            } catch (x) {}
+          }
           r.points = r._srvPts + delta;
         });
       } catch (e) {}

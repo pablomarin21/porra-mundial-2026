@@ -487,7 +487,9 @@ const ENGINE=(function(DATA){
     const e = extras || {}, a = actuals || {};
     const bd = { revelacion: 0, decepcion: 0, pichichi: 0, asistente: 0, portero: 0, hattrick: 0, dobleRoja: 0 };
     const norm = (s) => (s || "").toString().trim().toLowerCase();
-    if (a.revelacion && e.revelacion === a.revelacion) bd.revelacion += S.revelacion;
+    // REVELACIÓN: equipo humilde que llega a CUARTOS+ (espejo de la decepción). Compat: fallo del admin.
+    const revCuartos = oc && oc.reached && oc.reached.cuartos;
+    if ((revCuartos && e.revelacion && revCuartos.has(e.revelacion)) || (a.revelacion && e.revelacion === a.revelacion)) bd.revelacion += S.revelacion;
     // DECEPCIÓN: puntúa si tu selección está en el set CONFIRMADO (favoritos caídos antes de
     // cuartos + fallo manual del admin). Si no llega 'oc' (compat), cae al modelo viejo de 1 solo.
     const decSet = oc && oc.decepcionConfirmed;
