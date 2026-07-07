@@ -35,7 +35,7 @@
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="Porra Mundial" />
-  <link rel="stylesheet" href="styles.css?v=125" />
+  <link rel="stylesheet" href="styles.css?v=127" />
 </head>
 <body x-data="porraApp()" x-init="init()" x-cloak>
 
@@ -90,6 +90,11 @@
       <button class="nm-later" @click="dismissNotifModal()">Ahora no</button>
       <p class="tiny muted" style="text-align:center;margin:6px 0 0">Solo hay que dar permiso una vez. Se puede quitar cuando quieras.</p>
     </div>
+  </div>
+
+  <!-- ===================== AVISO DE VERSIÓN NUEVA ===================== -->
+  <div class="update-bar" x-show="updateVer" x-cloak @click="forceUpdate()" role="button" tabindex="0" @keydown.enter="forceUpdate()">
+    🔄 Hay una <b>versión nueva</b> de la porra — toca para <b>actualizar</b>
   </div>
 
   <!-- ===================== TOASTS ===================== -->
@@ -2196,9 +2201,9 @@
 
   <!-- ====== Dependencias ====== -->
   <script src="data.js?v=121"></script>
-  <script src="engine.js?v=125"></script>
+  <script src="engine.js?v=127"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
-  <script src="app.js?v=125"></script>
+  <script src="app.js?v=127"></script>
   <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.1/dist/cdn.min.js"></script>
 </body>
 </html>

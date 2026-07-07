@@ -19,6 +19,11 @@ function urlB64ToUint8Array(b) {
 
 const ALL_TEAMS = [].concat(...D.GROUP_LETTERS.map((L) => D.GROUPS[L]));
 
+// Versión con la que se cargó ESTA app (del ?v= del propio <script>). Se compara con
+// ver.txt del servidor para AVISAR (no recargar solo) cuando hay una versión más nueva,
+// y que nadie se quede con una versión vieja en caché sin enterarse.
+const APP_VER = (function () { try { const s = document.currentScript; const m = s && s.src.match(/[?&]v=(\d+)/); return m ? m[1] : ""; } catch (e) { return ""; } })();
+
 // ---- Rendimiento (móvil): caches a nivel de MÓDULO, fuera del proxy reactivo ----
 // Intl.DateTimeFormat es muy caro de construir: con ~104 partidos × varios getters
 // por render se creaban cientos por actualización. Un formatter por (locale+opts).
@@ -94,7 +99,7 @@ window.porraApp = function () {
     // ui
     toasts: [], busy: false, probBusy: false, syncBusy: false, syncMsg: "",
     showInstall: false, deferredPrompt: null,
-    pushSupported: false, pushOn: false, pushBusy: false, notifBusy: false, notifTitle: "", notifBody: "", showNotifModal: false, installForNotif: false,
+    pushSupported: false, pushOn: false, pushBusy: false, notifBusy: false, notifTitle: "", notifBody: "", showNotifModal: false, installForNotif: false, updateVer: "",
     // pronósticos
     groups: emptyGroups(), thirds: [], bracket: {}, _cols: [], _champion: null,
     extras: { revelacion: "", decepcion: "", pichichi: "", asistente: "", portero: "", sidebets: {} },
@@ -628,7 +633,21 @@ window.porraApp = function () {
     },
 
     // ---------- init ----------
+    // ---------- auto-aviso de versión nueva ----------
+    async checkUpdate() {
+      try {
+        if (!APP_VER) return;
+        const r = await fetch("ver.txt?_=" + Date.now(), { cache: "no-store" });
+        const v = (await r.text()).trim();
+        if (v && /^\d+$/.test(v) && Number(v) > Number(APP_VER)) this.updateVer = v;
+      } catch (e) { /* sin red: seguimos con lo cargado */ }
+    },
+    forceUpdate() {
+      try { const u = new URL(location.href); u.searchParams.set("_v", this.updateVer || Date.now()); location.replace(u.toString()); }
+      catch (e) { location.reload(); }
+    },
     async init() {
+      this.checkUpdate();   // si hay versión nueva desplegada, muestra el aviso "Actualizar"
       try { this.recent = JSON.parse(localStorage.getItem("porra_recent") || "[]"); } catch (e) { this.recent = []; }
       try { this._matchCache = JSON.parse(localStorage.getItem("porra_matchdata") || "{}"); } catch (e) { this._matchCache = {}; }
       try { const c = JSON.parse(localStorage.getItem("porra_espn_v1") || "null"); if (c && Array.isArray(c.events) && c.events.length) this.espnEvents = c.events; } catch (e) {}
@@ -644,7 +663,7 @@ window.porraApp = function () {
       try { if (!this.isStandalone && !localStorage.getItem("porra_install_seen")) setTimeout(() => { if (!this.isStandalone) this.showInstall = true; }, 1800); } catch (e) {}
       this._espnTimer = setInterval(() => { if (!this.pool) return; if (this.tab === "leaderboard") this.loadBoard(); else if (this.tab === "results" || this.tab === "goals") this.fetchEspn(false); }, 60000);
       // Al volver a la pestaña/app, refresca al instante (clasificación siempre al día con lo que se está jugando).
-      document.addEventListener("visibilitychange", () => { if (!document.hidden && this.pool) { if (this.tab === "leaderboard") this.loadBoard(); else if (this.tab === "results" || this.tab === "goals") this.fetchEspn(false); } });
+      document.addEventListener("visibilitychange", () => { if (!document.hidden) { this.checkUpdate(); if (this.pool) { if (this.tab === "leaderboard") this.loadBoard(); else if (this.tab === "results" || this.tab === "goals") this.fetchEspn(false); } } });
       const params = new URLSearchParams(location.search);
       const code = params.get("porra");
       const go = params.get("go");                       // deep-link (p.ej. desde una notificación)
