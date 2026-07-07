@@ -35,7 +35,7 @@
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="Porra Mundial" />
-  <link rel="stylesheet" href="styles.css?v=131" />
+  <link rel="stylesheet" href="styles.css?v=133" />
 </head>
 <body x-data="porraApp()" x-init="init()" x-cloak>
 
@@ -561,36 +561,28 @@
     <!-- 🔮 CÓMO PUEDE ACABAR: rango actual→techo + opciones reales, en vivo -->
     <template x-if="boardLocked && finalOutlook">
      <div class="outlook-card">
-      <div class="ol-h">🔮 Cómo puede acabar</div>
+      <div class="ol-h">🥉 ¿Quién entra y quién se cae del podio?</div>
       <p class="ol-sub">
-        Aún quedan hasta <b x-text="'+'+finalOutlook.inPlay"></b> puntos por jugador en juego <span class="muted">(cuadro inicial + 2º cuadro + especiales)</span>.
-        <template x-if="finalOutlook.allOpen"><span> Matemáticamente <b>sigue abierto para todos</b> — pero así están las opciones reales:</span></template>
-        <template x-if="!finalOutlook.allOpen"><span> Así se está decidiendo:</span></template>
+        Aún quedan hasta <b x-text="'+'+finalOutlook.inPlay"></b> puntos por jugador en juego <span class="muted">(cuadro inicial + 2º cuadro + especiales)</span> — así que el <b>top 3</b> puede cambiar. Esto es lo que necesita cada uno:
       </p>
       <template x-for="(r,i) in finalOutlook.rows" :key="'ol'+r.id">
-        <div class="ol-row" :class="{me: me.id && r.id===me.id}">
+        <div class="ol-row" :class="{me: me.id && r.id===me.id, inpod: r.inPodium, outpod: !r.inPodium}">
           <div class="ol-line">
             <span class="ol-pos" x-text="(i+1)+'º'"></span>
             <span class="ol-name" x-text="r.name"></span>
-            <span class="ol-tag" x-text="r.tag"></span>
+            <span class="ol-cur muted" x-text="r.cur+' pts'"></span>
+            <span class="ol-tag" :class="r.inPodium ? 'in' : 'out'">
+              <span x-text="r.inPodium ? '🥉 en el podio' : '❌ fuera'"></span><span x-show="r.podium!=null" x-text="' · '+pct(r.podium)+' podio'"></span>
+            </span>
           </div>
-          <div class="ol-bar" :title="'Ahora '+r.cur+' · techo '+r.techo">
-            <div class="ol-fill" :style="'width:'+Math.round(r.cur/finalOutlook.maxTecho*100)+'%'"></div>
-            <div class="ol-pot" :style="'left:'+Math.round(r.cur/finalOutlook.maxTecho*100)+'%; width:'+Math.round((r.techo-r.cur)/finalOutlook.maxTecho*100)+'%'"></div>
-            <div class="ol-avg" x-show="r.avg" :style="'left:'+Math.round((r.avg||0)/finalOutlook.maxTecho*100)+'%'"></div>
-          </div>
-          <div class="ol-nums">
-            <span><b x-text="r.cur"></b> ahora</span>
-            <span class="ol-sep">→</span>
-            <span>techo <b x-text="r.techo"></b> <span class="muted" x-text="'(+'+r.gettable+')'"></span></span>
-            <span class="ol-odds" x-show="r.win!=null">🏆 <b x-text="pct(r.win)"></b> · 🥉 <b x-text="pct(r.podium)"></b></span>
-          </div>
-          <div class="ol-swing" x-show="r.swings.length">
-            <span class="muted">Su gran baza:</span> <template x-for="(s,si) in r.swings" :key="'sw'+r.id+si"><span class="ol-chip"><span x-text="s.t"></span> <b x-text="'+'+s.p"></b></span></template>
+          <p class="ol-scn" x-text="r.scn"></p>
+          <div class="ol-swing" x-show="r.swings.length && r.canPod">
+            <span class="muted" x-text="r.inPodium ? 'Lo que le blinda:' : 'Su munición:'"></span>
+            <template x-for="(s,si) in r.swings" :key="'sw'+r.id+si"><span class="ol-chip"><span x-text="s.t"></span> <b x-text="'+'+s.p"></b></span></template>
           </div>
         </div>
       </template>
-      <p class="ol-foot muted">El <b>techo</b> es lo máximo posible si todo le saliera perfecto (sus equipos vivos ganándolo todo + especiales pendientes). 🏆/🥉 = probabilidad real de acabar 1º / en el podio según miles de simulaciones.</p>
+      <p class="ol-foot muted">«🥉 X% podio» = probabilidad real de acabar en el <b>top 3</b> según miles de simulaciones del resto del Mundial. La <b>munición</b> son las jugadas que aún le suman (equipos vivos que avancen + especiales pendientes).</p>
      </div>
     </template>
 
@@ -2239,7 +2231,7 @@
   <script src="data.js?v=121"></script>
   <script src="engine.js?v=131"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
-  <script src="app.js?v=132"></script>
+  <script src="app.js?v=133"></script>
   <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.1/dist/cdn.min.js"></script>
 </body>
 </html>

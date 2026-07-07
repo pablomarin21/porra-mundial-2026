@@ -1942,3 +1942,12 @@ tr.clickrow.sel td{background:#e7f1ec}
 .ol-chip{background:rgba(255,255,255,.09);border:1px solid rgba(255,255,255,.12);border-radius:8px;padding:2px 7px;white-space:nowrap}
 .ol-chip b{color:#3fce8c}
 .ol-foot{font-size:.72rem;line-height:1.35;margin:10px 0 0;padding-top:9px;border-top:1px solid rgba(255,255,255,.09)}
+
+/* escenarios de podio (reforma de "cómo puede acabar") */
+.ol-cur{font-size:.78rem;font-weight:600}
+.ol-tag.in{background:rgba(63,206,140,.18);border-color:rgba(63,206,140,.4);color:#bff3da}
+.ol-tag.out{background:rgba(255,255,255,.07);border-color:rgba(255,255,255,.13);color:#e9c6b0}
+.ol-row.inpod{border-left:3px solid #3fce8c;padding-left:9px;margin-left:-2px}
+.ol-row.outpod{border-left:3px solid rgba(255,255,255,.18);padding-left:9px;margin-left:-2px}
+.ol-scn{font-size:.86rem;line-height:1.42;color:#eaf3ee;margin:6px 0 2px}
+.ol-scn b{color:#fff}

@@ -259,6 +259,30 @@ window.porraApp = function () {
         else if (p >= 0.08) x.tag = "🥉 outsider al podio";
         else x.tag = "🎯 necesita una machada";
       });
+      // ---- ESCENARIOS DE PODIO: qué necesita cada uno para ENTRAR o no CAERSE del top 3 ----
+      const line3 = rows[2] ? rows[2].cur : 0, name3 = rows[2] ? rows[2].name : "";
+      const p4 = rows[3] ? rows[3].cur : null, name4 = rows[3] ? rows[3].name : "";
+      const rw = (r) => r === "campeón" ? "de campeón" : r === "final" ? "en la final" : r === "semis" ? "en semis" : r === "cuartos" ? "en cuartos" : "";
+      const swTxt = (s) => s ? s.t + (rw(s.r) ? " " + rw(s.r) : "") + " (+" + s.p + ")" : "";
+      const chaserSw = rows[3] && rows[3].swings[0];
+      rows.forEach((x, i) => {
+        x.inPodium = i < 3;
+        const s0 = x.swings[0];
+        if (i < 3) {
+          const need = 3 - i;   // cuántos de abajo deben adelantarle para caerse del podio (1º→3, 2º→2, 3º→1)
+          x.cushion = p4 != null ? x.cur - p4 : null;
+          if (x.clinch1 || x.podClinch) x.scn = "🔒 Podio asegurado — ya nadie le baja del top 3, pase lo que pase.";
+          else if (need >= 3) x.scn = "Casi intocable en el podio: para caerse tendrían que adelantarle TRES rivales de golpe. Solo peligraría con un desastre de sus equipos (" + (s0 ? s0.t : "los suyos") + ") y un pleno de los de abajo.";
+          else if (need === 2) x.scn = "Cómodo en el podio: para caerse tendrían que remontarle DOS de abajo a la vez (empezando por " + name4 + ", a " + x.cushion + " pts). Difícil, pero no imposible.";
+          else x.scn = "Es el 3º, el puesto en disputa: se cae del podio si " + name4 + " (a " + x.cushion + " pts) le adelanta" + (chaserSw ? " con " + swTxt(chaserSw) : "") + " y " + x.name + " no rasca más. Aguantar es la clave.";
+        } else {
+          const need = (i + 1) - 3;   // rivales que hay que adelantar para entrar (4º→1, 7º→4)
+          x.gap = Math.max(0, line3 - x.cur);
+          if (!x.canPod) x.scn = "❌ Ya no llega al podio: ni ganándolo todo (techo " + x.techo + ") alcanzaría al 3º.";
+          else if (need === 1) x.scn = "A las puertas: entra en el podio si adelanta a " + name3 + " (a " + x.gap + " pts). Su gran baza: " + (s0 ? swTxt(s0) : "que sus equipos avancen") + (x.swings[1] ? ", y " + swTxt(x.swings[1]) : "") + ". Y que " + name3 + " se atasque.";
+          else x.scn = "Para colarse en el podio tiene que adelantar a " + need + " rivales (hasta el 3º, " + name3 + ", a " + x.gap + " pts). Necesita casi pleno con su munición: " + (s0 ? swTxt(s0) : "sus equipos vivos") + (x.swings[1] ? " y " + swTxt(x.swings[1]) : "") + ", y que los de arriba pinchen.";
+        }
+      });
       const out = { inPlay: Math.max(...rows.map((x) => x.gettable)), maxTecho, rows, allOpen: rows.every((x) => x.canWin) };
       _MEMO.foKey = sig; _MEMO.foVal = out;
       return out;
