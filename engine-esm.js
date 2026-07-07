@@ -24,6 +24,15 @@ const ENGINE=(function(DATA){
   const LETTERS = DATA.GROUP_LETTERS;
   const THIRD_SLOT_NUMS = [74, 77, 79, 80, 81, 82, 85, 87];
 
+  // -------- SELECCIÓN DECEPCIÓN: fallo (admin) de qué favoritos "decepcionan" --------
+  // Regla de la porra (jul-2026): una selección decepción SOLO puntúa si era un GRAN
+  // favorito que cayó ANTES de cuartos. No es una regla por ronda (Alemania fuera en
+  // 1/16 SÍ es decepción; Croacia fuera en 1/16 NO; Chequia fuera en grupos NO), sino
+  // una lista curada por el admin. Cada equipo puntúa AUTOMÁTICAMENTE en cuanto queda
+  // eliminado sin llegar a cuartos (p.ej. Argentina: solo si pierde su octavos).
+  // Cerrado tras octavos: quien llega a cuartos ya no es decepción.
+  const DECEPCION_TEAMS = ["Portugal", "Germany", "Argentina"];
+
   // -------- utilidades aleatorias / partidos --------
   function poisson(lambda, rng) {
     const L = Math.exp(-lambda);
@@ -474,12 +483,16 @@ const ENGINE=(function(DATA){
   }
 
   // -------- puntos de las predicciones especiales --------
-  function scoreExtras(extras, actuals, S) {
+  function scoreExtras(extras, actuals, S, oc) {
     const e = extras || {}, a = actuals || {};
     const bd = { revelacion: 0, decepcion: 0, pichichi: 0, asistente: 0, portero: 0, hattrick: 0, dobleRoja: 0 };
     const norm = (s) => (s || "").toString().trim().toLowerCase();
     if (a.revelacion && e.revelacion === a.revelacion) bd.revelacion += S.revelacion;
-    if (a.decepcion && e.decepcion === a.decepcion) bd.decepcion += S.decepcion;
+    // DECEPCIÓN: puntúa si tu selección está en el set CONFIRMADO (favoritos caídos antes de
+    // cuartos + fallo manual del admin). Si no llega 'oc' (compat), cae al modelo viejo de 1 solo.
+    const decSet = oc && oc.decepcionConfirmed;
+    if (decSet ? (e.decepcion && decSet.has(e.decepcion))
+               : (a.decepcion && e.decepcion === a.decepcion)) bd.decepcion += S.decepcion;
     if (a.pichichi && norm(e.pichichi) && norm(e.pichichi) === norm(a.pichichi)) bd.pichichi += S.pichichi;
     if (a.asistente && norm(e.asistente) && norm(e.asistente) === norm(a.asistente)) bd.asistente += S.asistente;
     if (a.portero && norm(e.portero) && norm(e.portero) === norm(a.portero)) bd.portero += (S.portero || 0);
@@ -512,6 +525,7 @@ const ENGINE=(function(DATA){
     const groupMap = {};
     const liveExtra = {};   // partidos de grupo EN JUEGO (solo para mostrar; no puntúan)
     const ko = { octavos: new Set(), cuartos: new Set(), semis: new Set(), final: new Set(), champion: null };
+    const koLosers = new Set();   // equipos que PERDIERON una eliminatoria ya jugada (para 'decepción')
     for (const ev of (events || [])) {
       const comp = ev.competitions && ev.competitions[0]; if (!comp) continue;
       const cs = comp.competitors || []; if (cs.length !== 2) continue;
@@ -543,7 +557,10 @@ const ENGINE=(function(DATA){
         if (!rk && !slug) { const koWin = DATA.KO_WINDOWS.find((w) => date >= w.from && date <= w.to); rk = koWin ? koWin.reached : null; }
         if (rk) {
           let w = A.winner ? tA : (B.winner ? tB : (!isNaN(sA) && !isNaN(sB) ? (sA > sB ? tA : (sB > sA ? tB : null)) : null));
-          if (w) { if (rk === "champion") ko.champion = w; else ko[rk].add(w); }
+          if (w) {
+            if (rk === "champion") ko.champion = w; else ko[rk].add(w);
+            const loser = w === tA ? tB : tA; if (loser) koLosers.add(loser);   // el que cae, eliminado
+          }
         }
       }
     }
@@ -569,6 +586,22 @@ const ENGINE=(function(DATA){
       octavos: ko.octavos, cuartos: ko.cuartos, semis: ko.semis, final: ko.final, champion: ko.champion,
     };
     oc.extrasActual = extrasActual || {};
+    oc.koLosers = koLosers;
+    // Selección decepción CONFIRMADA: favoritos curados (DECEPCION_TEAMS) que ya cayeron
+    // ANTES de cuartos — cada uno se activa solo al quedar eliminado (p.ej. Argentina solo
+    // si pierde su octavos; si llega a cuartos, nunca cuenta). Se une (compat) al fallo
+    // manual del admin en extrasActual.decepcion (string o array), que puntúa sin condición.
+    const decSet = new Set();
+    const adm = (extrasActual || {}).decepcion;
+    if (Array.isArray(adm)) adm.forEach((t) => t && decSet.add(t));
+    else if (adm) decSet.add(adm);
+    for (const t of DECEPCION_TEAMS) { if (!oc.reached.cuartos.has(t) && koLosers.has(t)) decSet.add(t); }
+    oc.decepcionConfirmed = decSet;
+    // Decepción AÚN EN JUEGO: favoritos vivos que todavía podrían decepcionar (p.ej. Argentina
+    // antes de su octavos). Para "qué falta para el TOP 3": son puntos pendientes, no resueltos.
+    const decPending = new Set();
+    for (const t of DECEPCION_TEAMS) { if (!decSet.has(t) && !oc.reached.cuartos.has(t) && !koLosers.has(t)) decPending.add(t); }
+    oc.decepcionPending = decPending;
     oc.groupMap = groupMap;
     // ---- capa EN DIRECTO (solo para MOSTRAR): tabla que incluye los partidos en juego.
     //      NO afecta a la puntuación (eso sigue por jornadas COMPLETAS via groupOrder). ----

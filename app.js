@@ -149,7 +149,7 @@ window.porraApp = function () {
       const real = this.entries.filter((e) => e.picks && !this.isGuest(e));
       const rows = real.map((e) => {
         let bd = { grupos: 0, terceros: 0, octavos: 0, cuartos: 0, semis: 0, final: 0, campeon: 0, bonus: 0 }, ex = 0;
-        try { const dp = Eng.derivePicks(e.picks); bd = Eng.scoreBreakdown(dp, oc, S); ex = Eng.scoreExtras(e.picks.extras, this.extrasActual, S).total; } catch (x) {}
+        try { const dp = Eng.derivePicks(e.picks); bd = Eng.scoreBreakdown(dp, oc, S); ex = Eng.scoreExtras(e.picks.extras, this.extrasActual, S, oc).total; } catch (x) {}
         const grupos = bd.grupos + bd.terceros;
         const ko = bd.octavos + bd.cuartos + bd.semis + bd.final + bd.campeon + bd.bonus;
         const t = (H.traj && H.traj[e.id]) || [];
@@ -187,8 +187,12 @@ window.porraApp = function () {
       const mainKO = 16 * (S.octavos || 0) + 8 * (S.cuartos || 0) + 4 * (S.semis || 0) + 2 * (S.finalists || 0) + (S.champion || 0);
       const bonus = 16 * 2 + 8 * 4 + 4 * 5 + 2 * 8 + 13;   // 2º cuadro (valores fijos): 113
       const a = this.extrasActual || {};
+      const oc = this.outcome;
       let esp = 0;
-      for (const k of ["revelacion", "decepcion", "pichichi", "asistente", "portero"]) if (!a[k]) esp += (S[k] || 0);
+      for (const k of ["revelacion", "decepcion", "pichichi", "asistente", "portero"]) {
+        if (k === "decepcion") { if (oc && oc.decepcionPending && oc.decepcionPending.size) esp += (S.decepcion || 0); continue; }  // ya resuelta salvo favoritos vivos
+        if (!a[k]) esp += (S[k] || 0);
+      }
       const fam = (this.ranked || []).filter((e) => !this.isGuest(e)).map((e) => e.points).filter((p) => p != null);
       const gap = fam.length >= 2 ? (Math.max(...fam) - Math.min(...fam)) : null;
       return { remaining: mainKO + bonus + esp, mainKO, bonus, esp, gap, champion: S.champion || 0 };
@@ -262,7 +266,7 @@ window.porraApp = function () {
       const e = (this.entries || []).find((x) => x.id === id); if (!e || !e.picks) return null;
       const dp = Eng.derivePicks(e.picks);
       const bd = Eng.scoreBreakdown(dp, oc, S);
-      const ex = Eng.scoreExtras(e.picks.extras, this.extrasActual, S);
+      const ex = Eng.scoreExtras(e.picks.extras, this.extrasActual, S, oc);
       const champTeam = e.picks.bracket && (e.picks.bracket[D.FINAL.match] || e.picks.bracket[String(D.FINAL.match)]);
       return { id, name: (e.first_name + " " + e.last_name).trim(), picks: e.picks, bd, ex, cuadro: bd.octavos + bd.cuartos + bd.semis + bd.final + bd.campeon, total: bd.total + ex.total, champ: champTeam ? D.es(champTeam) : null, champFlag: champTeam ? D.flag(champTeam) : "" };
     },
@@ -807,7 +811,7 @@ window.porraApp = function () {
         const e = byId[r.id]; if (!e || !e.picks) return null;
         const dp = Eng.derivePicks(e.picks);
         const bd = Eng.scoreBreakdown(dp, oc, S);
-        const ex = Eng.scoreExtras(e.picks.extras, this.extrasActual, S);
+        const ex = Eng.scoreExtras(e.picks.extras, this.extrasActual, S, oc);
         const cuadro = bd.octavos + bd.cuartos + bd.semis + bd.final + bd.campeon;
         const cats = [];
         if (bd.grupos) cats.push("Grupos " + bd.grupos);
@@ -864,7 +868,7 @@ window.porraApp = function () {
           dp: Eng.derivePicks(e.picks),
           groups: e.picks.groups || {},
           champ: (e.picks.bracket && (e.picks.bracket[D.FINAL.match] || e.picks.bracket[String(D.FINAL.match)])) || null,
-          extra: Eng.scoreExtras(e.picks.extras, this.extrasActual, S).total,
+          extra: Eng.scoreExtras(e.picks.extras, this.extrasActual, S, oc0).total,
         }));
         const me = entries.find((e) => e.id === meId);
         if (!me || entries.length < 2) { this.pathAnalysis = { none: true }; return; }
@@ -948,7 +952,7 @@ window.porraApp = function () {
         const simMap = Object.assign({}, this.results, (oc0 && oc0.groupMap) || {});
         const entries = (this.entries || []).filter((e) => e.picks && !this.isGuest(e)).map((e) => ({
           id: e.id, name: (e.first_name || "").trim(), dp: Eng.derivePicks(e.picks),
-          extra: Eng.scoreExtras(e.picks.extras, this.extrasActual, S).total,
+          extra: Eng.scoreExtras(e.picks.extras, this.extrasActual, S, oc0).total,
         }));
         const who = entries.find((e) => e.id === whoId);
         if (!who || entries.length < 4) { this.top3Analysis = { none: true }; return; }
@@ -1098,16 +1102,24 @@ window.porraApp = function () {
         const myExtras = rawExtras(whoId);
         let pendMax = 0, exclPts = 0;
         const especiales = [];
+        const decConf = (this.outcome && this.outcome.decepcionConfirmed) || new Set();
+        const decPend = (this.outcome && this.outcome.decepcionPending) || new Set();
         for (const sp of SPECIALS) {
           const myVal = pickOf(myExtras, sp);
-          const act = actOf(sp);
-          const resolved = !!(act && act.toString().trim());
+          let act = actOf(sp);
+          let resolved = !!(act && act.toString().trim());
+          let forcedHit = null;   // decepción por regla: true=acertó (favorito caído), false=ya no puede serlo
+          if (sp.key === "decepcion") {
+            if (myVal && decConf.has(myVal)) { resolved = true; forcedHit = true; act = myVal; }         // ganada
+            else if (myVal && decPend.has(myVal)) { resolved = false; }                                    // en juego (Argentina)
+            else if (myVal) { resolved = true; forcedHit = false; act = ""; }                              // su equipo ya no puede decepcionar
+          }
           if (!myVal && !resolved) continue;
           const myKey = keyOf(myVal, sp);
           const row = { label: sp.label, pts: sp.pts, myPick: myVal ? dispOf(myVal, sp) : "", resolved };
           if (resolved) {
-            row.hit = !!(myKey && myKey === keyOf(act, sp));
-            row.actual = dispOf(act, sp);
+            row.hit = forcedHit !== null ? forcedHit : !!(myKey && myKey === keyOf(act, sp));
+            row.actual = sp.key === "decepcion" ? (forcedHit ? teamEsF(myVal) : "no fue decepción") : dispOf(act, sp);
           } else {
             const share = [], diff = [];
             for (const e of entries) {
@@ -1381,7 +1393,7 @@ window.porraApp = function () {
       });
     },
     async loadExtrasActual() {
-      try { this.extrasActual = (await this.rpc("porra_get_extras", {})) || {}; } catch (e) { this.extrasActual = {}; }
+      try { this.extrasActual = (await this.rpc("porra_get_extras", {})) || {}; this._extrasLoaded = true; } catch (e) { this.extrasActual = {}; }
       this.extrasActualEdit = Object.assign({ revelacion: "", decepcion: "", pichichi: "", asistente: "", portero: "", sidebets: {} }, this.extrasActual, { sidebets: Object.assign({}, this.extrasActual.sidebets || {}) });
     },
     async saveExtrasActual() {
@@ -1672,7 +1684,7 @@ window.porraApp = function () {
       const dp = Eng.derivePicks(e.picks);
       const oc = this.outcome || Eng.liveOutcome(this.results);
       const bd = Eng.scoreBreakdown(dp, oc, this.settings);
-      const ex = Eng.scoreExtras(e.picks.extras, this.extrasActual, this.settings);
+      const ex = Eng.scoreExtras(e.picks.extras, this.extrasActual, this.settings, oc);
       const ord = (set) => [...set].sort((a, b) => D.es(a).localeCompare(D.es(b)));
       return {
         name: e.first_name + " " + e.last_name,
@@ -2169,6 +2181,7 @@ window.porraApp = function () {
         const { data, error } = await sb.functions.invoke("porra-prob", { body: { code: this.pool.code } });
         if (!error && data && !data.error && Array.isArray(data.rows)) {
           this.usingServerBoard = true;
+          this._serverHasDecepcion = !!data.decepcionRuling;   // edge nuevo ya aplica la regla → no doblar
           this.boardLocked = !!data.locked;
           this.simN = data.sims || 4000; this.lastProb = true;
           this.ranked = data.rows.map((r) => ({ id: r.id, first_name: r.first_name, last_name: r.last_name, points: r.points, win: r.win, podium: r.podium, avg: r.avg, complete: r.complete }));
@@ -2181,8 +2194,33 @@ window.porraApp = function () {
       try { await this.loadResults(); if (ok) await this.loadEntries({ recompute: false }); } catch (e) {}
       if (!ok) { this.usingServerBoard = false; try { await this.refreshBoard(); } catch (e) {} }
       try { await this.fetchEspn(false); } catch (e) {}   // refresca outcome + explicación (computeLive)
+      this._applyDecepcionPatch();   // suma la "selección decepción" (el edge viejo no la aplica)
       this.applyTiebreak();   // reordena empates por el sistema de puntuación
       this.probBusy = false;
+    },
+    // El board del servidor (edge pinado viejo) NO aplica la regla de "selección decepción"
+    // (favoritos caídos antes de cuartos). La sumamos aquí sobre los puntos del servidor para que
+    // los TOTALES cuadren con el desglose por persona (que ya la incluye vía scoreExtras+oc).
+    // Cuando el edge se actualice devolverá decepcionRuling=true y dejamos de sumarla (anti-doble).
+    _applyDecepcionPatch() {
+      try {
+        if (!this.usingServerBoard || this._serverHasDecepcion) return;   // recompute local o edge nuevo: ya incluida
+        if (!this._extrasLoaded) return;   // sin extrasActual no sabemos qué contó el server → no arriesgar a doblar
+        const oc = this.outcome; const conf = oc && oc.decepcionConfirmed;
+        if (!conf || !conf.size) return;
+        const pts = (this.settings && this.settings.decepcion) || 0; if (!pts) return;
+        // El edge VIEJO ya cuenta la decepción del fallo del admin (extrasActual.decepcion, 1 equipo).
+        // Sumamos solo el DELTA de la regla nueva para NO doblar a quien ya la tiene (p.ej. Germany).
+        const ad = (this.extrasActual || {}).decepcion;
+        const serverDec = (pick) => Array.isArray(ad) ? (ad.indexOf(pick) >= 0 ? pts : 0) : ((ad && pick === ad) ? pts : 0);
+        const byId = {}; (this.entries || []).forEach((e) => { byId[e.id] = e; });
+        (this.ranked || []).forEach((r) => {
+          const e = byId[r.id]; const pick = e && e.picks && e.picks.extras && e.picks.extras.decepcion;
+          if (!pick) return;
+          const delta = (conf.has(pick) ? pts : 0) - serverDec(pick);
+          if (delta) r.points = (r.points || 0) + delta;
+        });
+      } catch (e) {}
     },
     openResults() { this.tab = "results"; this.fetchEspn(false).then(() => this.loadForecasts()).catch(() => {}); this.loadEntries({ recompute: false }); },
     openGoals() { this.tab = "goals"; this.fetchEspn(false).then(() => this.loadMatchData()).catch(() => {}); this.loadEntries({ recompute: false }).catch(() => {}); },
@@ -2194,7 +2232,7 @@ window.porraApp = function () {
         let base = 0, extra = 0;
         if (e.picks) {
           try { base = Eng.scoreEntry(Eng.derivePicks(e.picks), oc, S); } catch (x) {}
-          try { extra = Eng.scoreExtras(e.picks.extras, this.extrasActual, S).total; } catch (x) {}
+          try { extra = Eng.scoreExtras(e.picks.extras, this.extrasActual, S, oc).total; } catch (x) {}
         }
         const pr = this.probData[e.id];
         return Object.assign({}, e, { points: base + extra, basePoints: base, extraPts: extra, win: pr ? pr.win : null, podium: pr ? pr.podium : null, avg: pr ? pr.avg : null });
@@ -2211,7 +2249,7 @@ window.porraApp = function () {
       const oc = this.outcome || Eng.liveOutcome(this.results); const S = this.settings;
       try {
         const bd = Eng.scoreBreakdown(Eng.derivePicks(e.picks), oc, S);
-        const ex = Eng.scoreExtras(e.picks.extras, this.extrasActual, S);
+        const ex = Eng.scoreExtras(e.picks.extras, this.extrasActual, S, oc);
         return { cuadro: bd.octavos + bd.cuartos + bd.semis + bd.final + bd.campeon, especiales: ex.total, grupos: bd.grupos };
       } catch (x) { return { cuadro: 0, especiales: 0, grupos: 0 }; }
     },
@@ -2250,7 +2288,7 @@ window.porraApp = function () {
         if (picks) {
           try { gd = this._groupDetail(picks, oc, S); } catch (x) {}
           try { dp = Eng.derivePicks(picks); } catch (x) {}
-          try { ex = Eng.scoreExtras(picks.extras, this.extrasActual, S); } catch (x) {}
+          try { ex = Eng.scoreExtras(picks.extras, this.extrasActual, S, oc); } catch (x) {}
         }
         const champ = dp ? dp.champion : null;
         const champQ = champ ? qp(champ) : null;
@@ -2391,7 +2429,7 @@ window.porraApp = function () {
         const sub = {};
         for (const fx of D.GROUP_FIXTURES) { if (fx.md <= j) { const x = gm[fx.code]; if (x && x.played && x.home_score != null && x.away_score != null) sub[fx.code] = x; } }
         let hoc; try { hoc = Eng.liveOutcome(sub); } catch (e) { continue; }
-        const sc = real.map((r) => { const e = byId[r.id]; let p = 0; if (e && e.picks) { try { p = Eng.scoreEntry(Eng.derivePicks(e.picks), hoc, S) + Eng.scoreExtras(e.picks.extras, this.extrasActual, S).total; } catch (x) {} } return { id: r.id, pts: p }; });
+        const sc = real.map((r) => { const e = byId[r.id]; let p = 0; if (e && e.picks) { try { p = Eng.scoreEntry(Eng.derivePicks(e.picks), hoc, S) + Eng.scoreExtras(e.picks.extras, this.extrasActual, S, hoc).total; } catch (x) {} } return { id: r.id, pts: p }; });
         sc.sort((a, b) => b.pts - a.pts);
         sc.forEach((s, idx) => traj[s.id].push({ j: "J" + j, pts: s.pts, pos: idx + 1 }));
         if (byId[sc[0].id]) leaders.push({ j: "J" + j, name: this._shortName(byId[sc[0].id]) });
@@ -2536,7 +2574,7 @@ window.porraApp = function () {
     },
     runProbabilities() {
       const S = this.settings;
-      const mcEntries = this.entries.filter((e) => e.picks).map((e) => ({ id: e.id, picks: Eng.derivePicks(e.picks), extraPts: Eng.scoreExtras(e.picks.extras, this.extrasActual, S).total }));
+      const mcEntries = this.entries.filter((e) => e.picks).map((e) => ({ id: e.id, picks: Eng.derivePicks(e.picks), extraPts: Eng.scoreExtras(e.picks.extras, this.extrasActual, S, this.outcome).total }));
       if (!mcEntries.length) return this.toast("No hay quinielas guardadas todavía.", "warn");
       this.simN = mcEntries.length > 60 ? 1500 : mcEntries.length > 30 ? 2500 : 4000;
       const simResults = this._resMap;   // grupos (ESPN) + ganadores KO ya jugados → no re-aleatorizar lo decidido
