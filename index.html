@@ -35,7 +35,7 @@
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="Porra Mundial" />
-  <link rel="stylesheet" href="styles.css?v=135" />
+  <link rel="stylesheet" href="styles.css?v=136" />
 </head>
 <body x-data="porraApp()" x-init="init()" x-cloak>
 
@@ -594,6 +594,47 @@
       <p class="ol-foot muted">«🥉 X% podio» = probabilidad real de acabar en el <b>top 3</b> según miles de simulaciones del resto del Mundial. Cuenta TODO lo que queda: equipos vivos en ambos cuadros y los <b>especiales</b> (goleador +12, asistente +10, portero +10). Un especial <b>solo suma si su jugador sigue en el Mundial</b> — los de selecciones ya eliminadas salen <span style="text-decoration:line-through;opacity:.7">tachados</span> y no cuentan.</p>
      </div>
     </template>
+
+    <!-- ⚔️ EL CHUP CHUP DE CUARTOS: lo que aspira a sumar cada uno cuando se jueguen los 4 cruces -->
+    <div class="ko-today kc-round" x-show="boardLocked && koCuartos.matches.length">
+      <div class="kt-head">⚔️ Empieza el chup chup: cuartos <span class="muted tiny">— lo que aspira a sumar cada uno en los 4 cruces</span></div>
+      <div class="kc-asp" x-show="koCuartos.topAsp.length">
+        <span class="kc-asp-lab">🔥 Aspira a sumar:</span>
+        <template x-for="a in koCuartos.topAsp" :key="'kca'+a.id"><span class="kc-aspchip" :class="{me:a.isMe}"><span x-text="a.name"></span> <b x-text="'+'+a.sum"></b></span></template>
+      </div>
+      <template x-for="m in koCuartos.matches" :key="'kc'+m.match">
+        <div class="kt-card" :class="{live:m.live, done:m.done, findone:m.justDone}">
+          <div class="kt-top">
+            <span class="kt-round" x-text="m.dayShort || m.round"></span>
+            <span class="kt-time" :class="{live:m.live}" x-text="m.live?'EN VIVO':(m.done?'✓ FINAL':('🕒 '+m.kickoffSpain))"></span>
+          </div>
+          <div class="kt-match">
+            <span class="kt-mt"><span class="flag" x-text="m.teamAflag"></span> <b x-text="m.teamAes"></b></span>
+            <span class="kt-vs" :class="{scored:m.flash}" x-text="(m.hs!=null)?(m.hs+'–'+m.as):'vs'"></span>
+            <span class="kt-mt"><span class="flag" x-text="m.teamBflag"></span> <b x-text="m.teamBes"></b></span>
+          </div>
+          <div class="kt-now" x-show="m.live||m.done">
+            <template x-if="m.leader"><span x-text="(m.done?'✅ Pasó ':'🔴 Ahora pasa ')+(m.leader===m.teamA?m.teamAes:m.teamBes)"></span></template>
+            <template x-if="!m.leader"><span x-text="m.done ? '🥅 Se decidió en penaltis' : '⚖️ Empate — aún nadie suma'"></span></template>
+          </div>
+          <div class="kt-suh">
+            <span class="kt-pn">Suma…</span>
+            <span class="kt-scol" :class="{win:(m.live||m.done)&&m.leader===m.teamA}">si pasa <span class="flag" x-text="m.teamAflag"></span> <b x-text="m.teamAes"></b></span>
+            <span class="kt-scol" :class="{win:(m.live||m.done)&&m.leader===m.teamB}">si pasa <span class="flag" x-text="m.teamBflag"></span> <b x-text="m.teamBes"></b></span>
+          </div>
+          <div class="kt-players">
+            <template x-for="p in m.players" :key="'kcp'+m.match+p.id">
+              <div class="kt-prow" :class="{me:p.isMe, zero:p.max===0}">
+                <span class="kt-pn" x-text="p.name"></span>
+                <span class="kt-sv" :class="{best:(p.best==='a'||p.best==='both')&&p.sumA>0, win:(m.live||m.done)&&m.leader===m.teamA}"><small class="kt-svic" x-show="p.sumA>0" x-text="p.icA"></small><span x-text="p.sumA>0?'+'+p.sumA:'·'"></span></span>
+                <span class="kt-sv" :class="{best:(p.best==='b'||p.best==='both')&&p.sumB>0, win:(m.live||m.done)&&m.leader===m.teamB}"><small class="kt-svic" x-show="p.sumB>0" x-text="p.icB"></small><span x-text="p.sumB>0?'+'+p.sumB:'·'"></span></span>
+              </div>
+            </template>
+          </div>
+        </div>
+      </template>
+      <div class="kt-foot muted tiny">Ganar un cuarto = <b>pasar a semifinales</b>: vale 🏆 +<span x-text="settings.semis"></span> (cuadro de antes) · 🗓️ +5 (2º cuadro) → con los dos, <b>+<span x-text="settings.semis+5"></span></b>. El icono de cada casilla dice de dónde sale: 🏆 solo lo tienes en el de antes · 🗓️ solo en el 2º · 🏆🗓️ en los dos. <b class="kt-good-txt">Verde</b> = lo que más le conviene · «·» = no suma.</div>
+    </div>
 
     <!-- 🎯 EXPLICADOR SIMPLE: por qué hay 2 cuadros + de dónde salen los puntos -->
     <div class="howto-card" x-show="boardLocked">
@@ -2240,7 +2281,7 @@
   <script src="data.js?v=121"></script>
   <script src="engine.js?v=131"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
-  <script src="app.js?v=135"></script>
+  <script src="app.js?v=136"></script>
   <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.1/dist/cdn.min.js"></script>
 </body>
 </html>

@@ -737,6 +737,53 @@ window.porraApp = function () {
       _MEMO.ktKey = memoKey; _MEMO.ktVal = out;
       return out;
     },
+    // "Lo que nos jugamos en CUARTOS": los 4 partidos de cuartos (97-100). Ganar un cuarto
+    // = pasar a semis → +st.pts (cuadro original) / +st.bonus (2º cuadro). Por jugador, cuánto
+    // suma si gana cada equipo (mismo criterio que "Cruces de hoy"). Se activa en cuanto los
+    // 8 de cuartos están decididos, para ir haciendo "chup chup" antes de que se jueguen.
+    get koCuartos() {
+      const memoKey = "kc|" + this.espnAt + "|" + Math.floor((this.nowTs || 0) / 20000) + "|" + ((this.entries || []).length) + "|" + ((this.me && this.me.id) || "");
+      if (_MEMO.kcKey === memoKey && _MEMO.kcVal) return _MEMO.kcVal;
+      const tbm = (this.liveBr && this.liveBr.teamsByMatch) || {};
+      const meId = this.me && this.me.id;
+      const players = (this.entries || []).filter((e) => e.picks && !this.isGuest(e))
+        .map((e) => { let dp = null; try { dp = Eng.derivePicks(e.picks); } catch (x) {} return { id: e.id, name: this._shortName(e), isMe: e.id === meId, dp, b2: (e.picks && e.picks.bracket2) || {} }; })
+        .filter((p) => p.dp);
+      const out = [];
+      for (let mk = 97; mk <= 100; mk++) {
+        const st = this._koStage(mk); if (!st) continue;   // { key:'semis', pts, bonus:5, round:'Cuartos' }
+        const pair = tbm[mk] || tbm[String(mk)] || {}; const teamA = pair.a, teamB = pair.b;
+        if (!teamA || !teamB) continue;                     // solo con ambos equipos decididos
+        const hasMain = (P, t) => !!(P[st.key] && P[st.key].has && P[st.key].has(t));
+        const rows = players.map((p) => {
+          const cell = (t) => { const o = hasMain(p.dp, t), b = (p.b2[mk] === t || p.b2[String(mk)] === t);
+            return { sum: (o ? st.pts : 0) + (b ? st.bonus : 0), ic: o && b ? "🏆🗓️" : (o ? "🏆" : (b ? "🗓️" : "")) }; };
+          const cA = cell(teamA), cB = cell(teamB);
+          const sumA = cA.sum, sumB = cB.sum, max = Math.max(sumA, sumB);
+          return { id: p.id, name: p.name, isMe: p.isMe, sumA, icA: cA.ic, sumB, icB: cB.ic, max,
+            best: sumA === sumB ? (sumA > 0 ? "both" : "none") : (sumA > sumB ? "a" : "b") };
+        }).sort((a, b) => (b.isMe - a.isMe) || (b.max - a.max) || a.name.localeCompare(b.name));
+        const iso = (D.KO_KICKOFF || {})[mk] || (D.KO_KICKOFF || {})[String(mk)];
+        out.push({ match: mk, kickoffSpain: iso ? this.madridTime(iso) : "", dayShort: iso ? this.madridDayShort(iso) : "", ts: (iso && this._d(iso)) ? this._d(iso).getTime() : mk,
+          round: st.round, stageKey: st.key, pts: st.pts, bonus: st.bonus,
+          teamA, teamAes: D.es(teamA), teamAflag: D.flag(teamA), teamB, teamBes: D.es(teamB), teamBflag: D.flag(teamB),
+          live: false, done: false, hs: null, as: null, players: rows });
+      }
+      for (const card of out) {
+        const lm = (this.liveMatches || []).find((m) => (m.hCanon === card.teamA && m.aCanon === card.teamB) || (m.hCanon === card.teamB && m.aCanon === card.teamA));
+        if (lm) { if (!card.kickoffSpain) { card.kickoffSpain = lm.time; card.dayShort = lm.dayShort; card.ts = lm.ts || card.ts; } card.live = lm.live; card.done = lm.done; card.flash = lm.flash; card.justDone = lm.justDone; if (lm.live || lm.done) { card.hs = lm.hs; card.as = lm.as; } }
+        card.leader = null;
+        if ((card.live || card.done) && card.hs != null && card.as != null && Number(card.hs) !== Number(card.as)) card.leader = Number(card.hs) > Number(card.as) ? card.teamA : card.teamB;
+      }
+      out.sort((a, b) => a.ts - b.ts);
+      // resumen: a cuánto aspira cada uno en toda la ronda (mejor caso por cruce, sumado)
+      const per = {};
+      for (const card of out) for (const p of card.players) { const r = per[p.id] || (per[p.id] = { id: p.id, name: p.name, isMe: p.isMe, sum: 0 }); r.sum += p.max; }
+      const topAsp = Object.values(per).filter((x) => x.sum > 0).sort((a, b) => (b.isMe - a.isMe) || (b.sum - a.sum));
+      const res = { matches: out, topAsp, maxAsp: topAsp.reduce((m, x) => Math.max(m, x.sum), 0) };
+      _MEMO.kcKey = memoKey; _MEMO.kcVal = res;
+      return res;
+    },
     get schedule() {
       const f = this.calFilter, today = this.todayKey, byDay = {};
       for (const m of this.liveMatches) {

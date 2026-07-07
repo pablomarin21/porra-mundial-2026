@@ -1962,3 +1962,13 @@ tr.clickrow.sel td{background:#e7f1ec}
 /* especial ya imposible (jugador de equipo eliminado) */
 .ol-espchip.dead{background:rgba(255,255,255,.05);border-color:rgba(255,255,255,.1);color:#8a9a92;opacity:.7;text-decoration:line-through;text-decoration-color:rgba(226,110,90,.7)}
 .ol-espchip.dead .ol-dead{text-decoration:none;color:#e2836b;font-weight:700;font-size:.72rem;margin-left:2px}
+
+/* ⚔️ Chup chup de cuartos: fila de aspiraciones por jugador (sobre fondo oscuro del board) */
+.kc-asp{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin:-4px 2px 2px}
+.kc-asp-lab{font-weight:800;color:#ffe08a;font-size:.82rem;text-shadow:0 1px 4px rgba(0,0,0,.4)}
+.kc-aspchip{background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.22);border-radius:999px;padding:2px 9px;font-size:.8rem;color:#eef6f1;white-space:nowrap}
+.kc-aspchip b{color:var(--gold);font-weight:800}
+.kc-aspchip.me{background:rgba(245,197,66,.24);border-color:var(--gold)}
+.kc-round .kt-card{border-left-color:#3f7ad0}
+.kc-round .kt-card.live{border-left-color:#e0241b}
+.kc-round .kt-card.done{border-left-color:#1f9d57}
