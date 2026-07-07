@@ -217,10 +217,11 @@ window.porraApp = function () {
       const B2 = { cuartos: 4, semis: 5, final: 8, champion: 13 };   // bonus 2º cuadro por ronda
       const EA = this.extrasActual || {};
       const byId = {}; (this.entries || []).forEach((e) => { byId[e.id] = e; });
+      const espMeta = { pichichi: { ic: "⚽", lab: "Goleador" }, asistente: { ic: "🅰️", lab: "Asistente" }, portero: { ic: "🧤", lab: "Portero" } };
       const gettableOf = (e) => {
-        let g = 0; const parts = [];
-        if (!e || !e.picks) return { g, parts };
-        let dp; try { dp = Eng.derivePicks(e.picks); } catch (x) { return { g, parts }; }
+        let g = 0; const parts = [], esp = [];
+        if (!e || !e.picks) return { g, parts, esp };
+        let dp; try { dp = Eng.derivePicks(e.picks); } catch (x) { return { g, parts, esp }; }
         const add = (set, rn, pts, pre) => { for (const t of (set || [])) if (!R[rn].has(t) && !elim(t)) { g += pts; parts.push({ t: (pre || "") + D.flag(t) + " " + D.es(t), r: rn, p: pts }); } };
         add(dp.cuartos, "cuartos", S.cuartos, ""); add(dp.semis, "semis", S.semis, ""); add(dp.final, "final", S.finalists, "");
         if (dp.champion && !elim(dp.champion) && R.champion !== dp.champion) { g += S.champion; parts.push({ t: D.flag(dp.champion) + " " + D.es(dp.champion), r: "campeón", p: S.champion }); }
@@ -230,14 +231,16 @@ window.porraApp = function () {
         const ex = e.picks.extras || {};
         if (ex.revelacion && R.octavos.has(ex.revelacion) && !R.cuartos.has(ex.revelacion) && !oc.koLosers.has(ex.revelacion)) { g += S.revelacion; parts.push({ t: "✨ revelación " + D.es(ex.revelacion), r: "", p: S.revelacion }); }
         if (ex.decepcion && oc.decepcionPending && oc.decepcionPending.has(ex.decepcion)) { g += S.decepcion; parts.push({ t: "💀 decepción " + D.es(ex.decepcion), r: "", p: S.decepcion }); }
-        for (const k of ["pichichi", "asistente", "portero"]) if (ex[k] && !EA[k]) { g += (S[k] || 0); parts.push({ t: ({ pichichi: "⚽ Bota de Oro", asistente: "🅰️ máx. asistente", portero: "🧤 mejor portero" })[k], r: "", p: S[k] || 0 }); }
+        // ESPECIALES pendientes (goleador/asistente/portero) — línea propia; suman al techo pero aún no tienen dueño
+        for (const k of ["pichichi", "asistente", "portero"]) if (ex[k] && !EA[k]) { g += (S[k] || 0); esp.push({ ic: espMeta[k].ic, lab: espMeta[k].lab, name: ex[k], p: S[k] || 0 }); }
         parts.sort((a, b) => b.p - a.p);
-        return { g, parts };
+        return { g, parts, esp };
       };
       let rows = real.map((r, i) => {
         const gp = gettableOf(byId[r.id]);
+        const espTotal = gp.esp.reduce((s, x) => s + x.p, 0);
         return { id: r.id, name: (r.first_name || "").trim(), pos: i + 1, cur: r.points || 0, gettable: gp.g, techo: (r.points || 0) + gp.g,
-          win: r.win, podium: r.podium, avg: r.avg, swings: gp.parts.slice(0, 3) };
+          win: r.win, podium: r.podium, avg: r.avg, swings: gp.parts.slice(0, 3), esp: gp.esp, espTotal };
       });
       const maxTecho = Math.max(...rows.map((x) => x.techo), 1);
       rows.forEach((x) => {
@@ -268,19 +271,20 @@ window.porraApp = function () {
       rows.forEach((x, i) => {
         x.inPodium = i < 3;
         const s0 = x.swings[0];
+        const espTxt = x.espTotal > 0 ? " Y los ESPECIALES (goleador/asistente/portero, +" + x.espTotal + " sin dueño aún) pueden reordenarlo todo si acierta donde otros fallan." : "";
         if (i < 3) {
           const need = 3 - i;   // cuántos de abajo deben adelantarle para caerse del podio (1º→3, 2º→2, 3º→1)
           x.cushion = p4 != null ? x.cur - p4 : null;
           if (x.clinch1 || x.podClinch) x.scn = "🔒 Podio asegurado — ya nadie le baja del top 3, pase lo que pase.";
-          else if (need >= 3) x.scn = "Casi intocable en el podio: para caerse tendrían que adelantarle TRES rivales de golpe. Solo peligraría con un desastre de sus equipos (" + (s0 ? s0.t : "los suyos") + ") y un pleno de los de abajo.";
-          else if (need === 2) x.scn = "Cómodo en el podio: para caerse tendrían que remontarle DOS de abajo a la vez (empezando por " + name4 + ", a " + x.cushion + " pts). Difícil, pero no imposible.";
-          else x.scn = "Es el 3º, el puesto en disputa: se cae del podio si " + name4 + " (a " + x.cushion + " pts) le adelanta" + (chaserSw ? " con " + swTxt(chaserSw) : "") + " y " + x.name + " no rasca más. Aguantar es la clave.";
+          else if (need >= 3) x.scn = "Casi intocable en el podio: para caerse tendrían que adelantarle TRES rivales de golpe. Solo peligraría con un desastre de sus equipos (" + (s0 ? s0.t : "los suyos") + "), fallar los especiales y un pleno de los de abajo.";
+          else if (need === 2) x.scn = "Cómodo en el podio: para caerse tendrían que remontarle DOS de abajo a la vez (empezando por " + name4 + ", a " + x.cushion + " pts)." + espTxt;
+          else x.scn = "Es el 3º, el puesto en disputa: se cae si " + name4 + " (a " + x.cushion + " pts) le adelanta" + (chaserSw ? " con " + swTxt(chaserSw) : "") + "." + espTxt + " Aguantar es la clave.";
         } else {
           const need = (i + 1) - 3;   // rivales que hay que adelantar para entrar (4º→1, 7º→4)
           x.gap = Math.max(0, line3 - x.cur);
           if (!x.canPod) x.scn = "❌ Ya no llega al podio: ni ganándolo todo (techo " + x.techo + ") alcanzaría al 3º.";
-          else if (need === 1) x.scn = "A las puertas: entra en el podio si adelanta a " + name3 + " (a " + x.gap + " pts). Su gran baza: " + (s0 ? swTxt(s0) : "que sus equipos avancen") + (x.swings[1] ? ", y " + swTxt(x.swings[1]) : "") + ". Y que " + name3 + " se atasque.";
-          else x.scn = "Para colarse en el podio tiene que adelantar a " + need + " rivales (hasta el 3º, " + name3 + ", a " + x.gap + " pts). Necesita casi pleno con su munición: " + (s0 ? swTxt(s0) : "sus equipos vivos") + (x.swings[1] ? " y " + swTxt(x.swings[1]) : "") + ", y que los de arriba pinchen.";
+          else if (need === 1) x.scn = "A las puertas: entra en el podio si adelanta a " + name3 + " (a " + x.gap + " pts). Su gran baza: " + (s0 ? swTxt(s0) : "que sus equipos avancen") + (x.swings[1] ? ", y " + swTxt(x.swings[1]) : "") + "." + espTxt;
+          else x.scn = "Para colarse en el podio tiene que adelantar a " + need + " rivales (hasta el 3º, " + name3 + ", a " + x.gap + " pts): pleno con su munición (" + (s0 ? swTxt(s0) : "sus equipos") + (x.swings[1] ? ", " + swTxt(x.swings[1]) : "") + ") y que los de arriba pinchen." + espTxt;
         }
       });
       const out = { inPlay: Math.max(...rows.map((x) => x.gettable)), maxTecho, rows, allOpen: rows.every((x) => x.canWin) };

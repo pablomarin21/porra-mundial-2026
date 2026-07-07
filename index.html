@@ -35,7 +35,7 @@
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="Porra Mundial" />
-  <link rel="stylesheet" href="styles.css?v=133" />
+  <link rel="stylesheet" href="styles.css?v=134" />
 </head>
 <body x-data="porraApp()" x-init="init()" x-cloak>
 
@@ -577,12 +577,16 @@
           </div>
           <p class="ol-scn" x-text="r.scn"></p>
           <div class="ol-swing" x-show="r.swings.length && r.canPod">
-            <span class="muted" x-text="r.inPodium ? 'Lo que le blinda:' : 'Su munición:'"></span>
+            <span class="muted" x-text="r.inPodium ? 'Equipos que le blindan:' : 'Su munición (equipos):'"></span>
             <template x-for="(s,si) in r.swings" :key="'sw'+r.id+si"><span class="ol-chip"><span x-text="s.t"></span> <b x-text="'+'+s.p"></b></span></template>
+          </div>
+          <div class="ol-esp" x-show="r.esp.length && r.canPod">
+            <span class="ol-esp-lab">🎲 Especiales sin dueño <b x-text="'+'+r.espTotal"></b>:</span>
+            <template x-for="(s,si) in r.esp" :key="'esp'+r.id+si"><span class="ol-espchip"><span x-text="s.ic"></span> <span x-text="s.name"></span> <b x-text="'+'+s.p"></b></span></template>
           </div>
         </div>
       </template>
-      <p class="ol-foot muted">«🥉 X% podio» = probabilidad real de acabar en el <b>top 3</b> según miles de simulaciones del resto del Mundial. La <b>munición</b> son las jugadas que aún le suman (equipos vivos que avancen + especiales pendientes).</p>
+      <p class="ol-foot muted">«🥉 X% podio» = probabilidad real de acabar en el <b>top 3</b> según miles de simulaciones del resto del Mundial. Cuenta TODO lo que queda: equipos vivos en ambos cuadros y los <b>especiales</b> (goleador +12, asistente +10, portero +10 = <b>+32 por persona</b> que aún no tienen dueño).</p>
      </div>
     </template>
 
@@ -2231,7 +2235,7 @@
   <script src="data.js?v=121"></script>
   <script src="engine.js?v=131"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
-  <script src="app.js?v=133"></script>
+  <script src="app.js?v=134"></script>
   <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.1/dist/cdn.min.js"></script>
 </body>
 </html>
