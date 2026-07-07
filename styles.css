@@ -1915,3 +1915,30 @@ tr.clickrow.sel td{background:#e7f1ec}
 .update-bar b{color:#3a2a00}
 @keyframes upbar{from{opacity:0;transform:translate(-50%,10px)}to{opacity:1;transform:translate(-50%,0)}}
 @media(prefers-reduced-motion:reduce){.update-bar{animation:none}}
+
+/* 🔮 CÓMO PUEDE ACABAR — rango actual→techo + opciones reales (tab Clasificación) */
+.outlook-card{margin:14px 0;background:linear-gradient(160deg,#0e4936,#0a3527);border:1.5px solid var(--gold);border-radius:16px;padding:14px 14px 12px;box-shadow:0 8px 26px rgba(0,0,0,.28),inset 0 0 0 3px rgba(245,197,66,.08);color:#eaf3ee}
+.ol-h{font-weight:900;font-size:1.02rem;color:var(--gold);letter-spacing:.2px;margin-bottom:4px}
+.ol-sub{font-size:.82rem;line-height:1.4;color:#cfe4d9;margin:0 0 12px}
+.ol-sub b{color:#fff}
+.outlook-card .muted{color:#8fb3a4}
+.ol-row{padding:9px 0 10px;border-top:1px solid rgba(255,255,255,.09)}
+.ol-row:first-of-type{border-top:none}
+.ol-row.me{background:linear-gradient(90deg,rgba(245,197,66,.12),transparent);margin:0 -8px;padding-left:8px;padding-right:8px;border-radius:10px}
+.ol-line{display:flex;align-items:center;gap:8px;margin-bottom:6px}
+.ol-pos{font-weight:800;font-size:.78rem;color:#0a3527;background:var(--gold);border-radius:7px;padding:1px 7px;min-width:26px;text-align:center}
+.ol-name{font-weight:800;font-size:.95rem;color:#fff;flex:0 0 auto}
+.ol-tag{margin-left:auto;font-size:.74rem;font-weight:700;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.14);border-radius:999px;padding:2px 9px;white-space:nowrap}
+.ol-bar{position:relative;height:13px;border-radius:999px;background:rgba(255,255,255,.1);overflow:hidden;margin:2px 0 6px}
+.ol-fill{position:absolute;left:0;top:0;bottom:0;background:linear-gradient(90deg,#2ea56f,#3fce8c);border-radius:999px 0 0 999px;box-shadow:0 0 8px rgba(63,206,140,.4)}
+.ol-pot{position:absolute;top:0;bottom:0;background:repeating-linear-gradient(45deg,rgba(245,197,66,.55),rgba(245,197,66,.55) 5px,rgba(245,197,66,.28) 5px,rgba(245,197,66,.28) 10px)}
+.ol-avg{position:absolute;top:-2px;bottom:-2px;width:2px;background:#fff;box-shadow:0 0 4px rgba(0,0,0,.5);border-radius:2px}
+.ol-nums{display:flex;align-items:center;gap:6px;flex-wrap:wrap;font-size:.8rem;color:#cfe4d9}
+.ol-nums b{color:#fff}
+.ol-sep{color:#8fb3a4}
+.ol-odds{margin-left:auto;background:rgba(0,0,0,.22);border-radius:999px;padding:2px 9px;font-weight:600}
+.ol-odds b{color:var(--gold)}
+.ol-swing{margin-top:7px;display:flex;flex-wrap:wrap;align-items:center;gap:5px;font-size:.76rem}
+.ol-chip{background:rgba(255,255,255,.09);border:1px solid rgba(255,255,255,.12);border-radius:8px;padding:2px 7px;white-space:nowrap}
+.ol-chip b{color:#3fce8c}
+.ol-foot{font-size:.72rem;line-height:1.35;margin:10px 0 0;padding-top:9px;border-top:1px solid rgba(255,255,255,.09)}

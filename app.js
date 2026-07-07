@@ -200,6 +200,69 @@ window.porraApp = function () {
       const gap = fam.length >= 2 ? (Math.max(...fam) - Math.min(...fam)) : null;
       return { remaining: mainKO + bonus + esp, mainKO, bonus, esp, gap, champion: S.champion || 0 };
     },
+    // ---------- "CÓMO PUEDE ACABAR": rango actual→techo + opciones reales, en vivo ----------
+    // Para cada jugador calcula su TECHO = puntos actuales + todo lo que aún puede ganar con sus
+    // equipos VIVOS (cuadro inicial + 2º cuadro, rondas futuras) + especiales pendientes. Con el
+    // techo/suelo saca el estado matemático (puede ser 1º / asegurado / sin opciones), y con las
+    // probabilidades del board (win/podium/avg) la lectura realista. Se recalcula solo al cambiar
+    // resultados (memoizado por espnAt + puntos), así "se mueve en directo".
+    get finalOutlook() {
+      const oc = this.outcome, S = this.settings;
+      const real = (this.ranked || []).filter((r) => !this.isGuest(r) && r.points != null);
+      if (!oc || !oc.reached || real.length < 2) return null;
+      const sig = "fo|" + this.espnAt + "|" + real.map((r) => r.id + ":" + r.points).join(",");
+      if (_MEMO.foKey === sig && _MEMO.foVal) return _MEMO.foVal;
+      const R = oc.reached;
+      const elim = (t) => oc.koLosers.has(t) || !R.octavos.has(t);   // fuera en grupos/1-16 o perdió un KO
+      const B2 = { cuartos: 4, semis: 5, final: 8, champion: 13 };   // bonus 2º cuadro por ronda
+      const EA = this.extrasActual || {};
+      const byId = {}; (this.entries || []).forEach((e) => { byId[e.id] = e; });
+      const gettableOf = (e) => {
+        let g = 0; const parts = [];
+        if (!e || !e.picks) return { g, parts };
+        let dp; try { dp = Eng.derivePicks(e.picks); } catch (x) { return { g, parts }; }
+        const add = (set, rn, pts, pre) => { for (const t of (set || [])) if (!R[rn].has(t) && !elim(t)) { g += pts; parts.push({ t: (pre || "") + D.flag(t) + " " + D.es(t), r: rn, p: pts }); } };
+        add(dp.cuartos, "cuartos", S.cuartos, ""); add(dp.semis, "semis", S.semis, ""); add(dp.final, "final", S.finalists, "");
+        if (dp.champion && !elim(dp.champion) && R.champion !== dp.champion) { g += S.champion; parts.push({ t: D.flag(dp.champion) + " " + D.es(dp.champion), r: "campeón", p: S.champion }); }
+        const b2 = dp.b2 || {};
+        add(b2.cuartos, "cuartos", B2.cuartos, "2º "); add(b2.semis, "semis", B2.semis, "2º "); add(b2.final, "final", B2.final, "2º ");
+        if (b2.champion && !elim(b2.champion) && R.champion !== b2.champion) { g += B2.champion; parts.push({ t: "2º " + D.flag(b2.champion) + " " + D.es(b2.champion), r: "campeón", p: B2.champion }); }
+        const ex = e.picks.extras || {};
+        if (ex.revelacion && R.octavos.has(ex.revelacion) && !R.cuartos.has(ex.revelacion) && !oc.koLosers.has(ex.revelacion)) { g += S.revelacion; parts.push({ t: "✨ revelación " + D.es(ex.revelacion), r: "", p: S.revelacion }); }
+        if (ex.decepcion && oc.decepcionPending && oc.decepcionPending.has(ex.decepcion)) { g += S.decepcion; parts.push({ t: "💀 decepción " + D.es(ex.decepcion), r: "", p: S.decepcion }); }
+        for (const k of ["pichichi", "asistente", "portero"]) if (ex[k] && !EA[k]) { g += (S[k] || 0); parts.push({ t: ({ pichichi: "⚽ Bota de Oro", asistente: "🅰️ máx. asistente", portero: "🧤 mejor portero" })[k], r: "", p: S[k] || 0 }); }
+        parts.sort((a, b) => b.p - a.p);
+        return { g, parts };
+      };
+      let rows = real.map((r, i) => {
+        const gp = gettableOf(byId[r.id]);
+        return { id: r.id, name: (r.first_name || "").trim(), pos: i + 1, cur: r.points || 0, gettable: gp.g, techo: (r.points || 0) + gp.g,
+          win: r.win, podium: r.podium, avg: r.avg, swings: gp.parts.slice(0, 3) };
+      });
+      const maxTecho = Math.max(...rows.map((x) => x.techo), 1);
+      rows.forEach((x) => {
+        const others = rows.filter((y) => y.id !== x.id);
+        const maxOtherTecho = Math.max(...others.map((y) => y.techo));
+        const maxOtherCur = Math.max(...others.map((y) => y.cur));
+        x.clinch1 = x.cur >= maxOtherTecho;                                   // nadie le alcanza ni en su mejor caso
+        x.canWin = x.techo >= maxOtherCur;                                    // aún puede alcanzar al líder
+        x.canPod = others.filter((y) => y.cur > x.techo).length < 3;          // < 3 rivales inalcanzables por delante
+        x.podClinch = others.filter((y) => y.techo > x.cur).length < 3;       // como mucho 2 pueden superarle
+        const w = x.win || 0, p = x.podium || 0, oddsKnown = x.win != null;
+        if (x.clinch1) x.tag = "🔒 1º asegurado";
+        else if (!x.canPod) x.tag = "❌ sin opciones de podio";
+        else if (x.podClinch) x.tag = "🔒 podio asegurado";
+        else if (!oddsKnown) x.tag = x.pos === 1 ? "🏆 líder" : (x.pos <= 3 ? "🥉 en el podio" : "🎯 a la caza");  // aún sin probabilidades: por posición
+        else if (w >= 0.4) x.tag = "🏆 favorito";
+        else if (w >= 0.08) x.tag = "🏆 aspirante al título";
+        else if (p >= 0.33) x.tag = "🥉 pelea por el podio";
+        else if (p >= 0.08) x.tag = "🥉 outsider al podio";
+        else x.tag = "🎯 necesita una machada";
+      });
+      const out = { inPlay: Math.max(...rows.map((x) => x.gettable)), maxTecho, rows, allOpen: rows.every((x) => x.canWin) };
+      _MEMO.foKey = sig; _MEMO.foVal = out;
+      return out;
+    },
     famPos(i) { const e = (this.ranked || [])[i]; if (!e || this.isGuest(e)) return null; let c = 0; for (let k = 0; k <= i; k++) { if (!this.isGuest(this.ranked[k])) c++; } return c; },
     // ---------- pronósticos de la gente (Bota de Oro / máximo asistente) para la pestaña Goleadores ----------
     _shortName(e) { const n = (e.first_name || "").trim(); if (n.startsWith("🤖")) return "🤖 IA"; if (n.startsWith("🎙")) return "🎙️ Maldini"; return n.split(/\s+/)[0] || n; },
