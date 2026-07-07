@@ -1958,3 +1958,7 @@ tr.clickrow.sel td{background:#e7f1ec}
 .ol-esp-lab b{color:var(--gold)}
 .ol-espchip{background:rgba(245,197,66,.12);border:1px solid rgba(245,197,66,.3);border-radius:8px;padding:2px 7px;white-space:nowrap;color:#f3e6c4}
 .ol-espchip b{color:var(--gold)}
+
+/* especial ya imposible (jugador de equipo eliminado) */
+.ol-espchip.dead{background:rgba(255,255,255,.05);border-color:rgba(255,255,255,.1);color:#8a9a92;opacity:.7;text-decoration:line-through;text-decoration-color:rgba(226,110,90,.7)}
+.ol-espchip.dead .ol-dead{text-decoration:none;color:#e2836b;font-weight:700;font-size:.72rem;margin-left:2px}

@@ -36,6 +36,19 @@ function dtf(locale, opts) {
 // escribir un caché DENTRO del objeto reactivo desde un getter crea dependencias
 // sobre el propio caché y puede provocar bucles de re-render.
 const _MEMO = { lmKey: null, lmVal: null, ktKey: null, ktVal: null };
+// Jugador (pichichi/asistente/portero, texto libre) → su selección, para saber si un especial
+// SIGUE EN JUEGO: si su equipo está eliminado, ese premio ya no lo puede ganar. Coincidencia por
+// subcadena normalizada (sin acentos, minúsculas). Si no reconoce al jugador, se asume vivo.
+const _normName = (s) => (s || "").toString().toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/\s+/g, " ").trim();
+const PLAYER_TEAM = [
+  ["mbappe", "France"], ["maignan", "France"], ["griezmann", "France"], ["dembele", "France"], ["saliba", "France"], ["tchouameni", "France"], ["kolo muani", "France"],
+  ["raphinha", "Brazil"], ["vinicius", "Brazil"], ["vini", "Brazil"], ["rodrygo", "Brazil"], ["neymar", "Brazil"], ["endrick", "Brazil"], ["alisson", "Brazil"], ["casemiro", "Brazil"],
+  ["lamine", "Spain"], ["yamal", "Spain"], ["oyarzabal", "Spain"], ["unai", "Spain"], ["simon", "Spain"], ["morata", "Spain"], ["pedri", "Spain"], ["gavi", "Spain"], ["nico williams", "Spain"], ["rodri", "Spain"],
+  ["bruno fernandes", "Portugal"], ["ronaldo", "Portugal"], ["diogo costa", "Portugal"], ["diogo", "Portugal"], ["leao", "Portugal"], ["felix", "Portugal"], ["bernardo silva", "Portugal"],
+  ["messi", "Argentina"], ["dibu", "Argentina"], ["martinez", "Argentina"], ["julian", "Argentina"], ["alvarez", "Argentina"], ["lautaro", "Argentina"], ["mac allister", "Argentina"], ["enzo", "Argentina"],
+  ["haaland", "Norway"], ["odegaard", "Norway"], ["kane", "England"], ["bellingham", "England"], ["saka", "England"], ["foden", "England"], ["hakimi", "Morocco"], ["lukaku", "Belgium"], ["de bruyne", "Belgium"], ["doku", "Belgium"],
+];
+const _playerTeam = (name) => { const n = _normName(name); for (const [k, t] of PLAYER_TEAM) if (n.indexOf(k) >= 0) return t; return null; };
 // Sedes del Mundial 2026: zona horaria local + temperatura típica (máx. diurna jun-jul, °C).
 // Se busca por ciudad (de ESPN venue.address.city), sin acentos y en minúsculas.
 const VENUES = {
@@ -231,14 +244,20 @@ window.porraApp = function () {
         const ex = e.picks.extras || {};
         if (ex.revelacion && R.octavos.has(ex.revelacion) && !R.cuartos.has(ex.revelacion) && !oc.koLosers.has(ex.revelacion)) { g += S.revelacion; parts.push({ t: "✨ revelación " + D.es(ex.revelacion), r: "", p: S.revelacion }); }
         if (ex.decepcion && oc.decepcionPending && oc.decepcionPending.has(ex.decepcion)) { g += S.decepcion; parts.push({ t: "💀 decepción " + D.es(ex.decepcion), r: "", p: S.decepcion }); }
-        // ESPECIALES pendientes (goleador/asistente/portero) — línea propia; suman al techo pero aún no tienen dueño
-        for (const k of ["pichichi", "asistente", "portero"]) if (ex[k] && !EA[k]) { g += (S[k] || 0); esp.push({ ic: espMeta[k].ic, lab: espMeta[k].lab, name: ex[k], p: S[k] || 0 }); }
+        // ESPECIALES pendientes (goleador/asistente/portero) — línea propia. Solo cuenta si SIGUE
+        // EN JUEGO: si el jugador elegido es de un equipo eliminado, ese premio ya no lo puede ganar.
+        for (const k of ["pichichi", "asistente", "portero"]) {
+          if (!ex[k] || EA[k]) continue;
+          const team = _playerTeam(ex[k]), dead = !!(team && elim(team));
+          if (!dead) g += (S[k] || 0);
+          esp.push({ ic: espMeta[k].ic, lab: espMeta[k].lab, name: ex[k], p: S[k] || 0, dead: dead, team: team });
+        }
         parts.sort((a, b) => b.p - a.p);
         return { g, parts, esp };
       };
       let rows = real.map((r, i) => {
         const gp = gettableOf(byId[r.id]);
-        const espTotal = gp.esp.reduce((s, x) => s + x.p, 0);
+        const espTotal = gp.esp.filter((x) => !x.dead).reduce((s, x) => s + x.p, 0);
         return { id: r.id, name: (r.first_name || "").trim(), pos: i + 1, cur: r.points || 0, gettable: gp.g, techo: (r.points || 0) + gp.g,
           win: r.win, podium: r.podium, avg: r.avg, swings: gp.parts.slice(0, 3), esp: gp.esp, espTotal };
       });
