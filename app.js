@@ -311,6 +311,15 @@ window.porraApp = function () {
       return out;
     },
     famPos(i) { const e = (this.ranked || [])[i]; if (!e || this.isGuest(e)) return null; let c = 0; for (let k = 0; k <= i; k++) { if (!this.isGuest(this.ranked[k])) c++; } return c; },
+    // Estado de cena 100% MATEMÁTICO (para pintar la clasificación): "in" = podio asegurado
+    // (le invitan a cenar), "out" = sin opciones de podio (invita a cenar), "" = aún en el aire.
+    cenaStatus(id) {
+      const fo = this.finalOutlook; if (!fo) return "";
+      const r = fo.rows.find((x) => x.id === id); if (!r) return "";
+      if (r.podClinch) return "in";     // nadie puede bajarle del top 3
+      if (!r.canPod) return "out";      // ni ganándolo todo entra en el top 3
+      return "";
+    },
     // ---------- pronósticos de la gente (Bota de Oro / máximo asistente) para la pestaña Goleadores ----------
     _shortName(e) { const n = (e.first_name || "").trim(); if (n.startsWith("🤖")) return "🤖 IA"; if (n.startsWith("🎙")) return "🎙️ Maldini"; return n.split(/\s+/)[0] || n; },
     _norm(s) { return (s || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[.\-'`]/g, "").trim(); },

@@ -1972,3 +1972,28 @@ tr.clickrow.sel td{background:#e7f1ec}
 .kc-round .kt-card{border-left-color:#3f7ad0}
 .kc-round .kt-card.live{border-left-color:#e0241b}
 .kc-round .kt-card.done{border-left-color:#1f9d57}
+
+/* 🍽️ Cena 100% matemática en la clasificación */
+.league-row.cena-in{border-left:4px solid #1f9d57;background:linear-gradient(90deg,#e6f7ee,#fff 62%)}
+.league-row.cena-in .lr-pos{color:#1f9d57}
+.league-row.cena-in .lr-name>span:nth-child(2){color:#177a43;font-weight:700}
+.league-row.cena-out{border-left:4px solid var(--err);background:linear-gradient(90deg,#fde9e9,#fff 62%)}
+.league-row.cena-out .lr-pos{color:var(--err)}
+.league-row.cena-out .lr-name>span:nth-child(2){color:var(--err);font-weight:700}
+.paytag.treat{background:#1f9d57}
+.paytag.pay{background:var(--err)}
+.paytag.soft{background:#b09656;color:#fff;text-transform:none;letter-spacing:0;font-weight:700}
+
+/* que el texto de cena se lea en móvil (no MAYÚS, más ancho; el nombre cede) */
+.paytag.treat,.paytag.pay{text-transform:none;letter-spacing:.1px;font-size:.66rem}
+@media(max-width:560px){
+  .league-row.cena-in .lr-name>span:nth-child(2),.league-row.cena-out .lr-name>span:nth-child(2){max-width:24vw;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:0 1 auto}
+  .paytag.treat,.paytag.pay{max-width:50vw;flex:0 0 auto}
+}
+
+/* franja de cena a lo ancho (2ª línea de la fila) — el texto se lee entero en móvil */
+.league-row{flex-wrap:wrap}
+.cena-banner{flex-basis:100%;margin-top:8px;border-radius:9px;padding:6px 11px;font-weight:800;font-size:.82rem;color:#fff;text-align:center;box-shadow:0 2px 8px rgba(0,0,0,.12)}
+.cena-banner.treat{background:linear-gradient(90deg,#199a52,#2ec26f)}
+.cena-banner.pay{background:linear-gradient(90deg,#d0322a,#e15a4f)}
+.cb-sub{font-weight:600;opacity:.92;font-size:.74rem;white-space:nowrap}
