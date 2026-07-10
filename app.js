@@ -1365,22 +1365,34 @@ window.porraApp = function () {
           }
         }
       }
-      this.scorers = Object.values(goals).sort((a, b) => b.n - a.n || a.name.localeCompare(b.name)).slice(0, 30);
+      this.scorers = Object.values(goals).sort((a, b) => b.n - a.n || a.name.localeCompare(b.name)).slice(0, 999);
     },
     // ---- Tablas SOLO con jugadores de selecciones que siguen en el Mundial ----
     // (petición: quitar a los eliminados, que ya no suman, para ver la carrera entre los vivos)
-    _liveOnly(arr) {
+    _aliveList(arr) {
       const oc = this.outcome; if (!oc || !oc.reached) return arr || [];
       const R = oc.reached, KL = oc.koLosers || new Set();
       const dead = (c) => !!c && (KL.has(c) || !R.octavos.has(c));   // perdió un KO, o no pasó de grupos
       return (arr || []).filter((s) => !dead(s.canon));
     },
-    get scorersLive() { return this._liveOnly(this.scorers); },
-    get assistersLive() { return this._liveOnly(this.assisters); },
-    get porterosLive() { return this._liveOnly(this.porteros); },
-    get scorersHidden() { return Math.max(0, (this.scorers || []).length - this.scorersLive.length); },
-    get assistersHidden() { return Math.max(0, (this.assisters || []).length - this.assistersLive.length); },
-    get porterosHidden() { return Math.max(0, (this.porteros || []).length - this.porterosLive.length); },
+    // Top N vivos + SIEMPRE los jugadores apostados por la familia (aunque estén más abajo),
+    // con su puesto REAL, para que cada uno vea cómo va su apuesta aunque no lidere.
+    _liveTable(arr, field) {
+      const alive = this._aliveList(arr).map((s, i) => Object.assign({}, s, { rank: i + 1 }));
+      const CAP = 12;
+      const shown = alive.slice(0, CAP);
+      const shownKeys = new Set(shown.map((s) => this._surKey(s.name)));
+      const pickKeys = new Set();
+      for (const e of (this.entries || [])) { const v = e.picks && e.picks.extras && (e.picks.extras[field] || "").trim(); if (v) { const k = this._surKey(v); if (k) pickKeys.add(k); } }
+      for (const s of alive.slice(CAP)) { const k = this._surKey(s.name); if (pickKeys.has(k) && !shownKeys.has(k)) { shown.push(Object.assign({}, s, { _pick: true })); shownKeys.add(k); } }
+      return shown;
+    },
+    get scorersLive() { return this._liveTable(this.scorers, "pichichi"); },
+    get assistersLive() { return this._liveTable(this.assisters, "asistente"); },
+    get porterosLive() { return this._liveTable(this.porteros, "portero"); },
+    get scorersHidden() { return Math.max(0, (this.scorers || []).length - this._aliveList(this.scorers).length); },
+    get assistersHidden() { return Math.max(0, (this.assisters || []).length - this._aliveList(this.assisters).length); },
+    get porterosHidden() { return Math.max(0, (this.porteros || []).length - this._aliveList(this.porteros).length); },
     // Asistencias + porteros: ESPN solo los da en el endpoint summary por partido
     // (keyEvents[].participants[1] = asistente; rosters[].roster con el portero titular).
     // Goles encajados = marcador del rival (del scoreboard). Caché memoria + localStorage.
@@ -1447,8 +1459,8 @@ window.porraApp = function () {
             gks[k].gc += g.conceded; gks[k].pj++; if (g.conceded === 0) gks[k].cs++;
           }
         }
-        this.assisters = Object.values(assists).sort((x, y) => y.n - x.n || x.name.localeCompare(y.name)).slice(0, 30);
-        this.porteros = Object.values(gks).filter((p) => p.pj >= 1).sort((a, b) => a.gc - b.gc || b.pj - a.pj || b.cs - a.cs || a.name.localeCompare(b.name)).slice(0, 30);
+        this.assisters = Object.values(assists).sort((x, y) => y.n - x.n || x.name.localeCompare(y.name)).slice(0, 999);
+        this.porteros = Object.values(gks).filter((p) => p.pj >= 1).sort((a, b) => a.gc - b.gc || b.pj - a.pj || b.cs - a.cs || a.name.localeCompare(b.name)).slice(0, 999);
         this.assistsLoaded = true;
       } finally { this.assistsLoading = false; }
     },
