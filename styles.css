@@ -2004,3 +2004,8 @@ tr.clickrow.sel td{background:#e7f1ec}
 .sc-row.mypick{background:linear-gradient(90deg,#fff6da,#fff)}
 .sc-row.sep{border-top:2px dashed var(--gold2);margin-top:5px;padding-top:7px}
 .pick-tag{display:inline-block;background:var(--gold2);color:#3a2a00;font-weight:800;font-size:.58rem;line-height:1.4;border-radius:5px;padding:0 5px;margin-left:5px;vertical-align:middle;white-space:nowrap}
+
+/* hueco "próximamente" en el chup chup (cruce aún por decidir) */
+.kc-ph{border-style:dashed;background:#fbfdfc}
+.kc-round .kt-card.kc-ph{border-left-color:#9db3aa}
+.kc-ph-txt{font-size:.82rem;color:#5b6e66;line-height:1.45;padding:3px 1px 1px}

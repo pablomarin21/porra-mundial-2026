@@ -35,7 +35,7 @@
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="Porra Mundial" />
-  <link rel="stylesheet" href="styles.css?v=141" />
+  <link rel="stylesheet" href="styles.css?v=142" />
 </head>
 <body x-data="porraApp()" x-init="init()" x-cloak>
 
@@ -633,6 +633,12 @@
               </div>
             </template>
           </div>
+        </div>
+      </template>
+      <template x-for="ph in koCuartos.placeholders" :key="'kcph'+ph.match">
+        <div class="kt-card kc-ph">
+          <div class="kt-top"><span class="kt-round"><b x-text="ph.round"></b></span><span class="kt-time muted">⏳ por decidir</span></div>
+          <div class="kc-ph-txt">🔮 Este cruce <b>aparece aquí solo</b> —con lo que aspira cada uno— en cuanto se jueguen los partidos que lo alimentan.</div>
         </div>
       </template>
       <div class="kt-foot muted tiny">Cada cruce vale lo de <b>su ronda</b> (pasar de ronda): 🏆 el cuadro de antes · 🗓️ +el del 2º cuadro (cuartos +<span x-text="settings.semis"></span>/🗓️+5 · semis +<span x-text="settings.finalists"></span>/🗓️+8 · final +<span x-text="settings.champion"></span>/🗓️+13). El icono dice de dónde sale: 🏆 solo el de antes · 🗓️ solo el 2º · 🏆🗓️ los dos. <b class="kt-good-txt">Verde</b> = lo que más le conviene · «·» = no suma.</div>
@@ -2286,7 +2292,7 @@
   <script src="data.js?v=121"></script>
   <script src="engine.js?v=131"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
-  <script src="app.js?v=141"></script>
+  <script src="app.js?v=142"></script>
   <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.1/dist/cdn.min.js"></script>
 </body>
 </html>

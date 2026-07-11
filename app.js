@@ -790,7 +790,15 @@ window.porraApp = function () {
       const per = {};
       for (const card of pend) for (const p of card.players) { const r = per[p.id] || (per[p.id] = { id: p.id, name: p.name, isMe: p.isMe, sum: 0 }); r.sum += p.max; }
       const topAsp = Object.values(per).filter((x) => x.sum > 0).sort((a, b) => (b.isMe - a.isMe) || (b.sum - a.sum));
-      const res = { matches: pend, topAsp, maxAsp: topAsp.reduce((m, x) => Math.max(m, x.sum), 0) };
+      // HUECOS "próximamente": semis/final que aún no tienen los 2 equipos → se rellenan solos
+      const have = new Set(pend.map((c) => c.match));
+      const placeholders = [];
+      for (const mk of [101, 102, 104]) {
+        const st = this._koStage(mk); if (!st || have.has(mk)) continue;
+        const pair = tbm[mk] || tbm[String(mk)] || {}; if (pair.a && pair.b) continue;   // ya decidido (o jugado) → no hace falta hueco
+        placeholders.push({ match: mk, round: st.round, pts: st.pts, bonus: st.bonus });
+      }
+      const res = { matches: pend, placeholders, topAsp, maxAsp: topAsp.reduce((m, x) => Math.max(m, x.sum), 0) };
       _MEMO.kcKey = memoKey; _MEMO.kcVal = res;
       return res;
     },
