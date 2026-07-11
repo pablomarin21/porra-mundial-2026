@@ -759,8 +759,8 @@ window.porraApp = function () {
         .map((e) => { let dp = null; try { dp = Eng.derivePicks(e.picks); } catch (x) {} return { id: e.id, name: this._shortName(e), isMe: e.id === meId, dp, b2: (e.picks && e.picks.bracket2) || {} }; })
         .filter((p) => p.dp);
       const out = [];
-      for (let mk = 97; mk <= 100; mk++) {
-        const st = this._koStage(mk); if (!st) continue;   // { key:'semis', pts, bonus:5, round:'Cuartos' }
+      for (let mk = 97; mk <= 104; mk++) {
+        const st = this._koStage(mk); if (!st) continue;   // cuartos(97-100)/semis(101-102)/final(104); 103=3er puesto → null
         const pair = tbm[mk] || tbm[String(mk)] || {}; const teamA = pair.a, teamB = pair.b;
         if (!teamA || !teamB) continue;                     // solo con ambos equipos decididos
         const hasMain = (P, t) => !!(P[st.key] && P[st.key].has && P[st.key].has(t));
@@ -785,11 +785,12 @@ window.porraApp = function () {
         if ((card.live || card.done) && card.hs != null && card.as != null && Number(card.hs) !== Number(card.as)) card.leader = Number(card.hs) > Number(card.as) ? card.teamA : card.teamB;
       }
       out.sort((a, b) => a.ts - b.ts);
-      // resumen: a cuánto aspira cada uno en toda la ronda (mejor caso por cruce, sumado)
+      const pend = out.filter((c) => !c.done);   // solo lo que QUEDA por jugar (lo jugado ya sale en "Cruces de hoy")
+      // resumen: a cuánto aspira cada uno en lo que queda (mejor caso por cruce, sumado)
       const per = {};
-      for (const card of out) for (const p of card.players) { const r = per[p.id] || (per[p.id] = { id: p.id, name: p.name, isMe: p.isMe, sum: 0 }); r.sum += p.max; }
+      for (const card of pend) for (const p of card.players) { const r = per[p.id] || (per[p.id] = { id: p.id, name: p.name, isMe: p.isMe, sum: 0 }); r.sum += p.max; }
       const topAsp = Object.values(per).filter((x) => x.sum > 0).sort((a, b) => (b.isMe - a.isMe) || (b.sum - a.sum));
-      const res = { matches: out, topAsp, maxAsp: topAsp.reduce((m, x) => Math.max(m, x.sum), 0) };
+      const res = { matches: pend, topAsp, maxAsp: topAsp.reduce((m, x) => Math.max(m, x.sum), 0) };
       _MEMO.kcKey = memoKey; _MEMO.kcVal = res;
       return res;
     },

@@ -35,7 +35,7 @@
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="Porra Mundial" />
-  <link rel="stylesheet" href="styles.css?v=140" />
+  <link rel="stylesheet" href="styles.css?v=141" />
 </head>
 <body x-data="porraApp()" x-init="init()" x-cloak>
 
@@ -597,17 +597,17 @@
      </div>
     </template>
 
-    <!-- ⚔️ EL CHUP CHUP DE CUARTOS: lo que aspira a sumar cada uno cuando se jueguen los 4 cruces -->
+    <!-- ⚔️ EL CHUP CHUP: lo que aspira a sumar cada uno en lo que queda por jugar (cuartos → final) -->
     <div class="ko-today kc-round" x-show="boardLocked && koCuartos.matches.length">
-      <div class="kt-head">⚔️ Empieza el chup chup: cuartos <span class="muted tiny">— lo que aspira a sumar cada uno en los 4 cruces</span></div>
+      <div class="kt-head">⚔️ El chup chup: lo que queda por jugar <span class="muted tiny">— a cuánto aspira cada uno en los cruces que faltan</span></div>
       <div class="kc-asp" x-show="koCuartos.topAsp.length">
-        <span class="kc-asp-lab">🔥 Aspira a sumar:</span>
+        <span class="kc-asp-lab">🔥 Aspira a sumar en lo que queda:</span>
         <template x-for="a in koCuartos.topAsp" :key="'kca'+a.id"><span class="kc-aspchip" :class="{me:a.isMe}"><span x-text="a.name"></span> <b x-text="'+'+a.sum"></b></span></template>
       </div>
       <template x-for="m in koCuartos.matches" :key="'kc'+m.match">
         <div class="kt-card" :class="{live:m.live, done:m.done, findone:m.justDone}">
           <div class="kt-top">
-            <span class="kt-round" x-text="m.dayShort || m.round"></span>
+            <span class="kt-round"><b x-text="m.round"></b><span x-show="m.dayShort" class="muted" x-text="' · '+m.dayShort"></span></span>
             <span class="kt-time" :class="{live:m.live}" x-text="m.live?'EN VIVO':(m.done?'✓ FINAL':('🕒 '+m.kickoffSpain))"></span>
           </div>
           <div class="kt-match">
@@ -635,7 +635,7 @@
           </div>
         </div>
       </template>
-      <div class="kt-foot muted tiny">Ganar un cuarto = <b>pasar a semifinales</b>: vale 🏆 +<span x-text="settings.semis"></span> (cuadro de antes) · 🗓️ +5 (2º cuadro) → con los dos, <b>+<span x-text="settings.semis+5"></span></b>. El icono de cada casilla dice de dónde sale: 🏆 solo lo tienes en el de antes · 🗓️ solo en el 2º · 🏆🗓️ en los dos. <b class="kt-good-txt">Verde</b> = lo que más le conviene · «·» = no suma.</div>
+      <div class="kt-foot muted tiny">Cada cruce vale lo de <b>su ronda</b> (pasar de ronda): 🏆 el cuadro de antes · 🗓️ +el del 2º cuadro (cuartos +<span x-text="settings.semis"></span>/🗓️+5 · semis +<span x-text="settings.finalists"></span>/🗓️+8 · final +<span x-text="settings.champion"></span>/🗓️+13). El icono dice de dónde sale: 🏆 solo el de antes · 🗓️ solo el 2º · 🏆🗓️ los dos. <b class="kt-good-txt">Verde</b> = lo que más le conviene · «·» = no suma.</div>
     </div>
 
     <!-- 🎯 EXPLICADOR SIMPLE: por qué hay 2 cuadros + de dónde salen los puntos -->
@@ -2286,7 +2286,7 @@
   <script src="data.js?v=121"></script>
   <script src="engine.js?v=131"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
-  <script src="app.js?v=140"></script>
+  <script src="app.js?v=141"></script>
   <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.1/dist/cdn.min.js"></script>
 </body>
 </html>
