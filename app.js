@@ -763,7 +763,9 @@ window.porraApp = function () {
         const st = this._koStage(mk); if (!st) continue;   // cuartos(97-100)/semis(101-102)/final(104); 103=3er puesto → null
         const pair = tbm[mk] || tbm[String(mk)] || {}; const teamA = pair.a, teamB = pair.b;
         if (!teamA || !teamB) continue;                     // solo con ambos equipos decididos
-        const hasMain = (P, t) => !!(P[st.key] && P[st.key].has && P[st.key].has(t));
+        // OJO: en la FINAL st.key='champion' y P.champion es un STRING (no un Set) → caso aparte.
+        const champ = st.key === "champion";
+        const hasMain = (P, t) => champ ? (P.champion === t) : !!(P[st.key] && P[st.key].has && P[st.key].has(t));
         const rows = players.map((p) => {
           const cell = (t) => { const o = hasMain(p.dp, t), b = (p.b2[mk] === t || p.b2[String(mk)] === t);
             return { sum: (o ? st.pts : 0) + (b ? st.bonus : 0), ic: o && b ? "🏆🗓️" : (o ? "🏆" : (b ? "🗓️" : "")) }; };
