@@ -269,7 +269,7 @@ window.porraApp = function () {
         x.clinch1 = x.cur >= maxOtherTecho;                                   // nadie le alcanza ni en su mejor caso
         x.canWin = x.techo >= maxOtherCur;                                    // aún puede alcanzar al líder
         x.canPod = others.filter((y) => y.cur > x.techo).length < 3;          // < 3 rivales inalcanzables por delante
-        x.podClinch = others.filter((y) => y.techo > x.cur).length < 3;       // como mucho 2 pueden superarle
+        x.podClinch = others.filter((y) => y.techo >= x.cur).length < 3;      // >= : un rival que EMPATA a mi suelo puede ganarme el desempate → no es podio asegurado
         const w = x.win || 0, p = x.podium || 0, oddsKnown = x.win != null;
         if (x.clinch1) x.tag = "🔒 1º asegurado";
         else if (!x.canPod) x.tag = "❌ sin opciones de podio";
@@ -731,7 +731,9 @@ window.porraApp = function () {
       }
       for (const card of out) {
         const lm = (this.liveMatches || []).find((m) => (m.hCanon === card.teamA && m.aCanon === card.teamB) || (m.hCanon === card.teamB && m.aCanon === card.teamA));
-        if (lm) { card.live = lm.live; card.done = lm.done; card.flash = lm.flash; card.justDone = lm.justDone; if (lm.live || lm.done) { card.hs = lm.hs; card.as = lm.as; } }
+        if (lm) { card.live = lm.live; card.done = lm.done; card.flash = lm.flash; card.justDone = lm.justDone;
+          // Reorientar marcador ESPN (local/visitante) al orden teamA/teamB del cuadro (sedes neutrales).
+          if (lm.live || lm.done) { const flip = lm.hCanon === card.teamB; card.hs = flip ? lm.as : lm.hs; card.as = flip ? lm.hs : lm.as; } }
         // Solo display: con el marcador actual, quién pasa y quién sumaría cuántos puntos.
         card.leader = null; card.nowWho = "";
         if ((card.live || card.done) && card.hs != null && card.as != null && Number(card.hs) !== Number(card.as)) {
@@ -782,7 +784,10 @@ window.porraApp = function () {
       }
       for (const card of out) {
         const lm = (this.liveMatches || []).find((m) => (m.hCanon === card.teamA && m.aCanon === card.teamB) || (m.hCanon === card.teamB && m.aCanon === card.teamA));
-        if (lm) { if (!card.kickoffSpain) { card.kickoffSpain = lm.time; card.dayShort = lm.dayShort; card.ts = lm.ts || card.ts; } card.live = lm.live; card.done = lm.done; card.flash = lm.flash; card.justDone = lm.justDone; if (lm.live || lm.done) { card.hs = lm.hs; card.as = lm.as; } }
+        if (lm) { if (!card.kickoffSpain) { card.kickoffSpain = lm.time; card.dayShort = lm.dayShort; card.ts = lm.ts || card.ts; } card.live = lm.live; card.done = lm.done; card.flash = lm.flash; card.justDone = lm.justDone;
+          // Reorientar el marcador de ESPN (local/visitante) al orden teamA/teamB del CUADRO:
+          // ESPN puede poner a teamB como local (sedes neutrales), y aquí teamA va siempre a la izquierda.
+          if (lm.live || lm.done) { const flip = lm.hCanon === card.teamB; card.hs = flip ? lm.as : lm.hs; card.as = flip ? lm.hs : lm.as; } }
         card.leader = null;
         if ((card.live || card.done) && card.hs != null && card.as != null && Number(card.hs) !== Number(card.as)) card.leader = Number(card.hs) > Number(card.as) ? card.teamA : card.teamB;
       }
