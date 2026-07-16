@@ -116,6 +116,7 @@ window.porraApp = function () {
     // pronósticos
     groups: emptyGroups(), thirds: [], bracket: {}, _cols: [], _champion: null,
     extras: { revelacion: "", decepcion: "", pichichi: "", asistente: "", portero: "", sidebets: {} },
+    finalPred: { w: "", g: {}, m: "", sc: [] }, finalSaving: false, finalSaved: false, finalPhotoBad: {},
     letters: D.GROUP_LETTERS, allTeams: ALL_TEAMS.slice().sort((a, b) => D.es(a).localeCompare(D.es(b))),
     sideBets: D.SIDE_BETS,
     // en vivo (ESPN) + cierre automático
@@ -231,6 +232,7 @@ window.porraApp = function () {
       const EA = this.extrasActual || {};
       const byId = {}; (this.entries || []).forEach((e) => { byId[e.id] = e; });
       const espMeta = { pichichi: { ic: "⚽", lab: "Goleador" }, asistente: { ic: "🅰️", lab: "Asistente" }, portero: { ic: "🧤", lab: "Portero" } };
+      const _fa = this.finalActual, finPlayed = !!(_fa && _fa.done), FP = this.FINAL_PTS;   // hoisted: la final vale +40 mientras no se juegue
       const gettableOf = (e) => {
         let g = 0; const parts = [], esp = [];
         if (!e || !e.picks) return { g, parts, esp };
@@ -254,6 +256,9 @@ window.porraApp = function () {
           if (!dead) g += (S[k] || 0);
           esp.push({ ic: espMeta[k].ic, lab: espMeta[k].lab, name: ex[k], p: S[k] || 0, dead: dead, team: team });
         }
+        // 🏆 LA GRAN FINAL: si aún no se ha jugado y tiene pronóstico, puede sumar hasta +40
+        const fp = e.picks.final;
+        if (fp && fp.g && !finPlayed) { g += FP.total; parts.push({ t: "🏆 la gran final", r: "", p: FP.total }); }
         parts.sort((a, b) => b.p - a.p);
         return { g, parts, esp };
       };
@@ -448,6 +453,73 @@ window.porraApp = function () {
     get porteroBets() { return this._betSummary("portero", this.porteros); },
     // ---------- predicción "mejor portero" (campo nuevo): aviso en pantalla principal + guardar ----------
     get myEntry() { const id = this.me && this.me.id; return id ? (this.entries || []).find((e) => e.id === id) : null; },
+    // ===================== 🏆 LA GRAN FINAL (hasta +40) =====================
+    // Reparto: ganador +6 · resultado EXACTO +12 · método +8 · goleador +7 (máx 2) = 40.
+    // Se guarda en picks.final vía porra_save_entry preservando TODO lo demás (ojo: ese RPC
+    // reemplaza el picks entero — hay que mandar groups/thirds/bracket/bracket2/extras también).
+    get FINAL_PTS() { return { ganador: 6, exacto: 12, metodo: 8, goleador: 7, maxGol: 2, total: 40 }; },
+    get finalMatch() {
+      const oc = this.outcome; const fin = oc && oc.reached && oc.reached.final;
+      if (!fin || fin.size !== 2) return null;
+      const [a, b] = [...fin];
+      const lm = (this.liveMatches || []).find((m) => (m.hCanon === a && m.aCanon === b) || (m.hCanon === b && m.aCanon === a));
+      return { teams: [a, b], esA: D.es(a), esB: D.es(b), flagA: D.flag(a), flagB: D.flag(b),
+        day: lm ? lm.dayLong || lm.dayShort : "", time: lm ? lm.time : "", live: !!(lm && lm.live), done: !!(lm && lm.done), lm };
+    },
+    get finalXI() {
+      const fm = this.finalMatch; if (!fm) return null;
+      const T = window.PORRA_FINAL_XI || {};
+      const of = (t) => (T[t] || []).map((p) => Object.assign({}, p, { team: t, es: D.es(t), flag: D.flag(t) }));
+      return { A: of(fm.teams[0]), B: of(fm.teams[1]) };
+    },
+    // Resultado REAL de la final (cuando se juegue): ganador, marcador por equipo, método y goleadores.
+    get finalActual() {
+      const fm = this.finalMatch; if (!fm) return null;
+      const ev = (this.espnEvents || []).find((e) => {
+        const cs = (e.competitions && e.competitions[0] && e.competitions[0].competitors) || [];
+        const n = cs.map((c) => D.espnCanon(c.team && c.team.displayName));
+        return n.includes(fm.teams[0]) && n.includes(fm.teams[1]) && ((e.season && e.season.slug) || "").toLowerCase() === "final";
+      });
+      if (!ev) return null;
+      const st = (ev.status && ev.status.type) || {}; const comp = ev.competitions[0];
+      const cs = comp.competitors || [];
+      const g = {}; let w = null;
+      for (const c of cs) { const t = D.espnCanon(c.team && c.team.displayName); if (!t) continue; g[t] = c.score != null ? Number(c.score) : null; if (c.winner) w = t; }
+      const det = ((st.shortDetail || st.detail || "") + "").toLowerCase();
+      const m = /pen/.test(det) ? "pens" : (/aet|extra/.test(det) ? "et" : "90");
+      const sc = [];
+      for (const dd of (comp.details || [])) {
+        if (!dd.scoringPlay || dd.ownGoal || dd.shootout) continue;
+        const inv = dd.athletesInvolved || [];
+        if (inv[0] && inv[0].displayName) sc.push(inv[0].displayName);
+      }
+      return { done: !!st.completed, live: st.state === "in", w, g, m, sc, detail: st.shortDetail || "" };
+    },
+    _finalOf(e) { const f = e && e.picks && e.picks.final; return f && f.g ? f : null; },
+    scoreFinalOf(pred) {
+      const P = this.FINAL_PTS, act = this.finalActual;
+      const b = { ganador: 0, exacto: 0, metodo: 0, goleadores: 0, hits: [], total: 0, played: !!(act && act.done) };
+      if (!pred || !act || !act.done) return b;
+      if (pred.w && act.w && pred.w === act.w) b.ganador = P.ganador;
+      const ts = Object.keys(act.g || {});
+      if (pred.g && ts.length === 2 && ts.every((t) => act.g[t] != null && Number(pred.g[t]) === Number(act.g[t]))) b.exacto = P.exacto;
+      if (pred.m && act.m && pred.m === act.m) b.metodo = P.metodo;
+      const key = (n) => this._surKey(n);
+      for (const n of (pred.sc || [])) { if ((act.sc || []).some((x) => key(x) === key(n)) && b.hits.length < P.maxGol) b.hits.push(n); }
+      b.goleadores = b.hits.length * P.goleador;
+      b.total = b.ganador + b.exacto + b.metodo + b.goleadores;
+      return b;
+    },
+    // Predicciones de TODA la familia (se ven cuando ya has guardado la tuya o si ya se jugó)
+    get finalBoard() {
+      const fm = this.finalMatch; if (!fm) return [];
+      const meId = this.me && this.me.id;
+      return (this.entries || []).filter((e) => e.picks && !this.isGuest(e)).map((e) => {
+        const f = this._finalOf(e);
+        return { id: e.id, name: this._shortName(e), isMe: e.id === meId, pred: f,
+          sc: this.scoreFinalOf(f), gA: f && f.g ? f.g[fm.teams[0]] : null, gB: f && f.g ? f.g[fm.teams[1]] : null };
+      }).sort((a, b) => (b.isMe - a.isMe) || (b.sc.total - a.sc.total) || a.name.localeCompare(b.name));
+    },
     get myPortero() { const e = this.myEntry; const v = (e && e.picks && e.picks.extras && e.picks.extras.portero) || (this.extras && this.extras.portero) || ""; return (v || "").trim(); },
     async savePortero() {
       const v = (this.porteroDraft || "").trim();
@@ -2459,9 +2531,50 @@ window.porraApp = function () {
               delta = neo - old;
             } catch (x) {}
           }
+          // 🏆 LA GRAN FINAL (hasta +40): el edge no conoce picks.final → lo suma entero el cliente.
+          try { delta += this.scoreFinalOf(this._finalOf(e)).total; } catch (x) {}
           r.points = r._srvPts + delta;
         });
       } catch (e) {}
+    },
+    // ---------- 🏆 La gran final: abrir / cargar / guardar ----------
+    openFinal() { this.tab = "final"; this.fetchEspn(false).catch(() => {}); this.loadEntries({ recompute: false }).then(() => this.loadFinalPred()).catch(() => {}); },
+    loadFinalPred() {
+      const f = this._finalOf(this.myEntry);
+      this.finalPred = f ? { w: f.w || "", g: Object.assign({}, f.g || {}), m: f.m || "", sc: (f.sc || []).slice() } : { w: "", g: {}, m: "", sc: [] };
+      this.finalSaved = !!f;
+    },
+    finalSetGoals(team, v) { const n = Math.max(0, Math.min(9, parseInt(v, 10) || 0)); this.finalPred.g = Object.assign({}, this.finalPred.g, { [team]: n }); },
+    finalToggleScorer(name) {
+      const sc = (this.finalPred.sc || []).slice(); const i = sc.indexOf(name);
+      if (i >= 0) sc.splice(i, 1); else { if (sc.length >= this.FINAL_PTS.maxGol) sc.shift(); sc.push(name); }
+      this.finalPred.sc = sc;
+    },
+    get finalReady() { const p = this.finalPred, fm = this.finalMatch; return !!(fm && p.w && p.m && p.g[fm.teams[0]] != null && p.g[fm.teams[1]] != null); },
+    get finalLocked() { const a = this.finalActual; return !!(a && (a.done || a.live)); },   // al empezar la final ya no se toca
+    async saveFinalPred() {
+      const e = this.myEntry, fm = this.finalMatch;
+      if (!e || !fm || this.finalSaving || !this.finalReady) return;
+      if (this.finalLocked) return this.toast("La final ya ha empezado — ya no se puede cambiar.", "warn");
+      this.finalSaving = true;
+      try {
+        // OJO: porra_save_entry REEMPLAZA el picks entero → mandar TODO lo que ya tiene + final.
+        const cur = e.picks || {};
+        const picks = Object.assign({}, cur, { final: { w: this.finalPred.w, g: this.finalPred.g, m: this.finalPred.m, sc: this.finalPred.sc } });
+        // 1º intento: RPC dedicado (existe solo si ya se creó en la BD). 2º: guardado normal.
+        let ok = false;
+        try { await this.rpc("porra_set_final", { p_code: this.pool.code, p_participant_id: e.id, p_final: picks.final }); ok = true; }
+        catch (x1) {
+          const res = await this.rpc("porra_save_entry", { p_code: this.pool.code, p_first: e.first_name, p_last: e.last_name, p_picks: picks, p_participant_id: e.id });
+          ok = !!(res && res.participant_id);
+        }
+        if (ok) { e.picks = picks; this.finalSaved = true; _MEMO.foKey = null; this.toast("🏆 ¡Pronóstico de la final guardado!"); }
+      } catch (x) {
+        const raw = (x && x.raw) || "";
+        if (/POOL_LOCKED/i.test(raw)) this.toast("⚠️ La porra está cerrada: falta activar el guardado de la final en la base de datos. Avisa a Pablo.", "err");
+        else this.toast(this.errMsg(x), "err");
+      }
+      finally { this.finalSaving = false; }
     },
     openResults() { this.tab = "results"; this.fetchEspn(false).then(() => this.loadForecasts()).catch(() => {}); this.loadEntries({ recompute: false }); },
     openGoals() { this.tab = "goals"; this.fetchEspn(false).then(() => this.loadMatchData()).catch(() => {}); this.loadEntries({ recompute: false }).catch(() => {}); },

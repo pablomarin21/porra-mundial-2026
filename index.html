@@ -35,7 +35,7 @@
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="Porra Mundial" />
-  <link rel="stylesheet" href="styles.css?v=142" />
+  <link rel="stylesheet" href="styles.css?v=146" />
 </head>
 <body x-data="porraApp()" x-init="init()" x-cloak>
 
@@ -55,6 +55,7 @@
           <button :class="{active: tab==='scoring'}" @click="tab='scoring'; if(!(ranked&&ranked.length)) loadBoard()">📖 Puntuación</button>
           <button :class="{active: tab==='results'}" @click="openResults()">Resultados</button>
           <button :class="{active: tab==='goals'}" @click="openGoals()">⚽ Goleadores</button>
+          <button class="gf-tab" :class="{active: tab==='final'}" @click="openFinal()" x-show="finalMatch">🏆 La gran final</button>
           <button :class="{active: tab==='admin'}" @click="tab='admin'">Admin</button>
         </nav>
       </template>
@@ -513,6 +514,103 @@
     </div>
 
   </section>
+
+
+  <!-- ===================== 🏆 LA GRAN FINAL (hasta +40) ===================== -->
+  <template x-if="view==='pool' && tab==='final' && finalMatch">
+   <section class="gf-sec">
+    <div class="gf-hero">
+      <div class="gf-h-top">🏆 LA GRAN FINAL <span class="gf-when" x-text="(finalMatch.day||'')+(finalMatch.time?' · '+finalMatch.time:'')"></span></div>
+      <div class="gf-teams">
+        <span class="gf-t"><span class="gf-fl" x-text="finalMatch.flagA"></span><b x-text="finalMatch.esA"></b></span>
+        <span class="gf-vs" x-text="finalActual&&(finalActual.done||finalActual.live) ? ((finalActual.g[finalMatch.teams[0]]??'-')+'–'+(finalActual.g[finalMatch.teams[1]]??'-')) : 'VS'"></span>
+        <span class="gf-t"><span class="gf-fl" x-text="finalMatch.flagB"></span><b x-text="finalMatch.esB"></b></span>
+      </div>
+      <p class="gf-sub">Pronostica y suma hasta <b>+40</b>: 🏆 ganador <b>+6</b> · 🔢 resultado exacto <b>+12</b> · ⏱️ cómo se decide <b>+8</b> · ⚽ goleador <b>+7</b> (máx 2)</p>
+    </div>
+
+    <template x-if="finalLocked">
+      <p class="gf-lock">🔒 La final ya ha empezado — los pronósticos quedan cerrados.</p>
+    </template>
+
+    <div class="gf-card" x-show="!finalLocked">
+      <div class="gf-q">1️⃣ ¿Quién levanta la Copa? <span class="gf-pts">+6</span></div>
+      <div class="gf-two">
+        <template x-for="(t,i) in finalMatch.teams" :key="'gfw'+t">
+          <button class="gf-opt" :class="{sel:finalPred.w===t}" @click="finalPred.w=t">
+            <span class="gf-fl" x-text="i===0?finalMatch.flagA:finalMatch.flagB"></span> <b x-text="i===0?finalMatch.esA:finalMatch.esB"></b>
+          </button>
+        </template>
+      </div>
+
+      <div class="gf-q">2️⃣ Resultado exacto <span class="gf-pts">+12</span> <small class="muted">(al final del partido; si hay penaltis, el marcador antes de la tanda)</small></div>
+      <div class="gf-score">
+        <span class="gf-sc-t"><span class="gf-fl" x-text="finalMatch.flagA"></span> <b x-text="finalMatch.esA"></b></span>
+        <input class="gf-in" type="number" min="0" max="9" :value="finalPred.g[finalMatch.teams[0]] ?? ''" @input="finalSetGoals(finalMatch.teams[0], $event.target.value)">
+        <span class="gf-dash">–</span>
+        <input class="gf-in" type="number" min="0" max="9" :value="finalPred.g[finalMatch.teams[1]] ?? ''" @input="finalSetGoals(finalMatch.teams[1], $event.target.value)">
+        <span class="gf-sc-t"><b x-text="finalMatch.esB"></b> <span class="gf-fl" x-text="finalMatch.flagB"></span></span>
+      </div>
+
+      <div class="gf-q">3️⃣ ¿Cómo se decide? <span class="gf-pts">+8</span></div>
+      <div class="gf-three">
+        <button class="gf-opt" :class="{sel:finalPred.m==='90'}" @click="finalPred.m='90'">⏱️ En los 90'</button>
+        <button class="gf-opt" :class="{sel:finalPred.m==='et'}" @click="finalPred.m='et'">⏳ Prórroga</button>
+        <button class="gf-opt" :class="{sel:finalPred.m==='pens'}" @click="finalPred.m='pens'">🥅 Penaltis</button>
+      </div>
+
+      <div class="gf-q">4️⃣ ¿Quién marca? <span class="gf-pts">+7 cada uno (máx 2)</span> <small class="muted">— toca a los jugadores del once</small></div>
+      <template x-for="side in [{k:'A',t:finalMatch.teams[0],es:finalMatch.esA},{k:'B',t:finalMatch.teams[1],es:finalMatch.esB}]" :key="'gfs'+side.k">
+        <div class="gf-xi">
+          <div class="gf-xi-h"><span class="gf-fl" x-text="side.k==='A'?finalMatch.flagA:finalMatch.flagB"></span> <b x-text="side.es"></b> <small class="muted">— once esperado</small></div>
+          <div class="gf-grid">
+            <template x-for="p in (side.k==='A'?finalXI.A:finalXI.B)" :key="'gfp'+p.n">
+              <button class="gf-pl" :class="{sel:finalPred.sc.includes(p.n)}" @click="finalToggleScorer(p.n)" :title="p.n">
+                <span class="gf-av">
+                  <img x-show="p.img && !finalPhotoBad[p.n]" :src="p.img" :alt="p.n" loading="lazy" @error="finalPhotoBad[p.n]=true">
+                  <span class="gf-av-fb" x-show="!p.img || finalPhotoBad[p.n]"><b x-text="p.num"></b></span>
+                  <span class="gf-num" x-text="p.num"></span>
+                  <span class="gf-tick" x-show="finalPred.sc.includes(p.n)">✓</span>
+                </span>
+                <span class="gf-pn" x-text="p.n"></span>
+                <span class="gf-pp" x-text="p.pos"></span>
+              </button>
+            </template>
+          </div>
+        </div>
+      </template>
+
+      <div class="gf-save">
+        <p class="gf-picked" x-show="finalPred.sc.length">⚽ Tus goleadores: <b x-text="finalPred.sc.join(' · ')"></b></p>
+        <button class="btn primary block" :disabled="!finalReady || finalSaving" @click="saveFinalPred()">
+          <span x-show="!finalSaving" x-text="finalSaved ? '💾 Actualizar mi pronóstico' : '💾 Guardar mi pronóstico'"></span><span x-show="finalSaving">Guardando…</span>
+        </button>
+        <p class="tiny muted" x-show="!finalReady">Elige ganador, resultado y cómo se decide para poder guardar.</p>
+        <p class="tiny gf-ok" x-show="finalSaved && !finalSaving">✅ Guardado. Puedes cambiarlo hasta que empiece la final.</p>
+      </div>
+    </div>
+
+    <div class="gf-board" x-show="finalBoard.length">
+      <div class="gf-b-h">👀 Los pronósticos de la familia</div>
+      <template x-for="r in finalBoard" :key="'gfb'+r.id">
+        <div class="gf-b-row" :class="{me:r.isMe}">
+          <span class="gf-b-n" x-text="r.name"></span>
+          <template x-if="r.pred">
+            <span class="gf-b-p">
+              <b x-text="(r.gA??'-')+'–'+(r.gB??'-')"></b>
+              <span class="gf-b-m" x-text="r.pred.m==='90'?"90'":(r.pred.m==='et'?'prórroga':'penaltis')"></span>
+              <span class="gf-b-w" x-text="'🏆 '+es(r.pred.w)"></span>
+              <span class="gf-b-sc" x-show="r.pred.sc && r.pred.sc.length" x-text="'⚽ '+(r.pred.sc||[]).join(', ')"></span>
+            </span>
+          </template>
+          <template x-if="!r.pred"><span class="gf-b-none muted">sin pronóstico</span></template>
+          <span class="gf-b-pts" x-show="r.sc.played" :class="{good:r.sc.total>0}" x-text="'+'+r.sc.total"></span>
+        </div>
+      </template>
+      <p class="tiny muted gf-b-f">Se puntúa cuando acabe la final: 🏆 ganador +6 · 🔢 exacto +12 · ⏱️ método +8 · ⚽ goleador +7 (máx 2) = <b>40</b>.</p>
+    </div>
+   </section>
+  </template>
 
   <!-- ===================== CLASIFICACIÓN ===================== -->
   <section x-show="view==='pool' && tab==='leaderboard'" class="board">
@@ -2290,9 +2388,10 @@
 
   <!-- ====== Dependencias ====== -->
   <script src="data.js?v=121"></script>
+  <script src="final-xi.js?v=146"></script>
   <script src="engine.js?v=131"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
-  <script src="app.js?v=145"></script>
+  <script src="app.js?v=146"></script>
   <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.1/dist/cdn.min.js"></script>
 </body>
 </html>
