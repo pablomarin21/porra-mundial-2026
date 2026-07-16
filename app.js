@@ -495,7 +495,9 @@ window.porraApp = function () {
       }
       return { done: !!st.completed, live: st.state === "in", w, g, m, sc, detail: st.shortDetail || "" };
     },
-    _finalOf(e) { const f = e && e.picks && e.picks.final; return f && f.g ? f : null; },
+    // El pronóstico vive en picks.bracket2._final (ver saveFinalPred: es la única vía que
+    // funciona con la porra cerrada). El motor ignora las claves que no son nº de partido.
+    _finalOf(e) { const b2 = e && e.picks && e.picks.bracket2; const f = b2 && b2._final; return f && f.g ? f : null; },
     scoreFinalOf(pred) {
       const P = this.FINAL_PTS, act = this.finalActual;
       const b = { ganador: 0, exacto: 0, metodo: 0, goleadores: 0, hits: [], total: 0, played: !!(act && act.done) };
@@ -1626,7 +1628,7 @@ window.porraApp = function () {
         // Si el CUADRO DEL 28-JUN está abierto y aún NO lo has empezado, entras DIRECTO ahí
         // (para que nadie se lo pierda). Si ya lo empezaste, entras a la Clasificación.
         if (this.me.id) { try {
-          const e = this.myEntry; const n = (e && e.picks && e.picks.bracket2) ? Object.keys(e.picks.bracket2).length : 0;
+          const e = this.myEntry; const n = (e && e.picks && e.picks.bracket2) ? Object.keys(e.picks.bracket2).filter((k) => /^\d+$/.test(k)).length : 0;   // solo nº de partido (ignora _final)
           let finOpen = true; try { finOpen = Date.now() < new Date(D.KO_KICKOFF[104]).getTime() - 3600000; } catch (x) {}
           if (n === 0 && finOpen) this.tab = "ko27";
         } catch (x) {} }
@@ -2408,7 +2410,7 @@ window.porraApp = function () {
     get ko27Players() {
       const real = (this.ranked || []).filter((r) => !this.isGuest(r));
       const byId = {}; (this.entries || []).forEach((e) => (byId[e.id] = e));
-      return real.map((r) => { const e = byId[r.id]; const n = e && e.picks && e.picks.bracket2 ? Object.keys(e.picks.bracket2).length : 0;
+      return real.map((r) => { const e = byId[r.id]; const n = e && e.picks && e.picks.bracket2 ? Object.keys(e.picks.bracket2).filter((k) => /^\d+$/.test(k)).length : 0;   // solo nº de partido (ignora _final)
         return { id: r.id, name: this._shortName(r), me: !!(this.me && r.id === this.me.id), picks: n }; });
     },
     // nº de cruces de 1/16 con AMBOS equipos ya decididos (listos para predecir)
@@ -2558,22 +2560,18 @@ window.porraApp = function () {
       if (this.finalLocked) return this.toast("La final ya ha empezado — ya no se puede cambiar.", "warn");
       this.finalSaving = true;
       try {
-        // OJO: porra_save_entry REEMPLAZA el picks entero → mandar TODO lo que ya tiene + final.
-        const cur = e.picks || {};
-        const picks = Object.assign({}, cur, { final: { w: this.finalPred.w, g: this.finalPred.g, m: this.finalPred.m, sc: this.finalPred.sc } });
-        // 1º intento: RPC dedicado (existe solo si ya se creó en la BD). 2º: guardado normal.
-        let ok = false;
-        try { await this.rpc("porra_set_final", { p_code: this.pool.code, p_participant_id: e.id, p_final: picks.final }); ok = true; }
-        catch (x1) {
-          const res = await this.rpc("porra_save_entry", { p_code: this.pool.code, p_first: e.first_name, p_last: e.last_name, p_picks: picks, p_participant_id: e.id });
-          ok = !!(res && res.participant_id);
-        }
-        if (ok) { e.picks = picks; this.finalSaved = true; _MEMO.foKey = null; this.toast("🏆 ¡Pronóstico de la final guardado!"); }
-      } catch (x) {
-        const raw = (x && x.raw) || "";
-        if (/POOL_LOCKED/i.test(raw)) this.toast("⚠️ La porra está cerrada: falta activar el guardado de la final en la base de datos. Avisa a Pablo.", "err");
-        else this.toast(this.errMsg(x), "err");
-      }
+        // Se guarda DENTRO de bracket2 bajo la clave "_final": porra_save_entry rechaza con
+        // POOL_LOCKED (porra cerrada), pero porra_set_bracket2 SÍ acepta post-cierre (así se
+        // guardó el 2º cuadro el 28-jun). El motor solo lee claves de nº de partido (73-104),
+        // así que "_final" es invisible para la puntuación y el 2º cuadro queda intacto.
+        const cur = (e.picks && e.picks.bracket2) || {};
+        const b2 = Object.assign({}, cur, { _final: { w: this.finalPred.w, g: this.finalPred.g, m: this.finalPred.m, sc: this.finalPred.sc } });
+        await this.rpc("porra_set_bracket2", { p_code: this.pool.code, p_participant_id: e.id, p_bracket2: b2 });
+        e.picks = Object.assign({}, e.picks || {}, { bracket2: b2 });
+        if (this.me && this.me.id === e.id) this.bracket2 = Object.assign({}, this.bracket2 || {}, { _final: b2._final });
+        this.finalSaved = true; _MEMO.foKey = null; _MEMO.kcKey = null;
+        this.toast("🏆 ¡Pronóstico de la final guardado!");
+      } catch (x) { this.toast(this.errMsg(x), "err"); }
       finally { this.finalSaving = false; }
     },
     openResults() { this.tab = "results"; this.fetchEspn(false).then(() => this.loadForecasts()).catch(() => {}); this.loadEntries({ recompute: false }); },
