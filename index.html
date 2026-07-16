@@ -49,13 +49,13 @@
       <button class="install-btn" x-show="!isStandalone" @click="showInstall=true" title="Añadir al móvil como app">📲 Instalar</button>
       <template x-if="pool">
         <nav class="tabs">
+          <button class="gf-tab" :class="{active: tab==='final'}" @click="openFinal()" x-show="finalMatch">🏆 La gran final</button>
           <button class="tab-hot" :class="{active: tab==='ko27'}" @click="openKo27()">🗓️ 28 jun</button>
           <button :class="{active: tab==='leaderboard'}" @click="openLeaderboard()">Clasificación</button>
           <button :class="{active: tab==='play'}" @click="tab='play'">Mi Porra</button>
           <button :class="{active: tab==='scoring'}" @click="tab='scoring'; if(!(ranked&&ranked.length)) loadBoard()">📖 Puntuación</button>
           <button :class="{active: tab==='results'}" @click="openResults()">Resultados</button>
           <button :class="{active: tab==='goals'}" @click="openGoals()">⚽ Goleadores</button>
-          <button class="gf-tab" :class="{active: tab==='final'}" @click="openFinal()" x-show="finalMatch">🏆 La gran final</button>
           <button :class="{active: tab==='admin'}" @click="tab='admin'">Admin</button>
         </nav>
       </template>
@@ -2391,7 +2391,7 @@
   <script src="final-xi.js?v=146"></script>
   <script src="engine.js?v=131"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
-  <script src="app.js?v=147"></script>
+  <script src="app.js?v=148"></script>
   <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.1/dist/cdn.min.js"></script>
 </body>
 </html>
