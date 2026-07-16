@@ -244,11 +244,13 @@ window.porraApp = function () {
         const ex = e.picks.extras || {};
         if (ex.revelacion && R.octavos.has(ex.revelacion) && !R.cuartos.has(ex.revelacion) && !oc.koLosers.has(ex.revelacion)) { g += S.revelacion; parts.push({ t: "✨ revelación " + D.es(ex.revelacion), r: "", p: S.revelacion }); }
         if (ex.decepcion && oc.decepcionPending && oc.decepcionPending.has(ex.decepcion)) { g += S.decepcion; parts.push({ t: "💀 decepción " + D.es(ex.decepcion), r: "", p: S.decepcion }); }
-        // ESPECIALES pendientes (goleador/asistente/portero) — línea propia. Solo cuenta si SIGUE
-        // EN JUEGO: si el jugador elegido es de un equipo eliminado, ese premio ya no lo puede ganar.
+        // ESPECIALES pendientes (goleador/asistente/portero) — línea propia. Solo está muerto si su
+        // selección YA NO JUEGA MÁS. Perder la semi NO mata el premio: queda el 3º/4º puesto.
+        const playing = this._teamsPlaying;
         for (const k of ["pichichi", "asistente", "portero"]) {
           if (!ex[k] || EA[k]) continue;
-          const team = _playerTeam(ex[k]), dead = !!(team && elim(team));
+          const team = _playerTeam(ex[k]);
+          const dead = !!(team && playing && playing.size && !playing.has(team));
           if (!dead) g += (S[k] || 0);
           esp.push({ ic: espMeta[k].ic, lab: espMeta[k].lab, name: ex[k], p: S[k] || 0, dead: dead, team: team });
         }
@@ -1383,13 +1385,27 @@ window.porraApp = function () {
       }
       this.scorers = Object.values(goals).sort((a, b) => b.n - a.n || a.name.localeCompare(b.name)).slice(0, 999);
     },
-    // ---- Tablas SOLO con jugadores de selecciones que siguen en el Mundial ----
-    // (petición: quitar a los eliminados, que ya no suman, para ver la carrera entre los vivos)
+    // Equipos que AÚN TIENEN PARTIDO por jugar (pueden seguir marcando/asistiendo/parando).
+    // OJO: perder la semi NO te deja fuera de esta lista — queda el 3º/4º puesto. Y en grupos,
+    // todos tienen partidos → no se filtra a nadie. Vacío = Mundial terminado.
+    get _teamsPlaying() {
+      const key = "tp|" + this.espnAt;
+      if (_MEMO.tpKey === key && _MEMO.tpVal) return _MEMO.tpVal;
+      const s = new Set();
+      for (const ev of (this.espnEvents || [])) {
+        const st = (ev.status && ev.status.type) || {}; if (st.completed) continue;
+        const cs = (ev.competitions && ev.competitions[0] && ev.competitions[0].competitors) || [];
+        for (const c of cs) { const t = D.espnCanon(c.team && c.team.displayName); if (t) s.add(t); }
+      }
+      _MEMO.tpKey = key; _MEMO.tpVal = s;
+      return s;
+    },
+    // ---- Tablas SOLO con jugadores que AÚN pueden sumar (su selección tiene partido pendiente) ----
+    // (petición: quitar a los que ya no juegan, para ver la carrera entre los que siguen en pie)
     _aliveList(arr) {
-      const oc = this.outcome; if (!oc || !oc.reached) return arr || [];
-      const R = oc.reached, KL = oc.koLosers || new Set();
-      const dead = (c) => !!c && (KL.has(c) || !R.octavos.has(c));   // perdió un KO, o no pasó de grupos
-      return (arr || []).filter((s) => !dead(s.canon));
+      const P = this._teamsPlaying;
+      if (!P || !P.size) return arr || [];            // Mundial acabado (o sin datos) → no filtrar
+      return (arr || []).filter((s) => !s.canon || P.has(s.canon));   // sin equipo reconocido → no penalizar
     },
     // Top N vivos + SIEMPRE los jugadores apostados por la familia (aunque estén más abajo),
     // con su puesto REAL, para que cada uno vea cómo va su apuesta aunque no lidere.
