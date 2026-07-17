@@ -116,7 +116,7 @@ window.porraApp = function () {
     // pronósticos
     groups: emptyGroups(), thirds: [], bracket: {}, _cols: [], _champion: null,
     extras: { revelacion: "", decepcion: "", pichichi: "", asistente: "", portero: "", sidebets: {} },
-    finalPred: { w: "", g: {}, m: "", sc: [] }, finalSaving: false, finalSaved: false, finalPhotoBad: {}, finalNeedPin: false, finalPinInput: "", finalLocalSaved: false, _finalTimer: null, _finalFnMissing: false, finalJustSaved: false, finalSavedWhere: "", _finalSavedTimer: null,
+    finalPred: { w: "", g: {}, m: "", sc: [] }, finalSaving: false, finalSaved: false, finalPhotoBad: {}, finalNeedPin: false, finalPinInput: "", finalLocalSaved: false, _finalTimer: null, _finalFnMissing: false, finalJustSaved: false, finalSavedWhere: "", _finalSavedTimer: null, _finalHelper: {},
     letters: D.GROUP_LETTERS, allTeams: ALL_TEAMS.slice().sort((a, b) => D.es(a).localeCompare(D.es(b))),
     sideBets: D.SIDE_BETS,
     // en vivo (ESPN) + cierre automático
@@ -499,8 +499,10 @@ window.porraApp = function () {
     // funciona con la porra cerrada). El motor ignora las claves que no son nº de partido.
     _finalOf(e) {
       if (!e) return null;
-      // 1º la config de la propia porra (pool.settings.finals) — así se guarda con la porra cerrada
-      // sin tocar los picks (que están congelados); 2º dentro de picks (si algún día se instala la función).
+      // 1º el almacén de finales (porra-satélite) — donde guarda TODA la familia sin permisos;
+      // 2º la config de la propia porra (pool.settings.finals); 3º dentro de picks (legado).
+      const h = this._finalHelper && this._finalHelper[e.id];
+      if (h && h.g) return h;
       const fin = (this.pool && this.pool.settings && this.pool.settings.finals) || null;
       const fromS = fin && fin[e.id];
       if (fromS && fromS.g) return fromS;
@@ -2514,6 +2516,7 @@ window.porraApp = function () {
       try { await this.loadResults(); if (ok) await this.loadEntries({ recompute: false }); } catch (e) {}
       if (!ok) { this.usingServerBoard = false; try { await this.refreshBoard(); } catch (e) {} }
       try { await this.fetchEspn(false); } catch (e) {}   // refresca outcome + explicación (computeLive)
+      try { await this.loadFinalHelper(); } catch (e) {}   // finales de la familia (almacén satélite) → para puntuar la final
       this._applySpecialsPatch();   // suma decepción + revelación (el edge viejo no las aplica)
       this.applyTiebreak();   // reordena empates por el sistema de puntuación
       this.probBusy = false;
@@ -2549,7 +2552,23 @@ window.porraApp = function () {
       } catch (e) {}
     },
     // ---------- 🏆 La gran final: abrir / cargar / guardar ----------
-    openFinal() { this.tab = "final"; this.fetchEspn(false).catch(() => {}); this.loadEntries({ recompute: false }).then(() => this.loadFinalPred()).catch(() => {}); },
+    openFinal() { this.tab = "final"; this.fetchEspn(false).catch(() => {}); this.loadEntries({ recompute: false }).then(() => this.loadFinalHelper()).then(() => this.loadFinalPred()).catch(() => {}); },
+    // Almacén de finales: una porra-satélite (código <CODE>FINAL) que crea la propia app. Cada uno
+    // guarda su final ahí como una "entrada" normal (sin PIN ni permisos), etiquetada con su id de
+    // FAMILIA2026 (picks.ref). La app la lee y la pinta en el tablero. Invisible para el usuario.
+    get _finalHelperCode() { return (((this.pool && this.pool.code) || "") + "FINAL").slice(0, 24); },
+    _finalHelperKey() { return "porra_finalhelper_" + (this.pool && this.pool.code) + "_" + (this.myEntry && this.myEntry.id); },
+    async loadFinalHelper() {
+      try {
+        const r = await this.rpc("porra_list_entries", { p_code: this._finalHelperCode });
+        const map = {};
+        ((r && r.entries) || []).forEach((en) => {
+          const p = en.picks || {}; const fin = p._final;
+          if (p.ref && fin && fin.g) map[p.ref] = { id: en.id, w: fin.w, g: fin.g, m: fin.m, sc: fin.sc };
+        });
+        this._finalHelper = map; _MEMO.foKey = null;
+      } catch (e) { /* aún no existe: mapa vacío */ }
+    },
     loadFinalPred() {
       let f = this._finalOf(this.myEntry);
       const synced = !!f;
@@ -2592,40 +2611,31 @@ window.porraApp = function () {
       if (!e || !fm || !this.finalReady || this.finalLocked || this.finalSaving) return;
       this.finalSaving = true;
       const f = { w: this.finalPred.w, g: this.finalPred.g, m: this.finalPred.m, sc: this.finalPred.sc };
-      const ok = () => { this.finalSaved = true; this.finalNeedPin = false; _MEMO.foKey = null; _MEMO.kcKey = null; this._flashSaved("porra"); };
+      const code = this._finalHelperCode;
+      const first = (this.me && this.me.first) || e.first_name || "—";
+      const last = (this.me && this.me.last) || e.last_name || "";
+      let helperId = (this._finalHelper[e.id] && this._finalHelper[e.id].id) || null;
+      if (!helperId) { try { helperId = localStorage.getItem(this._finalHelperKey()) || null; } catch (z) {} }
+      const save = async () => {
+        const r = await this.rpc("porra_save_entry", { p_code: code, p_first: first, p_last: last, p_picks: { ref: e.id, _final: f }, p_participant_id: helperId });
+        helperId = (r && r.participant_id) || helperId;
+        this._finalHelper = Object.assign({}, this._finalHelper, { [e.id]: { id: helperId, w: f.w, g: f.g, m: f.m, sc: f.sc } });
+        try { localStorage.setItem(this._finalHelperKey(), helperId); } catch (z) {}
+        this.finalSaved = true; this.finalNeedPin = false; _MEMO.foKey = null; _MEMO.kcKey = null; this._flashSaved("porra");
+      };
       try {
-        let usedFn = false;
-        if (!this._finalFnMissing) {
-          try {
-            await this.rpc("porra_set_final", { p_code: this.pool.code, p_participant_id: e.id, p_final: f });
-            const b2 = Object.assign({}, (e.picks && e.picks.bracket2) || {}, { _final: f });
-            e.picks = Object.assign({}, e.picks || {}, { bracket2: b2 });
-            if (this.me && this.me.id === e.id) this.bracket2 = Object.assign({}, this.bracket2 || {}, { _final: f });
-            usedFn = true; ok();
-          } catch (x) {
-            const raw = (x && (x.raw || x.message || "")) + "";
-            if (/FINAL_LOCKED/.test(raw)) { this.finalSaving = false; return; }
-            if (/PGRST202|porra_set_final|Could not find the function|schema cache/i.test(raw)) this._finalFnMissing = true;   // no reintentar cada cambio
-            else { this.finalSaving = false; return; }   // error de red: se queda el borrador local
-          }
-        }
-        if (!usedFn && this._finalFnMissing) {
-          const pin = this.adminPin || this._finalPin();
-          if (pin) {
-            try {
-              const s = Object.assign({}, this.pool.settings || {});
-              s.finals = Object.assign({}, s.finals || {}, { [e.id]: f });
-              await this.rpc("porra_set_settings", { p_code: this.pool.code, p_pin: pin, p_settings: s });
-              this.pool.settings = s; this.settings = Object.assign({}, this.settings, { finals: s.finals });
-              this.adminPin = pin; try { localStorage.setItem(this._finalPinKey(), pin); } catch (z) {}
-              ok();
-            } catch (y) {
-              const yr = (y && (y.raw || y.message || "")) + "";
-              if (/BAD_PIN/i.test(yr)) { this.adminPin = ""; try { localStorage.removeItem(this._finalPinKey()); } catch (z) {} this.finalPinInput = ""; if (this.adminOk || opts.manual) { this.finalNeedPin = true; if (opts.manual) this.toast("Ese PIN de admin no es correcto.", "err"); } }
-              // otro error: se queda el borrador local
-            }
-          } else { this.finalNeedPin = true; this._flashSaved("movil"); }   // sin función ni PIN: queda en el móvil + muestra el campo de PIN (el admin lo sube a la porra; la familia lo ignora)
-        }
+        await save();
+      } catch (x) {
+        const raw = (x && (x.raw || x.message || "")) + "";
+        if (/POOL_NOT_FOUND/i.test(raw)) {
+          // primera vez: la app crea el almacén de finales (invisible) y reintenta
+          const pin = "fnl" + (this.pool.code || "").slice(0, 8);
+          try { await this.rpc("porra_create_pool", { p_name: "Finales " + this.pool.code, p_code: code, p_admin_pin: pin }); } catch (c) {}
+          try { await this.rpc("porra_lock_pool", { p_code: code, p_pin: pin, p_locked: false, p_lock_at: "2026-07-19T19:00:00+00:00" }); } catch (c) {}
+          try { await save(); } catch (y) { this._flashSaved("movil"); }
+        } else if (/PARTICIPANT_NOT_FOUND/i.test(raw) && helperId) {
+          helperId = null; try { await save(); } catch (y) { this._flashSaved("movil"); }   // el id guardado ya no vale → entrada nueva
+        } else { this._flashSaved("movil"); }   // red u otro: queda el borrador local, se reintenta al siguiente cambio
       } finally { this.finalSaving = false; }
     },
     async saveFinalPred() { return this._syncFinal({ manual: true }); },
