@@ -518,8 +518,13 @@ window.porraApp = function () {
       if (pred.g && ts.length === 2 && ts.every((t) => act.g[t] != null && Number(pred.g[t]) === Number(act.g[t]))) b.exacto = P.exacto;
       if (pred.m && act.m && pred.m === act.m) b.metodo = P.metodo;
       const key = (n) => this._surKey(n);
-      for (const n of (pred.sc || [])) { if ((act.sc || []).some((x) => key(x) === key(n)) && b.hits.length < P.maxGol) b.hits.push(n); }
-      b.goleadores = b.hits.length * P.goleador;
+      let goles = 0;   // cuenta con multiplicidad: un doblete acertado (1 nombre, 2 goles reales) = 2
+      for (const n of (pred.sc || [])) {
+        const veces = (act.sc || []).filter((x) => key(x) === key(n)).length;
+        if (veces > 0) b.hits.push(n);
+        goles += veces;
+      }
+      b.goleadores = Math.min(goles, P.maxGol) * P.goleador;   // tope +14 (mantiene el máximo en 40)
       b.total = b.ganador + b.exacto + b.metodo + b.goleadores;
       return b;
     },
@@ -2579,10 +2584,34 @@ window.porraApp = function () {
     // Cada cambio guarda SOLO (sin botón): al instante en el móvil + sincroniza con la porra tras un respiro.
     finalSetWinner(t) { this.finalPred.w = t; this.autoSaveFinal(); },
     finalSetMethod(m) { this.finalPred.m = m; this.autoSaveFinal(); },
-    finalSetGoals(team, v) { const n = Math.max(0, Math.min(9, parseInt(v, 10) || 0)); this.finalPred.g = Object.assign({}, this.finalPred.g, { [team]: n }); this.autoSaveFinal(); },
+    finalSetGoals(team, v) {
+      const n = Math.max(0, Math.min(9, parseInt(v, 10) || 0));
+      this.finalPred.g = Object.assign({}, this.finalPred.g, { [team]: n });
+      // si bajas los goles de un equipo, recorta sus goleadores que ahora sobren
+      let sc = (this.finalPred.sc || []).slice();
+      const mismos = sc.filter((x) => this._finalTeamOf(x) === team);
+      if (mismos.length > n) { const quitar = new Set(mismos.slice(0, mismos.length - n)); sc = sc.filter((x) => !quitar.has(x)); }
+      this.finalPred.sc = sc;
+      this.autoSaveFinal();
+    },
+    _finalTeamOf(name) {
+      const xi = this.finalXI, fm = this.finalMatch; if (!xi || !fm) return null;
+      if ((xi.A || []).some((p) => p.n === name)) return fm.teams[0];
+      if ((xi.B || []).some((p) => p.n === name)) return fm.teams[1];
+      return null;
+    },
+    finalScorersFor(team) { return (this.finalPred.sc || []).filter((x) => this._finalTeamOf(x) === team); },
+    // Goleadores POR EQUIPO según tu marcador: España 2 → hasta 2 goleadores del España;
+    // si eliges 1, es doblete (ese jugador marca los 2). Total = suma de ambos equipos.
     finalToggleScorer(name) {
       const sc = (this.finalPred.sc || []).slice(); const i = sc.indexOf(name);
-      if (i >= 0) sc.splice(i, 1); else { if (sc.length >= this.FINAL_PTS.maxGol) sc.shift(); sc.push(name); }
+      if (i >= 0) { sc.splice(i, 1); this.finalPred.sc = sc; this.autoSaveFinal(); return; }
+      const team = this._finalTeamOf(name);
+      const cupo = team ? (Number((this.finalPred.g || {})[team]) || 0) : 0;
+      if (cupo <= 0) { this.toast("Pon primero los goles de ese equipo para elegir sus goleadores.", "warn"); return; }
+      const mismos = sc.filter((x) => this._finalTeamOf(x) === team);
+      if (mismos.length >= cupo) sc.splice(sc.indexOf(mismos[0]), 1);   // ese equipo ya está lleno → quita el más antiguo
+      sc.push(name);
       this.finalPred.sc = sc; this.autoSaveFinal();
     },
     _finalDraftKey() { return "porra_finaldraft_" + (this.pool && this.pool.code) + "_" + (this.myEntry && this.myEntry.id); },

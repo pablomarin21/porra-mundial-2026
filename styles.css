@@ -2029,6 +2029,7 @@ tr.clickrow.sel td{background:#e7f1ec}
 .gf-status.ok{background:#1f9d55;color:#fff;border:1px solid #178047;animation:gfpop .4s cubic-bezier(.2,1.3,.4,1)}
 .gf-status.ok b{color:#eafff2}
 @keyframes gfpop{0%{transform:scale(.6);opacity:0}55%{transform:scale(1.1);opacity:1}100%{transform:scale(1)}}
+.gf-xi-off{opacity:.45}
 .gf-card{background:#fff;border:1px solid var(--line);border-radius:14px;padding:14px;box-shadow:var(--shadow);margin-bottom:14px}
 .gf-q{font-weight:800;color:#26323b;font-size:.92rem;margin:14px 0 8px;display:flex;flex-wrap:wrap;align-items:center;gap:7px}
 .gf-q:first-child{margin-top:0}

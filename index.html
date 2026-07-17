@@ -35,7 +35,7 @@
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="Porra Mundial" />
-  <link rel="stylesheet" href="styles.css?v=154" />
+  <link rel="stylesheet" href="styles.css?v=156" />
 </head>
 <body x-data="porraApp()" x-init="init()" x-cloak>
 
@@ -564,10 +564,13 @@
         <button class="gf-opt" :class="{sel:finalPred.m==='pens'}" @click="finalSetMethod('pens')">🥅 Penaltis</button>
       </div>
 
-      <div class="gf-q">4️⃣ ¿Quién marca? <span class="gf-pts">+7 cada uno (máx 2)</span> <small class="muted">— toca a los jugadores del once</small></div>
+      <div class="gf-q">4️⃣ ¿Quién marca? <span class="gf-pts">+7 por acierto</span> <small class="muted">— según tu resultado. Pon menos goleadores que goles = doblete/triplete.</small></div>
       <template x-for="side in [{k:'A',t:finalMatch.teams[0],es:finalMatch.esA},{k:'B',t:finalMatch.teams[1],es:finalMatch.esB}]" :key="'gfs'+side.k">
-        <div class="gf-xi">
-          <div class="gf-xi-h"><span class="gf-fl" x-text="side.k==='A'?finalMatch.flagA:finalMatch.flagB"></span> <b x-text="side.es"></b> <small class="muted">— once esperado</small></div>
+        <div class="gf-xi" :class="{'gf-xi-off': (finalPred.g[side.t]||0)===0}">
+          <div class="gf-xi-h">
+            <span class="gf-fl" x-text="side.k==='A'?finalMatch.flagA:finalMatch.flagB"></span> <b x-text="side.es"></b>
+            <small class="muted" x-text="(finalPred.g[side.t]||0)===0 ? '— pon primero sus goles arriba' : ('— ' + finalScorersFor(side.t).length + '/' + (finalPred.g[side.t]||0) + ' goleador' + ((finalPred.g[side.t]||0)===1?'':'es') + ((finalPred.g[side.t]||0)>1 ? ' · elige 1 = doblete' : ''))"></small>
+          </div>
           <div class="gf-grid">
             <template x-for="p in (side.k==='A'?finalXI.A:finalXI.B)" :key="'gfp'+p.n">
               <button class="gf-pl" :class="{sel:finalPred.sc.includes(p.n)}" @click="finalToggleScorer(p.n)" :title="p.n">
@@ -2403,7 +2406,7 @@
   <script src="final-xi.js?v=146"></script>
   <script src="engine.js?v=131"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
-  <script src="app.js?v=155"></script>
+  <script src="app.js?v=156"></script>
   <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.1/dist/cdn.min.js"></script>
 </body>
 </html>
