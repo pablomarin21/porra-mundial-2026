@@ -35,7 +35,7 @@
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="Porra Mundial" />
-  <link rel="stylesheet" href="styles.css?v=146" />
+  <link rel="stylesheet" href="styles.css?v=153" />
 </head>
 <body x-data="porraApp()" x-init="init()" x-cloak>
 
@@ -527,6 +527,11 @@
         <span class="gf-t"><span class="gf-fl" x-text="finalMatch.flagB"></span><b x-text="finalMatch.esB"></b></span>
       </div>
       <p class="gf-sub">Pronostica y suma hasta <b>+40</b>: 🏆 ganador <b>+6</b> · 🔢 resultado exacto <b>+12</b> · ⏱️ cómo se decide <b>+8</b> · ⚽ goleador <b>+7</b> (máx 2)</p>
+    </div>
+
+    <div class="gf-status" x-show="!finalLocked && (finalSaving || finalJustSaved)" :class="{saving: finalSaving, ok: finalJustSaved && !finalSaving}" x-transition.opacity>
+      <span x-show="finalSaving">💾 Guardando…</span>
+      <span x-show="!finalSaving && finalJustSaved">✅ Guardado <b x-text="finalSavedWhere==='porra' ? 'en la porra' : 'en tu móvil'"></b></span>
     </div>
 
     <template x-if="finalLocked">
@@ -2398,7 +2403,7 @@
   <script src="final-xi.js?v=146"></script>
   <script src="engine.js?v=131"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
-  <script src="app.js?v=152"></script>
+  <script src="app.js?v=153"></script>
   <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.1/dist/cdn.min.js"></script>
 </body>
 </html>

@@ -116,7 +116,7 @@ window.porraApp = function () {
     // pronósticos
     groups: emptyGroups(), thirds: [], bracket: {}, _cols: [], _champion: null,
     extras: { revelacion: "", decepcion: "", pichichi: "", asistente: "", portero: "", sidebets: {} },
-    finalPred: { w: "", g: {}, m: "", sc: [] }, finalSaving: false, finalSaved: false, finalPhotoBad: {}, finalNeedPin: false, finalPinInput: "", finalLocalSaved: false, _finalTimer: null, _finalFnMissing: false,
+    finalPred: { w: "", g: {}, m: "", sc: [] }, finalSaving: false, finalSaved: false, finalPhotoBad: {}, finalNeedPin: false, finalPinInput: "", finalLocalSaved: false, _finalTimer: null, _finalFnMissing: false, finalJustSaved: false, finalSavedWhere: "", _finalSavedTimer: null,
     letters: D.GROUP_LETTERS, allTeams: ALL_TEAMS.slice().sort((a, b) => D.es(a).localeCompare(D.es(b))),
     sideBets: D.SIDE_BETS,
     // en vivo (ESPN) + cierre automático
@@ -2574,6 +2574,12 @@ window.porraApp = function () {
       clearTimeout(this._finalTimer);
       this._finalTimer = setTimeout(() => { if (this.finalReady) this._syncFinal({}); }, 800);   // sincroniza con la porra tras un respiro
     },
+    // Aviso visible + animado de "guardado" (arriba del todo). where: "porra" | "movil".
+    _flashSaved(where) {
+      this.finalSavedWhere = where; this.finalJustSaved = true;
+      clearTimeout(this._finalSavedTimer); this._finalSavedTimer = setTimeout(() => { this.finalJustSaved = false; }, 2400);
+      this.toast(where === "porra" ? "✅ ¡Guardado en la porra!" : "✅ Guardado en tu móvil");
+    },
     get finalReady() { const p = this.finalPred, fm = this.finalMatch; return !!(fm && p.w && p.m && p.g[fm.teams[0]] != null && p.g[fm.teams[1]] != null); },
     get finalLocked() { const a = this.finalActual; return !!(a && (a.done || a.live)); },   // al empezar la final ya no se toca
     // Envía el pronóstico a la porra. 1º vía limpia porra_set_final (vale para TODA la familia); si no
@@ -2586,7 +2592,7 @@ window.porraApp = function () {
       if (!e || !fm || !this.finalReady || this.finalLocked || this.finalSaving) return;
       this.finalSaving = true;
       const f = { w: this.finalPred.w, g: this.finalPred.g, m: this.finalPred.m, sc: this.finalPred.sc };
-      const ok = () => { this.finalSaved = true; this.finalNeedPin = false; _MEMO.foKey = null; _MEMO.kcKey = null; if (opts.manual) this.toast("🏆 Guardado en la porra."); };
+      const ok = () => { this.finalSaved = true; this.finalNeedPin = false; _MEMO.foKey = null; _MEMO.kcKey = null; this._flashSaved("porra"); };
       try {
         let usedFn = false;
         if (!this._finalFnMissing) {
@@ -2619,7 +2625,7 @@ window.porraApp = function () {
               // otro error: se queda el borrador local
             }
           } else if (this.adminOk) { this.finalNeedPin = true; }   // eres admin: mete el PIN una vez para subirlo
-          // familia sin función ni PIN: ya está guardado en el móvil; subirá cuando exista porra_set_final
+          else { this._flashSaved("movil"); }   // familia: guardado en su móvil (subirá cuando exista porra_set_final)
         }
       } finally { this.finalSaving = false; }
     },
