@@ -2578,7 +2578,7 @@ window.porraApp = function () {
     _flashSaved(where) {
       this.finalSavedWhere = where; this.finalJustSaved = true;
       clearTimeout(this._finalSavedTimer); this._finalSavedTimer = setTimeout(() => { this.finalJustSaved = false; }, 2400);
-      this.toast(where === "porra" ? "✅ ¡Guardado en la porra!" : "✅ Guardado en tu móvil");
+      this.toast(where === "porra" ? "✅ ¡Guardado en la porra!" : "📱 Guardado en tu móvil (aún no en la porra)", where === "porra" ? "ok" : "warn");
     },
     get finalReady() { const p = this.finalPred, fm = this.finalMatch; return !!(fm && p.w && p.m && p.g[fm.teams[0]] != null && p.g[fm.teams[1]] != null); },
     get finalLocked() { const a = this.finalActual; return !!(a && (a.done || a.live)); },   // al empezar la final ya no se toca
@@ -2624,8 +2624,7 @@ window.porraApp = function () {
               if (/BAD_PIN/i.test(yr)) { this.adminPin = ""; try { localStorage.removeItem(this._finalPinKey()); } catch (z) {} this.finalPinInput = ""; if (this.adminOk || opts.manual) { this.finalNeedPin = true; if (opts.manual) this.toast("Ese PIN de admin no es correcto.", "err"); } }
               // otro error: se queda el borrador local
             }
-          } else if (this.adminOk) { this.finalNeedPin = true; }   // eres admin: mete el PIN una vez para subirlo
-          else { this._flashSaved("movil"); }   // familia: guardado en su móvil (subirá cuando exista porra_set_final)
+          } else { this.finalNeedPin = true; this._flashSaved("movil"); }   // sin función ni PIN: queda en el móvil + muestra el campo de PIN (el admin lo sube a la porra; la familia lo ignora)
         }
       } finally { this.finalSaving = false; }
     },

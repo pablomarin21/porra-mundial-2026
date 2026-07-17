@@ -35,7 +35,7 @@
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="Porra Mundial" />
-  <link rel="stylesheet" href="styles.css?v=153" />
+  <link rel="stylesheet" href="styles.css?v=154" />
 </head>
 <body x-data="porraApp()" x-init="init()" x-cloak>
 
@@ -591,9 +591,9 @@
         <p class="tiny muted" x-show="!finalReady">✍️ Rellena ganador, resultado y cómo se decide — <b>se guarda solo</b>.</p>
         <p class="tiny gf-ok" x-show="finalReady && finalSaving">💾 Guardando…</p>
         <p class="tiny gf-ok" x-show="finalReady && !finalSaving && finalSaved">✅ Guardado en la porra. Se guarda solo cada vez que cambies algo, hasta que empiece la final.</p>
-        <p class="tiny gf-ok" x-show="finalReady && !finalSaving && !finalSaved && finalLocalSaved">✅ Guardado en tu móvil — se irá guardando solo mientras rellenas.</p>
+        <p class="tiny" style="color:#c0392b;font-weight:600" x-show="finalReady && !finalSaving && !finalSaved && finalLocalSaved">⚠️ Guardado en tu móvil, pero <b>aún no en la porra</b> — por eso no sale abajo en el tablero.</p>
         <div class="gf-pin" x-show="finalNeedPin" x-transition style="margin-top:10px;padding:12px;border:1px solid #d8b25a;border-radius:12px;background:#fbf6e9">
-          <p class="tiny" style="margin:0 0 8px">🔒 Solo tú (admin), una vez: escribe tu <b>PIN de admin</b> para subir la final a la porra. Queda recordado en este móvil.</p>
+          <p class="tiny" style="margin:0 0 8px">🔒 <b>¿Eres el admin?</b> Mete tu <b>PIN</b> para subir tu final a la porra (y que salga en el tablero de abajo). Si no eres admin, tu pronóstico ya queda guardado en tu móvil. <span class="muted">Se recuerda en este móvil.</span></p>
           <div style="display:flex;gap:8px">
             <input type="password" inputmode="numeric" x-model="finalPinInput" placeholder="PIN admin" maxlength="12" @keydown.enter="finalSubmitPin()" style="flex:1;min-width:0" />
             <button class="btn primary" :disabled="finalSaving" @click="finalSubmitPin()">Guardar</button>
@@ -2403,7 +2403,7 @@
   <script src="final-xi.js?v=146"></script>
   <script src="engine.js?v=131"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
-  <script src="app.js?v=153"></script>
+  <script src="app.js?v=154"></script>
   <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.1/dist/cdn.min.js"></script>
 </body>
 </html>
