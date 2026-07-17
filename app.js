@@ -497,7 +497,16 @@ window.porraApp = function () {
     },
     // El pronóstico vive en picks.bracket2._final (ver saveFinalPred: es la única vía que
     // funciona con la porra cerrada). El motor ignora las claves que no son nº de partido.
-    _finalOf(e) { const b2 = e && e.picks && e.picks.bracket2; const f = b2 && b2._final; return f && f.g ? f : null; },
+    _finalOf(e) {
+      if (!e) return null;
+      // 1º la config de la propia porra (pool.settings.finals) — así se guarda con la porra cerrada
+      // sin tocar los picks (que están congelados); 2º dentro de picks (si algún día se instala la función).
+      const fin = (this.pool && this.pool.settings && this.pool.settings.finals) || null;
+      const fromS = fin && fin[e.id];
+      if (fromS && fromS.g) return fromS;
+      const b2 = e.picks && e.picks.bracket2; const f = b2 && b2._final;
+      return f && f.g ? f : null;
+    },
     scoreFinalOf(pred) {
       const P = this.FINAL_PTS, act = this.finalActual;
       const b = { ganador: 0, exacto: 0, metodo: 0, goleadores: 0, hits: [], total: 0, played: !!(act && act.done) };
@@ -2559,25 +2568,33 @@ window.porraApp = function () {
       if (!e || !fm || this.finalSaving || !this.finalReady) return;
       if (this.finalLocked) return this.toast("La final ya ha empezado — ya no se puede cambiar.", "warn");
       this.finalSaving = true;
+      const f = { w: this.finalPred.w, g: this.finalPred.g, m: this.finalPred.m, sc: this.finalPred.sc };
+      const done = () => { this.finalSaved = true; _MEMO.foKey = null; _MEMO.kcKey = null; this.toast("🏆 ¡Pronóstico de la final guardado!"); };
+      // Guarda los finales DENTRO de la config de la propia porra (pool.settings.finals): la porra
+      // está cerrada y los picks congelados, pero set_settings SÍ escribe post-cierre (con PIN admin).
+      // El motor lee la puntuación de claves concretas, así que "finals" no altera nada más.
+      const saveViaSettings = async () => {
+        const s = Object.assign({}, this.pool.settings || {});
+        s.finals = Object.assign({}, s.finals || {}, { [e.id]: f });
+        await this.rpc("porra_set_settings", { p_code: this.pool.code, p_pin: this.adminPin, p_settings: s });
+        this.pool.settings = s; this.settings = Object.assign({}, this.settings, { finals: s.finals });
+      };
       try {
-        // Se guarda DENTRO de bracket2 bajo la clave "_final". Los RPC existentes NO valen:
-        // porra_save_entry -> POOL_LOCKED, porra_set_bracket2 -> KO2_LOCKED, porra_set_portero
-        // -> POOL_LOCKED (comprobado los tres contra FAMILIA2026, 15-jul). De ahí porra_set_final
-        // (sql/porra_set_final.sql): escribe SOLO _final y tiene su propio candado (pitido inicial
-        // 19-jul 21:00 CEST), así el cuadro original y el 2º cuadro siguen cerrados a cal y canto.
-        // El motor solo lee claves de nº de partido (73-104), así que "_final" no altera puntos.
-        const f = { w: this.finalPred.w, g: this.finalPred.g, m: this.finalPred.m, sc: this.finalPred.sc };
+        // Vía limpia (si algún día se instala porra_set_final): escribe en tu entrada, vale para toda la familia.
         await this.rpc("porra_set_final", { p_code: this.pool.code, p_participant_id: e.id, p_final: f });
         const b2 = Object.assign({}, (e.picks && e.picks.bracket2) || {}, { _final: f });
         e.picks = Object.assign({}, e.picks || {}, { bracket2: b2 });
         if (this.me && this.me.id === e.id) this.bracket2 = Object.assign({}, this.bracket2 || {}, { _final: f });
-        this.finalSaved = true; _MEMO.foKey = null; _MEMO.kcKey = null;
-        this.toast("🏆 ¡Pronóstico de la final guardado!");
+        done();
       } catch (x) {
-        const m = (x && (x.message || x.msg)) || "";
-        if (/PGRST202|porra_set_final|Could not find the function/i.test(m)) this.toast("Guardado no disponible todavía — falta activarlo en el servidor. Avisa a Pablo.", "err");
-        else if (/FINAL_LOCKED/.test(m)) this.toast("La final ya ha empezado — ya no se puede cambiar.", "warn");
-        else this.toast(this.errMsg(x), "err");
+        const raw = (x && (x.raw || x.message || "")) + "";
+        const missing = /PGRST202|porra_set_final|Could not find the function|schema cache/i.test(raw);
+        if (/FINAL_LOCKED/.test(raw)) { this.toast("La final ya ha empezado — ya no se puede cambiar.", "warn"); }
+        else if (missing && this.adminOk && this.adminPin) {
+          try { await saveViaSettings(); done(); } catch (y) { this.toast(this.errMsg(y), "err"); }
+        }
+        else if (missing) { this.toast("Para guardar la final entra en Admin con tu PIN (arriba) y vuelve a darle a Guardar.", "warn"); }
+        else { this.toast(this.errMsg(x), "err"); }
       }
       finally { this.finalSaving = false; }
     },
