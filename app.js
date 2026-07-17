@@ -116,7 +116,7 @@ window.porraApp = function () {
     // pronósticos
     groups: emptyGroups(), thirds: [], bracket: {}, _cols: [], _champion: null,
     extras: { revelacion: "", decepcion: "", pichichi: "", asistente: "", portero: "", sidebets: {} },
-    finalPred: { w: "", g: {}, m: "", sc: [] }, finalSaving: false, finalSaved: false, finalPhotoBad: {}, finalNeedPin: false, finalPinInput: "",
+    finalPred: { w: "", g: {}, m: "", sc: [] }, finalSaving: false, finalSaved: false, finalPhotoBad: {}, finalNeedPin: false, finalPinInput: "", finalLocalSaved: false, _finalTimer: null, _finalFnMissing: false,
     letters: D.GROUP_LETTERS, allTeams: ALL_TEAMS.slice().sort((a, b) => D.es(a).localeCompare(D.es(b))),
     sideBets: D.SIDE_BETS,
     // en vivo (ESPN) + cierre automático
@@ -2551,68 +2551,86 @@ window.porraApp = function () {
     // ---------- 🏆 La gran final: abrir / cargar / guardar ----------
     openFinal() { this.tab = "final"; this.fetchEspn(false).catch(() => {}); this.loadEntries({ recompute: false }).then(() => this.loadFinalPred()).catch(() => {}); },
     loadFinalPred() {
-      const f = this._finalOf(this.myEntry);
+      let f = this._finalOf(this.myEntry);
+      const synced = !!f;
+      if (!f) { try { const d = JSON.parse(localStorage.getItem(this._finalDraftKey()) || "null"); if (d && d.w) f = d; } catch (e) {} }   // borrador local si aún no está en el servidor
       this.finalPred = f ? { w: f.w || "", g: Object.assign({}, f.g || {}), m: f.m || "", sc: (f.sc || []).slice() } : { w: "", g: {}, m: "", sc: [] };
-      this.finalSaved = !!f;
+      this.finalSaved = synced; this.finalLocalSaved = !!f;
     },
-    finalSetGoals(team, v) { const n = Math.max(0, Math.min(9, parseInt(v, 10) || 0)); this.finalPred.g = Object.assign({}, this.finalPred.g, { [team]: n }); },
+    // Cada cambio guarda SOLO (sin botón): al instante en el móvil + sincroniza con la porra tras un respiro.
+    finalSetWinner(t) { this.finalPred.w = t; this.autoSaveFinal(); },
+    finalSetMethod(m) { this.finalPred.m = m; this.autoSaveFinal(); },
+    finalSetGoals(team, v) { const n = Math.max(0, Math.min(9, parseInt(v, 10) || 0)); this.finalPred.g = Object.assign({}, this.finalPred.g, { [team]: n }); this.autoSaveFinal(); },
     finalToggleScorer(name) {
       const sc = (this.finalPred.sc || []).slice(); const i = sc.indexOf(name);
       if (i >= 0) sc.splice(i, 1); else { if (sc.length >= this.FINAL_PTS.maxGol) sc.shift(); sc.push(name); }
-      this.finalPred.sc = sc;
+      this.finalPred.sc = sc; this.autoSaveFinal();
+    },
+    _finalDraftKey() { return "porra_finaldraft_" + (this.pool && this.pool.code) + "_" + (this.myEntry && this.myEntry.id); },
+    _saveFinalDraft() { try { localStorage.setItem(this._finalDraftKey(), JSON.stringify(this.finalPred)); } catch (e) {} this.finalLocalSaved = true; },
+    autoSaveFinal() {
+      if (this.finalLocked) return;
+      this._saveFinalDraft();                        // guardado instantáneo en el móvil (nunca se pierde)
+      clearTimeout(this._finalTimer);
+      this._finalTimer = setTimeout(() => { if (this.finalReady) this._syncFinal({}); }, 800);   // sincroniza con la porra tras un respiro
     },
     get finalReady() { const p = this.finalPred, fm = this.finalMatch; return !!(fm && p.w && p.m && p.g[fm.teams[0]] != null && p.g[fm.teams[1]] != null); },
     get finalLocked() { const a = this.finalActual; return !!(a && (a.done || a.live)); },   // al empezar la final ya no se toca
-    async saveFinalPred() {
+    // Envía el pronóstico a la porra. 1º vía limpia porra_set_final (vale para TODA la familia); si no
+    // está instalada, 2º fallback a la config de la porra con PIN admin (solo tú). Si no hay ninguna,
+    // se queda el borrador local en el móvil y se subirá en cuanto exista porra_set_final. Silencioso
+    // (auto-guardado); solo avisa en acciones manuales (opts.manual).
+    async _syncFinal(opts) {
+      opts = opts || {};
       const e = this.myEntry, fm = this.finalMatch;
-      if (!e || !fm || this.finalSaving || !this.finalReady) return;
-      if (this.finalLocked) return this.toast("La final ya ha empezado — ya no se puede cambiar.", "warn");
+      if (!e || !fm || !this.finalReady || this.finalLocked || this.finalSaving) return;
       this.finalSaving = true;
       const f = { w: this.finalPred.w, g: this.finalPred.g, m: this.finalPred.m, sc: this.finalPred.sc };
-      const done = () => { this.finalSaved = true; this.finalNeedPin = false; _MEMO.foKey = null; _MEMO.kcKey = null; this.toast("🏆 ¡Pronóstico de la final guardado!"); };
-      // Guarda los finales DENTRO de la config de la propia porra (pool.settings.finals): la porra
-      // está cerrada y los picks congelados, pero set_settings SÍ escribe post-cierre (con PIN admin).
-      // El motor lee la puntuación de claves concretas, así que "finals" no altera nada más.
-      const saveViaSettings = async (pin) => {
-        const s = Object.assign({}, this.pool.settings || {});
-        s.finals = Object.assign({}, s.finals || {}, { [e.id]: f });
-        await this.rpc("porra_set_settings", { p_code: this.pool.code, p_pin: pin, p_settings: s });
-        this.pool.settings = s; this.settings = Object.assign({}, this.settings, { finals: s.finals });
-        this.adminPin = pin; try { localStorage.setItem(this._finalPinKey(), pin); } catch (z) {}   // recordado → la próxima, un clic
-      };
+      const ok = () => { this.finalSaved = true; this.finalNeedPin = false; _MEMO.foKey = null; _MEMO.kcKey = null; if (opts.manual) this.toast("🏆 Guardado en la porra."); };
       try {
-        // Vía limpia (si algún día se instala porra_set_final): escribe en tu entrada, vale para toda la familia.
-        await this.rpc("porra_set_final", { p_code: this.pool.code, p_participant_id: e.id, p_final: f });
-        const b2 = Object.assign({}, (e.picks && e.picks.bracket2) || {}, { _final: f });
-        e.picks = Object.assign({}, e.picks || {}, { bracket2: b2 });
-        if (this.me && this.me.id === e.id) this.bracket2 = Object.assign({}, this.bracket2 || {}, { _final: f });
-        done();
-      } catch (x) {
-        const raw = (x && (x.raw || x.message || "")) + "";
-        const missing = /PGRST202|porra_set_final|Could not find the function|schema cache/i.test(raw);
-        if (/FINAL_LOCKED/.test(raw)) { this.toast("La final ya ha empezado — ya no se puede cambiar.", "warn"); }
-        else if (missing) {
+        let usedFn = false;
+        if (!this._finalFnMissing) {
+          try {
+            await this.rpc("porra_set_final", { p_code: this.pool.code, p_participant_id: e.id, p_final: f });
+            const b2 = Object.assign({}, (e.picks && e.picks.bracket2) || {}, { _final: f });
+            e.picks = Object.assign({}, e.picks || {}, { bracket2: b2 });
+            if (this.me && this.me.id === e.id) this.bracket2 = Object.assign({}, this.bracket2 || {}, { _final: f });
+            usedFn = true; ok();
+          } catch (x) {
+            const raw = (x && (x.raw || x.message || "")) + "";
+            if (/FINAL_LOCKED/.test(raw)) { this.finalSaving = false; return; }
+            if (/PGRST202|porra_set_final|Could not find the function|schema cache/i.test(raw)) this._finalFnMissing = true;   // no reintentar cada cambio
+            else { this.finalSaving = false; return; }   // error de red: se queda el borrador local
+          }
+        }
+        if (!usedFn && this._finalFnMissing) {
           const pin = this.adminPin || this._finalPin();
           if (pin) {
-            try { await saveViaSettings(pin); done(); }
-            catch (y) {
+            try {
+              const s = Object.assign({}, this.pool.settings || {});
+              s.finals = Object.assign({}, s.finals || {}, { [e.id]: f });
+              await this.rpc("porra_set_settings", { p_code: this.pool.code, p_pin: pin, p_settings: s });
+              this.pool.settings = s; this.settings = Object.assign({}, this.settings, { finals: s.finals });
+              this.adminPin = pin; try { localStorage.setItem(this._finalPinKey(), pin); } catch (z) {}
+              ok();
+            } catch (y) {
               const yr = (y && (y.raw || y.message || "")) + "";
-              if (/BAD_PIN/i.test(yr)) { this.adminPin = ""; try { localStorage.removeItem(this._finalPinKey()); } catch (z) {} this.finalNeedPin = true; this.finalPinInput = ""; this.toast("Ese PIN de admin no es correcto.", "err"); }
-              else this.toast(this.errMsg(y), "err");
+              if (/BAD_PIN/i.test(yr)) { this.adminPin = ""; try { localStorage.removeItem(this._finalPinKey()); } catch (z) {} this.finalPinInput = ""; if (this.adminOk || opts.manual) { this.finalNeedPin = true; if (opts.manual) this.toast("Ese PIN de admin no es correcto.", "err"); } }
+              // otro error: se queda el borrador local
             }
-          } else { this.finalNeedPin = true; this.toast("Escribe tu PIN de admin aquí abajo 👇", "warn"); }
+          } else if (this.adminOk) { this.finalNeedPin = true; }   // eres admin: mete el PIN una vez para subirlo
+          // familia sin función ni PIN: ya está guardado en el móvil; subirá cuando exista porra_set_final
         }
-        else { this.toast(this.errMsg(x), "err"); }
-      }
-      finally { this.finalSaving = false; }
+      } finally { this.finalSaving = false; }
     },
+    async saveFinalPred() { return this._syncFinal({ manual: true }); },
     _finalPinKey() { return "porra_apin_" + (this.pool && this.pool.code); },
     _finalPin() { try { return localStorage.getItem(this._finalPinKey()) || ""; } catch (e) { return ""; } },
     finalSubmitPin() {
       const p = (this.finalPinInput || "").trim();
       if (p.length < 4) return this.toast("El PIN de admin es de 4 o más dígitos.", "warn");
       this.adminPin = p; this.finalPinInput = "";
-      this.saveFinalPred();
+      this._syncFinal({ manual: true });
     },
     openResults() { this.tab = "results"; this.fetchEspn(false).then(() => this.loadForecasts()).catch(() => {}); this.loadEntries({ recompute: false }); },
     openGoals() { this.tab = "goals"; this.fetchEspn(false).then(() => this.loadMatchData()).catch(() => {}); this.loadEntries({ recompute: false }).catch(() => {}); },

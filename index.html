@@ -537,7 +537,7 @@
       <div class="gf-q">1️⃣ ¿Quién levanta la Copa? <span class="gf-pts">+6</span></div>
       <div class="gf-two">
         <template x-for="(t,i) in finalMatch.teams" :key="'gfw'+t">
-          <button class="gf-opt" :class="{sel:finalPred.w===t}" @click="finalPred.w=t">
+          <button class="gf-opt" :class="{sel:finalPred.w===t}" @click="finalSetWinner(t)">
             <span class="gf-fl" x-text="i===0?finalMatch.flagA:finalMatch.flagB"></span> <b x-text="i===0?finalMatch.esA:finalMatch.esB"></b>
           </button>
         </template>
@@ -554,9 +554,9 @@
 
       <div class="gf-q">3️⃣ ¿Cómo se decide? <span class="gf-pts">+8</span></div>
       <div class="gf-three">
-        <button class="gf-opt" :class="{sel:finalPred.m==='90'}" @click="finalPred.m='90'">⏱️ En los 90'</button>
-        <button class="gf-opt" :class="{sel:finalPred.m==='et'}" @click="finalPred.m='et'">⏳ Prórroga</button>
-        <button class="gf-opt" :class="{sel:finalPred.m==='pens'}" @click="finalPred.m='pens'">🥅 Penaltis</button>
+        <button class="gf-opt" :class="{sel:finalPred.m==='90'}" @click="finalSetMethod('90')">⏱️ En los 90'</button>
+        <button class="gf-opt" :class="{sel:finalPred.m==='et'}" @click="finalSetMethod('et')">⏳ Prórroga</button>
+        <button class="gf-opt" :class="{sel:finalPred.m==='pens'}" @click="finalSetMethod('pens')">🥅 Penaltis</button>
       </div>
 
       <div class="gf-q">4️⃣ ¿Quién marca? <span class="gf-pts">+7 cada uno (máx 2)</span> <small class="muted">— toca a los jugadores del once</small></div>
@@ -582,18 +582,18 @@
 
       <div class="gf-save">
         <p class="gf-picked" x-show="finalPred.sc.length">⚽ Tus goleadores: <b x-text="finalPred.sc.join(' · ')"></b></p>
-        <button class="btn primary block" :disabled="!finalReady || finalSaving" @click="saveFinalPred()">
-          <span x-show="!finalSaving" x-text="finalSaved ? '💾 Actualizar mi pronóstico' : '💾 Guardar mi pronóstico'"></span><span x-show="finalSaving">Guardando…</span>
-        </button>
+        <!-- Sin botón: se guarda solo con cada cambio. Indicador de estado en vivo. -->
+        <p class="tiny muted" x-show="!finalReady">✍️ Rellena ganador, resultado y cómo se decide — <b>se guarda solo</b>.</p>
+        <p class="tiny gf-ok" x-show="finalReady && finalSaving">💾 Guardando…</p>
+        <p class="tiny gf-ok" x-show="finalReady && !finalSaving && finalSaved">✅ Guardado en la porra. Se guarda solo cada vez que cambies algo, hasta que empiece la final.</p>
+        <p class="tiny gf-ok" x-show="finalReady && !finalSaving && !finalSaved && finalLocalSaved">✅ Guardado en tu móvil — se irá guardando solo mientras rellenas.</p>
         <div class="gf-pin" x-show="finalNeedPin" x-transition style="margin-top:10px;padding:12px;border:1px solid #d8b25a;border-radius:12px;background:#fbf6e9">
-          <p class="tiny" style="margin:0 0 8px">🔒 Solo la primera vez: escribe tu <b>PIN de admin</b> y guarda. Queda recordado en este móvil.</p>
+          <p class="tiny" style="margin:0 0 8px">🔒 Solo tú (admin), una vez: escribe tu <b>PIN de admin</b> para subir la final a la porra. Queda recordado en este móvil.</p>
           <div style="display:flex;gap:8px">
             <input type="password" inputmode="numeric" x-model="finalPinInput" placeholder="PIN admin" maxlength="12" @keydown.enter="finalSubmitPin()" style="flex:1;min-width:0" />
             <button class="btn primary" :disabled="finalSaving" @click="finalSubmitPin()">Guardar</button>
           </div>
         </div>
-        <p class="tiny muted" x-show="!finalReady">Elige ganador, resultado y cómo se decide para poder guardar.</p>
-        <p class="tiny gf-ok" x-show="finalSaved && !finalSaving">✅ Guardado. Puedes cambiarlo hasta que empiece la final.</p>
       </div>
     </div>
 
@@ -2398,7 +2398,7 @@
   <script src="final-xi.js?v=146"></script>
   <script src="engine.js?v=131"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
-  <script src="app.js?v=151"></script>
+  <script src="app.js?v=152"></script>
   <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.1/dist/cdn.min.js"></script>
 </body>
 </html>
