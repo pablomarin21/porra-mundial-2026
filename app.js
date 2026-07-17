@@ -116,7 +116,7 @@ window.porraApp = function () {
     // pronósticos
     groups: emptyGroups(), thirds: [], bracket: {}, _cols: [], _champion: null,
     extras: { revelacion: "", decepcion: "", pichichi: "", asistente: "", portero: "", sidebets: {} },
-    finalPred: { w: "", g: {}, m: "", sc: [] }, finalSaving: false, finalSaved: false, finalPhotoBad: {},
+    finalPred: { w: "", g: {}, m: "", sc: [] }, finalSaving: false, finalSaved: false, finalPhotoBad: {}, finalNeedPin: false, finalPinInput: "",
     letters: D.GROUP_LETTERS, allTeams: ALL_TEAMS.slice().sort((a, b) => D.es(a).localeCompare(D.es(b))),
     sideBets: D.SIDE_BETS,
     // en vivo (ESPN) + cierre automático
@@ -2569,15 +2569,16 @@ window.porraApp = function () {
       if (this.finalLocked) return this.toast("La final ya ha empezado — ya no se puede cambiar.", "warn");
       this.finalSaving = true;
       const f = { w: this.finalPred.w, g: this.finalPred.g, m: this.finalPred.m, sc: this.finalPred.sc };
-      const done = () => { this.finalSaved = true; _MEMO.foKey = null; _MEMO.kcKey = null; this.toast("🏆 ¡Pronóstico de la final guardado!"); };
+      const done = () => { this.finalSaved = true; this.finalNeedPin = false; _MEMO.foKey = null; _MEMO.kcKey = null; this.toast("🏆 ¡Pronóstico de la final guardado!"); };
       // Guarda los finales DENTRO de la config de la propia porra (pool.settings.finals): la porra
       // está cerrada y los picks congelados, pero set_settings SÍ escribe post-cierre (con PIN admin).
       // El motor lee la puntuación de claves concretas, así que "finals" no altera nada más.
-      const saveViaSettings = async () => {
+      const saveViaSettings = async (pin) => {
         const s = Object.assign({}, this.pool.settings || {});
         s.finals = Object.assign({}, s.finals || {}, { [e.id]: f });
-        await this.rpc("porra_set_settings", { p_code: this.pool.code, p_pin: this.adminPin, p_settings: s });
+        await this.rpc("porra_set_settings", { p_code: this.pool.code, p_pin: pin, p_settings: s });
         this.pool.settings = s; this.settings = Object.assign({}, this.settings, { finals: s.finals });
+        this.adminPin = pin; try { localStorage.setItem(this._finalPinKey(), pin); } catch (z) {}   // recordado → la próxima, un clic
       };
       try {
         // Vía limpia (si algún día se instala porra_set_final): escribe en tu entrada, vale para toda la familia.
@@ -2590,13 +2591,28 @@ window.porraApp = function () {
         const raw = (x && (x.raw || x.message || "")) + "";
         const missing = /PGRST202|porra_set_final|Could not find the function|schema cache/i.test(raw);
         if (/FINAL_LOCKED/.test(raw)) { this.toast("La final ya ha empezado — ya no se puede cambiar.", "warn"); }
-        else if (missing && this.adminOk && this.adminPin) {
-          try { await saveViaSettings(); done(); } catch (y) { this.toast(this.errMsg(y), "err"); }
+        else if (missing) {
+          const pin = this.adminPin || this._finalPin();
+          if (pin) {
+            try { await saveViaSettings(pin); done(); }
+            catch (y) {
+              const yr = (y && (y.raw || y.message || "")) + "";
+              if (/BAD_PIN/i.test(yr)) { this.adminPin = ""; try { localStorage.removeItem(this._finalPinKey()); } catch (z) {} this.finalNeedPin = true; this.finalPinInput = ""; this.toast("Ese PIN de admin no es correcto.", "err"); }
+              else this.toast(this.errMsg(y), "err");
+            }
+          } else { this.finalNeedPin = true; this.toast("Escribe tu PIN de admin aquí abajo 👇", "warn"); }
         }
-        else if (missing) { this.toast("Para guardar la final entra en Admin con tu PIN (arriba) y vuelve a darle a Guardar.", "warn"); }
         else { this.toast(this.errMsg(x), "err"); }
       }
       finally { this.finalSaving = false; }
+    },
+    _finalPinKey() { return "porra_apin_" + (this.pool && this.pool.code); },
+    _finalPin() { try { return localStorage.getItem(this._finalPinKey()) || ""; } catch (e) { return ""; } },
+    finalSubmitPin() {
+      const p = (this.finalPinInput || "").trim();
+      if (p.length < 4) return this.toast("El PIN de admin es de 4 o más dígitos.", "warn");
+      this.adminPin = p; this.finalPinInput = "";
+      this.saveFinalPred();
     },
     openResults() { this.tab = "results"; this.fetchEspn(false).then(() => this.loadForecasts()).catch(() => {}); this.loadEntries({ recompute: false }); },
     openGoals() { this.tab = "goals"; this.fetchEspn(false).then(() => this.loadMatchData()).catch(() => {}); this.loadEntries({ recompute: false }).catch(() => {}); },
