@@ -35,7 +35,7 @@
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="Porra Mundial" />
-  <link rel="stylesheet" href="styles.css?v=156" />
+  <link rel="stylesheet" href="styles.css?v=157" />
 </head>
 <body x-data="porraApp()" x-init="init()" x-cloak>
 
@@ -571,7 +571,8 @@
             <span class="gf-fl" x-text="side.k==='A'?finalMatch.flagA:finalMatch.flagB"></span> <b x-text="side.es"></b>
             <small class="muted" x-text="(finalPred.g[side.t]||0)===0 ? '— pon primero sus goles arriba' : ('— ' + finalScorersFor(side.t).length + '/' + (finalPred.g[side.t]||0) + ' goleador' + ((finalPred.g[side.t]||0)===1?'':'es') + ((finalPred.g[side.t]||0)>1 ? ' · elige 1 = doblete' : ''))"></small>
           </div>
-          <div class="gf-grid">
+          <p class="gf-xi-need" x-show="(finalPred.g[side.t]||0)===0">⚠️ Primero pon los goles de <b x-text="side.es"></b> arriba (paso 2️⃣). Después eliges sus goleadores.</p>
+          <div class="gf-grid" x-show="(finalPred.g[side.t]||0)>0">
             <template x-for="p in (side.k==='A'?finalXI.A:finalXI.B)" :key="'gfp'+p.n">
               <button class="gf-pl" :class="{sel:finalPred.sc.includes(p.n)}" @click="finalToggleScorer(p.n)" :title="p.n">
                 <span class="gf-av">
