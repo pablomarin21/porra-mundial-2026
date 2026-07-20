@@ -36,6 +36,9 @@ function dtf(locale, opts) {
 // escribir un caché DENTRO del objeto reactivo desde un getter crea dependencias
 // sobre el propio caché y puede provocar bucles de re-render.
 const _MEMO = { lmKey: null, lmVal: null, ktKey: null, ktVal: null };
+// Resultados OFICIALES de los especiales del Mundial 2026 (torneo terminado). Se fusionan sobre
+// el extrasActual del servidor para que la clasificación de la app cuadre con el cuadro definitivo.
+const FINAL_OFFICIAL_EXTRAS = { pichichi: "Mbappe", portero: "Unai Simón", asistente: "Olise" };
 // Jugador (pichichi/asistente/portero, texto libre) → su selección, para saber si un especial
 // SIGUE EN JUEGO: si su equipo está eliminado, ese premio ya no lo puede ganar. Coincidencia por
 // subcadena normalizada (sin acentos, minúsculas). Si no reconoce al jugador, se asume vivo.
@@ -120,7 +123,7 @@ window.porraApp = function () {
     letters: D.GROUP_LETTERS, allTeams: ALL_TEAMS.slice().sort((a, b) => D.es(a).localeCompare(D.es(b))),
     sideBets: D.SIDE_BETS,
     // en vivo (ESPN) + cierre automático
-    espnEvents: [], espnAt: 0, liveBusy: false, nowTs: 0, outcome: null, extrasActual: {}, _espnTimer: null, explain: null, scoringStatus: null, forecasts: {}, forecastsAt: 0, pathAnalysis: null, pathLoading: false, top3Analysis: null, top3Loading: false, top3Who: "", cmpA: "", cmpB: "", cmpGroup: "",
+    espnEvents: [], espnAt: 0, liveBusy: false, nowTs: 0, outcome: null, extrasActual: {}, extrasActualServer: {}, _espnTimer: null, explain: null, scoringStatus: null, forecasts: {}, forecastsAt: 0, pathAnalysis: null, pathLoading: false, top3Analysis: null, top3Loading: false, top3Who: "", cmpA: "", cmpB: "", cmpGroup: "",
     // Solo display: marcas de tiempo "acaba de marcar" / "acaba de terminar" para animar marcadores.
     scoreFlash: {}, finFlash: {}, _scoreCache: null,
     extrasActualEdit: { revelacion: "", decepcion: "", pichichi: "", asistente: "", portero: "", sidebets: {} },
@@ -1638,7 +1641,8 @@ window.porraApp = function () {
         this.loadMine(pool.code);
         this.phase = this.me.id ? "hub" : "welcome"; this.gIdx = 0; this.chosenNew = false; this.confirmClaim = null; this.wmode = "choose"; this.entriesLoaded = false;
         if (this.me.id) this.tab = "leaderboard";   // quien ya juega entra directo a la Clasificación en directo
-        await Promise.all([this.loadExtrasActual(), this.loadResults(), this.loadEntries()]);
+        await Promise.all([this.loadExtrasActual(), this.loadResults(), this.loadFinalHelper()]);
+        await this.loadEntries();   // tras cargar el helper de la gran final → el recálculo ya la incluye
         if (this.espnEvents.length) { try { this.computeLive(); } catch (e) {} }
         this.loadAvatars();
         // Si el CUADRO DEL 28-JUN está abierto y aún NO lo has empezado, entras DIRECTO ahí
@@ -1720,7 +1724,9 @@ window.porraApp = function () {
       });
     },
     async loadExtrasActual() {
-      try { this.extrasActual = (await this.rpc("porra_get_extras", {})) || {}; this._extrasLoaded = true; } catch (e) { if (!this._extrasLoaded) this.extrasActual = {}; }   // en fallo tras éxito previo, conservar el bueno (no doblar)
+      try { this.extrasActualServer = (await this.rpc("porra_get_extras", {})) || {}; this._extrasLoaded = true; } catch (e) { if (!this._extrasLoaded) this.extrasActualServer = {}; }   // lo que usó el edge (DB); en fallo tras éxito, conservar el bueno
+      // + especiales oficiales del torneo (goleador/portero/asistente): el DB no los tenía. Así la app puntúa igual que el cuadro definitivo.
+      this.extrasActual = Object.assign({}, this.extrasActualServer, FINAL_OFFICIAL_EXTRAS);
       this.extrasActualEdit = Object.assign({ revelacion: "", decepcion: "", pichichi: "", asistente: "", portero: "", sidebets: {} }, this.extrasActual, { sidebets: Object.assign({}, this.extrasActual.sidebets || {}) });
     },
     async saveExtrasActual() {
@@ -2012,13 +2018,14 @@ window.porraApp = function () {
       const oc = this.outcome || Eng.liveOutcome(this.results);
       const bd = Eng.scoreBreakdown(dp, oc, this.settings);
       const ex = Eng.scoreExtras(e.picks.extras, this.extrasActual, this.settings, oc);
+      const gf = this.scoreFinalOf(this._finalOf(e));   // 🏆 la gran final (hasta 40)
       const ord = (set) => [...set].sort((a, b) => D.es(a).localeCompare(D.es(b)));
       return {
         name: e.first_name + " " + e.last_name,
         champion: dp.champion, finalists: ord(dp.final), semis: ord(dp.semis),
         cuartos: ord(dp.cuartos), octavos: ord(dp.octavos),
         groups: e.picks.groups || {}, thirds: e.picks.thirds || [], bd,
-        extras: e.picks.extras || {}, ex, total: bd.total + ex.total,
+        extras: e.picks.extras || {}, ex, gf, total: bd.total + ex.total + gf.total,
         bits: this._explainBits(e.picks, oc, this.settings, bd, ex),   // justificación punto a punto
         groupDetail: this._groupDetail(e.picks, oc, this.settings),    // grupos en directo (pred vs real + pts + riesgo)
         ko1: this._koView(dp, oc, this.settings, false),               // cuadro de antes del Mundial (rondas + estado)
@@ -2522,7 +2529,8 @@ window.porraApp = function () {
       if (!ok) { this.usingServerBoard = false; try { await this.refreshBoard(); } catch (e) {} }
       try { await this.fetchEspn(false); } catch (e) {}   // refresca outcome + explicación (computeLive)
       try { await this.loadFinalHelper(); } catch (e) {}   // finales de la familia (almacén satélite) → para puntuar la final
-      this._applySpecialsPatch();   // suma decepción + revelación (el edge viejo no las aplica)
+      if (this.usingServerBoard) this._applySpecialsPatch();   // edge: parchea especiales + gran final sobre el board del server
+      else this.recomputeRanking();                            // local: re-rank AHORA que el helper de la final ya está cargado
       this.applyTiebreak();   // reordena empates por el sistema de puntuación
       this.probBusy = false;
     },
@@ -2536,7 +2544,7 @@ window.porraApp = function () {
         if (!this.usingServerBoard || this._serverHasRuling) return;   // recompute local o edge nuevo: ya incluidas
         if (!this._extrasLoaded) return;   // sin extrasActual no sabemos qué contó el server → no arriesgar a doblar
         const oc = this.outcome; if (!oc) return;
-        const S = this.settings; const EA = this.extrasActual || {};
+        const S = this.settings; const EA = this.extrasActual || {}; const EAsrv = this.extrasActualServer || EA;
         const byId = {}; (this.entries || []).forEach((e) => { byId[e.id] = e; });
         (this.ranked || []).forEach((r) => {
           // IDEMPOTENTE: recalcula SIEMPRE desde el punto BASE del server (_srvPts), nunca acumula,
@@ -2545,8 +2553,8 @@ window.porraApp = function () {
           const e = byId[r.id]; let delta = 0;
           if (e && e.picks && e.picks.extras) {
             try {
-              const neo = Eng.scoreExtras(e.picks.extras, EA, S, oc).total;   // regla nueva (decepción + revelación)
-              const old = Eng.scoreExtras(e.picks.extras, EA, S).total;       // lo que el edge viejo ya cuenta (sin oc)
+              const neo = Eng.scoreExtras(e.picks.extras, EA, S, oc).total;    // final correcto: + oficiales + decepción/revelación (oc)
+              const old = Eng.scoreExtras(e.picks.extras, EAsrv, S).total;      // lo que el edge ya contó (extras del DB, sin oficiales ni oc)
               delta = neo - old;
             } catch (x) {}
           }
@@ -2683,13 +2691,14 @@ window.porraApp = function () {
       if (this.usingServerBoard) { if (this.selectedId) this.det = this._computeDetail(this.selectedId); return; }
       const oc = this.outcome || Eng.liveOutcome(this.results); const S = this.settings;
       const arr = this.entries.map((e) => {
-        let base = 0, extra = 0;
+        let base = 0, extra = 0, gf = 0;
         if (e.picks) {
           try { base = Eng.scoreEntry(Eng.derivePicks(e.picks), oc, S); } catch (x) {}
           try { extra = Eng.scoreExtras(e.picks.extras, this.extrasActual, S, oc).total; } catch (x) {}
+          try { gf = this.scoreFinalOf(this._finalOf(e)).total; } catch (x) {}   // 🏆 la gran final también en el recompute local
         }
         const pr = this.probData[e.id];
-        return Object.assign({}, e, { points: base + extra, basePoints: base, extraPts: extra, win: pr ? pr.win : null, podium: pr ? pr.podium : null, avg: pr ? pr.avg : null });
+        return Object.assign({}, e, { points: base + extra + gf, basePoints: base, extraPts: extra, win: pr ? pr.win : null, podium: pr ? pr.podium : null, avg: pr ? pr.avg : null });
       });
       this.ranked = arr;
       this.applyTiebreak();

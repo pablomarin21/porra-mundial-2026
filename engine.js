@@ -483,7 +483,9 @@
   function scoreExtras(extras, actuals, S, oc) {
     const e = extras || {}, a = actuals || {};
     const bd = { revelacion: 0, decepcion: 0, pichichi: 0, asistente: 0, portero: 0, hattrick: 0, dobleRoja: 0 };
-    const norm = (s) => (s || "").toString().trim().toLowerCase();
+    const norm = (s) => (s || "").toString().trim().toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
+    const surn = (s) => { const p = norm(s).split(/\s+/); return p[p.length - 1]; };
+    const same = (x, y) => { const a2 = norm(x), b2 = norm(y); return !!a2 && !!b2 && (a2 === b2 || surn(x) === surn(y)); };   // justo: nombre completo O apellido (Kylian Mbappe = Mbappe)
     // REVELACIÓN: equipo humilde que llega a CUARTOS+ (espejo de la decepción). Compat: fallo del admin.
     const revCuartos = oc && oc.reached && oc.reached.cuartos;
     if ((revCuartos && e.revelacion && revCuartos.has(e.revelacion)) || (a.revelacion && e.revelacion === a.revelacion)) bd.revelacion += S.revelacion;
@@ -492,9 +494,9 @@
     const decSet = oc && oc.decepcionConfirmed;
     if (decSet ? (e.decepcion && decSet.has(e.decepcion))
                : (a.decepcion && e.decepcion === a.decepcion)) bd.decepcion += S.decepcion;
-    if (a.pichichi && norm(e.pichichi) && norm(e.pichichi) === norm(a.pichichi)) bd.pichichi += S.pichichi;
-    if (a.asistente && norm(e.asistente) && norm(e.asistente) === norm(a.asistente)) bd.asistente += S.asistente;
-    if (a.portero && norm(e.portero) && norm(e.portero) === norm(a.portero)) bd.portero += (S.portero || 0);
+    if (a.pichichi && same(e.pichichi, a.pichichi)) bd.pichichi += S.pichichi;
+    if (a.asistente && same(e.asistente, a.asistente)) bd.asistente += S.asistente;
+    if (a.portero && same(e.portero, a.portero)) bd.portero += (S.portero || 0);
     const sb = e.sidebets || {}, asb = a.sidebets || {};
     if (asb.hattrick && sb.hattrick === asb.hattrick) bd.hattrick += S.hattrick;
     if (asb.dobleRoja && sb.dobleRoja === asb.dobleRoja) bd.dobleRoja += S.dobleRoja;

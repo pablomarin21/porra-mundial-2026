@@ -1142,6 +1142,7 @@
             <span x-text="'Campeón '+det.bd.campeon"></span>
             <span class="bd-bonus" x-show="det.bd && det.bd.bonus" x-text="'🗓️ 28-jun '+(det.bd?det.bd.bonus:0)"></span>
             <span class="bd-extra" x-show="det.ex.total" x-text="'⭐ Especiales '+det.ex.total"></span>
+            <span class="bd-extra" x-show="det.gf && det.gf.total" x-text="'🏆 Gran final '+(det.gf?det.gf.total:0)"></span>
           </div>
         </template>
 
@@ -2405,9 +2406,9 @@
   <!-- ====== Dependencias ====== -->
   <script src="data.js?v=121"></script>
   <script src="final-xi.js?v=146"></script>
-  <script src="engine.js?v=131"></script>
+  <script src="engine.js?v=159"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
-  <script src="app.js?v=158"></script>
+  <script src="app.js?v=159"></script>
   <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.1/dist/cdn.min.js"></script>
 </body>
 </html>
